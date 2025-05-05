@@ -302,14 +302,21 @@ export default class DateFormat {
   isValid(): boolean {
     return !isNaN(this._d.getTime());
   }
-
-  /** Diff vs other in unit, optionally float */
-  diff(other: DateFormat|Date|string|number, unit: Unit='millisecond', floating=false): number {
+  /** Diff vs. other in unit, optionally float */
+  diff(other: DateFormat | Date | string | number, unit: Unit = 'millisecond', floating = false): number {
     const o = other instanceof DateFormat ? other : new DateFormat(other as string | number | Date);
-    const ms= this.valueOf() - o.valueOf();
+    const ms = this.valueOf() - o.valueOf();
     const per = DateFormat.UNIT_MS[unit] || 1;
-    const v   = ms / per;
-    return floating ? v : Math.floor(v);
+
+    if (per === 0) {
+      throw new Error(`Invalid unit "${unit}"`);
+    }
+
+    const result = ms / per;
+    if (floating) {
+      return Math.round((result + Number.EPSILON) * 100) / 100; // Round to 2 decimal places
+    }
+    return Math[result < 0 ? 'ceil' : 'floor'](result);
   }
 
   /** Native Date */

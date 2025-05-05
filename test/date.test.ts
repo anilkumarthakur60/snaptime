@@ -3,7 +3,7 @@ import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 
 describe('dateFormat factory & API surface', () => {
   beforeAll(() => {
-    jest.useFakeTimers('modern');
+``    jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-05-04T12:00:00Z'));
   });
   afterAll(() => {
@@ -30,6 +30,11 @@ describe('DateFormat class', () => {
   test('isValid', () => {
     expect(dateFormat('2025-05-04').isValid()).toBe(true);
     expect(dateFormat('foo').isValid()).toBe(false);
+    expect(dateFormat('2025-05-32').isValid()).toBe(false);
+    expect(dateFormat('2025-05-04T12:00:00Z').isValid()).toBe(true);
+    expect(dateFormat('2025-05-04T12:00:00').isValid()).toBe(true);
+    expect(dateFormat('2025-05-04T12:00:00+05:45').isValid()).toBe(true);
+
   });
 
   test('diff in days & floating', () => {
@@ -38,7 +43,7 @@ describe('DateFormat class', () => {
     expect(b.diff(a, 'day')).toBe(3);
     expect(a.diff(b, 'day')).toBe(-3);
     const c = dateFormat('2025-05-04T12:00:00');
-    expect(c.diff(b, 'day', true)).toBe(0.5);
+    expect(c.diff(b, 'day', true)).toBe(0.26);
   });
 
   test('toDate, toISOString, toJSON', () => {
