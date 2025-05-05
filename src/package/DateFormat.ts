@@ -1,7 +1,17 @@
 // src/DateFormat.ts
 
 /** Supported time units */
-export type Unit = 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'date' | 'month' | 'year' | 'fortnight' | 'unknown';
+export type Unit =
+  | 'millisecond'
+  | 'second'
+  | 'minute'
+  | 'hour'
+  | 'day'
+  | 'date'
+  | 'month'
+  | 'year'
+  | 'fortnight'
+  | 'unknown'
 
 /** Locale data shape */
 export interface LocaleData {
@@ -48,7 +58,7 @@ export interface DateFormatStatic {
 
 // Interface for custom plugin methods
 export interface DateFormatPluginMethods {
-  testPluginMethod?: () => string;
+  testPluginMethod?: () => string
 }
 
 /** A length of time with parse/add/subtract/humanize/format */
@@ -251,15 +261,15 @@ export default class DateFormat {
     if (parts.X != null) return new DateFormat(parts.X * 1000, { utc: true })
 
     const Y = parts.YYYY || 1970
-    const Mo = (parts.MM || 1) - 1  // Convert 1-12 to 0-11 for JS Date
+    const Mo = (parts.MM || 1) - 1 // Convert 1-12 to 0-11 for JS Date
     const D = parts.DD || 1
     const h = parts.HH ?? parts.hh ?? 0
     const mi = parts.mm || 0
     const s = parts.ss || 0
-    
+
     // Create with the correct UTC option
     const inst = new DateFormat(new Date(Date.UTC(Y, Mo, D, h, mi, s)), { utc: true })
-    
+
     // apply timezone offset if Z was parsed
     if (parts.Z) {
       const ofs = String(parts.Z).replace(':', '')
@@ -269,7 +279,7 @@ export default class DateFormat {
       const offset = sign * (hh2 * 60 + mm2) * 60000
       return new DateFormat(new Date(inst.valueOf() - offset))
     }
-    
+
     return inst
   }
 
@@ -530,7 +540,7 @@ export default class DateFormat {
 
   local(): DateFormat {
     if (!this._utc) return this.clone()
-    
+
     const ts = this.valueOf()
     const localDate = new Date(ts)
     return new DateFormat(localDate)
@@ -718,7 +728,7 @@ export default class DateFormat {
       ...opts,
       timeZone: this._utc ? 'UTC' : undefined
     })
-    
+
     // Special handling for locale that needs commas
     if (opts.weekday === 'long' && opts.month === 'long' && opts.day === 'numeric') {
       // For formats like "Sunday, 4 May 2025"
@@ -728,7 +738,7 @@ export default class DateFormat {
         return `${parts[0]}, ${parts.slice(1).join(' ')}`
       }
     }
-    
+
     return formatter.format(this.toDate())
   }
 
@@ -738,10 +748,10 @@ export default class DateFormat {
     const diff = this.valueOf() - now.valueOf()
     const isNegative = diff < 0
     const absMs = Math.abs(diff)
-    
+
     let value: number
     let unit: string
-    
+
     if (absMs < 1000) {
       value = Math.round(absMs)
       unit = value === 1 ? 'millisecond' : 'milliseconds'
@@ -758,7 +768,7 @@ export default class DateFormat {
       value = Math.round(absMs / 86400000)
       unit = value === 1 ? 'day' : 'days'
     }
-    
+
     return isNegative ? `${value} ${unit} ago` : `in ${value} ${unit}`
   }
 
@@ -768,18 +778,18 @@ export default class DateFormat {
     d.setHours(0, 0, 0, 0)
     d.setDate(d.getDate() + 4 - (d.getDay() || 7))
     const yearStart = new Date(d.getFullYear(), 0, 1)
-    const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
-    
+    const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+
     // Adjust for December weeks that may belong to next year
     if (week === 1 && d.getMonth() === 11) {
       return 53
     }
-    
+
     // Adjust for January weeks that may belong to previous year
     if (d.getMonth() === 0 && d.getDate() <= 3 && week >= 52) {
       return 53
     }
-    
+
     return week
   }
 

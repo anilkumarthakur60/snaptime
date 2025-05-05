@@ -12,6 +12,5 @@ export default defineConfig({
     sourcemap: false,
     emptyOutDir: true,
     cssCodeSplit: true,
-    minify: "terser",
   },
 });

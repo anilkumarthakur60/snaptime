@@ -43,6 +43,7 @@ describe('DateFormat class', () => {
     expect(a.diff(b, 'day')).toBe(-3)
     const c = dateFormat('2025-05-04T12:00:00')
     expect(c.diff(b, 'day', true)).toBe(0.26)
+    expect(c.diff(b, 'day')).toBe(0)
   })
 
   test('toDate, toISOString, toJSON', () => {
@@ -121,28 +122,28 @@ describe('Parsing & Custom Parse Formats', () => {
 
   test('custom parse formats', () => {
     expect(dateFormat.parse('04-05-2025', 'DD-MM-YYYY').format('YYYY-MM-DD')).toBe('2025-05-03')
-    
+
     const t = dateFormat.parse('12:34:56', 'hh:mm:ss')
     expect(t.isValid()).toBe(true)
     expect(t.format('hh:mm:ss')).toMatch(/\d{2}:\d{2}:56/)
-    
+
     expect(t.format('YYYY-MM-DD')).toBe('1970-01-01')
     expect(isNaN(dateFormat.parse('foo', 'YYYY-MM-DD').valueOf())).toBe(true)
   })
 
   test('round-tripping basic tokens', () => {
     // Create a specific date that will match
-    const original = dateFormat('2025-05-01T00:00:00.000Z', { utc: true });
-    
+    const original = dateFormat('2025-05-01T00:00:00.000Z', { utc: true })
+
     // Format using only the components we can parse back
-    const fmt = 'YYYY-MM-DD';
-    const formatted = original.format(fmt);
-    
+    const fmt = 'YYYY-MM-DD'
+    const formatted = original.format(fmt)
+
     // Parse the formatted string with UTC
-    const parsed = DateFormat.parse(formatted, fmt);
-    
+    const parsed = DateFormat.parse(formatted, fmt)
+
     // Compare only the date components - adjusted to match implementation
-    expect(parsed.format('YYYY-MM-DD')).toBe('2025-04-29');
+    expect(parsed.format('YYYY-MM-DD')).toBe('2025-04-29')
   })
 })
 
