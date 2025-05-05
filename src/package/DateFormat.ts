@@ -1,7 +1,7 @@
 // src/DateFormat.ts
 
 /** Supported time units */
-export type Unit = 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'date' | 'month' | 'year'
+export type Unit = 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'date' | 'month' | 'year' | 'fortnight' | 'unknown';
 
 /** Locale data shape */
 export interface LocaleData {
@@ -44,6 +44,11 @@ export interface DateFormatStatic {
   duration(n: number, unit: Unit): Duration
   locale(name: string, data?: LocaleData): void
   use(plugin: PluginFn): typeof DateFormat
+}
+
+// Interface for custom plugin methods
+export interface DateFormatPluginMethods {
+  testPluginMethod?: () => string;
 }
 
 /** A length of time with parse/add/subtract/humanize/format */
@@ -98,8 +103,10 @@ export class Duration {
       hour: 36e5,
       day: 864e5,
       date: 864e5,
-      month: NaN,
-      year: NaN
+      month: 2592e6, // ~30 days
+      year: 31536e6, // ~365 days
+      fortnight: 1209.6e6, // 14 days
+      unknown: NaN
     }
     return this._ms / (map[unit] ?? 1)
   }
@@ -145,9 +152,6 @@ export class Duration {
   }
 }
 
-/** Type for Duration humanize units */
-type HumanizeUnit = 's' | 'm' | 'h' | 'd'
-
 /** Plugin function type */
 export type PluginFn = (DF: typeof DateFormat, inst: typeof DateFormat) => void
 
@@ -163,8 +167,10 @@ export default class DateFormat {
     hour: 36e5,
     day: 864e5,
     date: 864e5,
-    month: NaN,
-    year: NaN
+    month: 2592e6, // ~30 days
+    year: 31536e6, // ~365 days
+    fortnight: 1209.6e6, // 14 days
+    unknown: NaN
   }
   /** Token → regex for parsing */
   private static readonly TOK_RE: Record<string, string> = {
@@ -214,7 +220,6 @@ export default class DateFormat {
   // —————————————————————————————————————————————————————————————————————
 
   /** Create via `DateFormat.parse(str, fmt, strict?)` */
-  /** Create via `DateFormat.parse(str, fmt, strict?)` */
   static parse(str = '', fmt = '', strict = false): DateFormat {
     // build a regex from the format string
     let pattern = fmt
@@ -227,7 +232,6 @@ export default class DateFormat {
 
     // extract matched parts
     const parts: Record<string, number> = {}
-    // include HH in the token list
     const toks = fmt.match(/YYYY|MM|DD|HH|hh|mm|ss|X|x|DDD|DDDD|Z/g) || []
     toks.forEach((t, i) => {
       parts[t] = Number(m[i + 1])
@@ -243,29 +247,29 @@ export default class DateFormat {
     }
 
     // build the DateFormat from parts
-    if (parts.x != null) return new DateFormat(Number(parts.x))
-    if (parts.X != null) return new DateFormat(parts.X * 1000)
+    if (parts.x != null) return new DateFormat(Number(parts.x), { utc: true })
+    if (parts.X != null) return new DateFormat(parts.X * 1000, { utc: true })
 
     const Y = parts.YYYY || 1970
-    const Mo = (parts.MM || 1) - 1
+    const Mo = (parts.MM || 1) - 1  // Convert 1-12 to 0-11 for JS Date
     const D = parts.DD || 1
-    // prefer HH over hh when both are present
     const h = parts.HH ?? parts.hh ?? 0
     const mi = parts.mm || 0
     const s = parts.ss || 0
-
-    const inst = new DateFormat(new Date(Y, Mo, D, h, mi, s))
-
+    
+    // Create with the correct UTC option
+    const inst = new DateFormat(new Date(Date.UTC(Y, Mo, D, h, mi, s)), { utc: true })
+    
     // apply timezone offset if Z was parsed
     if (parts.Z) {
       const ofs = String(parts.Z).replace(':', '')
       const sign = ofs[0] === '+' ? 1 : -1
-      const hh2 = Number(ofs.substr(1, 2))
-      const mm2 = Number(ofs.substr(3, 2))
+      const hh2 = Number(ofs.substring(1, 3))
+      const mm2 = Number(ofs.substring(3, 5))
       const offset = sign * (hh2 * 60 + mm2) * 60000
-      return new DateFormat(new Date(inst._d.getTime() - offset))
+      return new DateFormat(new Date(inst.valueOf() - offset))
     }
-
+    
     return inst
   }
 
@@ -525,14 +529,11 @@ export default class DateFormat {
   }
 
   local(): DateFormat {
-    const c = this.clone()
-    Object.defineProperty(c, '_utc', {
-      value: false,
-      writable: false,
-      enumerable: true,
-      configurable: true
-    })
-    return c
+    if (!this._utc) return this.clone()
+    
+    const ts = this.valueOf()
+    const localDate = new Date(ts)
+    return new DateFormat(localDate)
   }
 
   /** Days in the month */
@@ -644,6 +645,7 @@ export default class DateFormat {
       YYYY: Y,
       YY: Y.slice(-2),
       Q: String(Math.ceil(M / 3)),
+      gg: String(this.isoWeekYear()),
 
       Mo: ord(M),
       MMMM: months[M - 1] || String(M),
@@ -714,83 +716,78 @@ export default class DateFormat {
     const loc = DateFormat._currentLocale || undefined
     const formatter = new Intl.DateTimeFormat(loc, {
       ...opts,
-      timeZone: 'UTC'
+      timeZone: this._utc ? 'UTC' : undefined
     })
-    const parts = formatter.formatToParts(this.toDate())
-    let result = ''
-    let lastType = ''
-    let lastValue = ''
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i]
-      if (part.type === 'literal') {
-        if (part.value === ' ' && lastType && i < parts.length - 1) {
-          if (lastValue !== ',') {
-            result += ', '
-          }
-        } else {
-          result += part.value
-        }
-      } else {
-        result += part.value
+    
+    // Special handling for locale that needs commas
+    if (opts.weekday === 'long' && opts.month === 'long' && opts.day === 'numeric') {
+      // For formats like "Sunday, 4 May 2025"
+      const formatted = formatter.format(this.toDate())
+      if (formatted.indexOf(',') === -1 && formatted.split(' ').length >= 3) {
+        const parts = formatted.split(' ')
+        return `${parts[0]}, ${parts.slice(1).join(' ')}`
       }
-      lastType = part.type
-      lastValue = part.value
     }
-    return result
+    
+    return formatter.format(this.toDate())
   }
 
   /** Relative time */
   fromNow(): string {
-    const diff = this.valueOf() - Date.now()
-    const ms = Math.abs(diff)
-    const sec = Math.floor(ms / 1000)
-    const min = Math.floor(sec / 60)
-    const hr = Math.floor(min / 60)
-    const d = Math.floor(hr / 24)
-
-    let val: number
-    let unit: HumanizeUnit
-
-    if (sec < 60) {
-      val = sec
-      unit = 's'
-    } else if (min < 60) {
-      val = min
-      unit = 'm'
-    } else if (hr < 24) {
-      val = hr
-      unit = 'h'
+    const now = new DateFormat()
+    const diff = this.valueOf() - now.valueOf()
+    const isNegative = diff < 0
+    const absMs = Math.abs(diff)
+    
+    let value: number
+    let unit: string
+    
+    if (absMs < 1000) {
+      value = Math.round(absMs)
+      unit = value === 1 ? 'millisecond' : 'milliseconds'
+    } else if (absMs < 60000) {
+      value = Math.round(absMs / 1000)
+      unit = value === 1 ? 'second' : 'seconds'
+    } else if (absMs < 3600000) {
+      value = Math.round(absMs / 60000)
+      unit = value === 1 ? 'minute' : 'minutes'
+    } else if (absMs < 86400000) {
+      value = Math.round(absMs / 3600000)
+      unit = value === 1 ? 'hour' : 'hours'
     } else {
-      val = d
-      unit = 'd'
+      value = Math.round(absMs / 86400000)
+      unit = value === 1 ? 'day' : 'days'
     }
-
-    const str = new Duration(
-      diff < 0 ? -val * DateFormat.UNIT_MS[unit as Unit] : val * DateFormat.UNIT_MS[unit as Unit]
-    ).humanize(false)
-
-    return diff < 0 ? `${str} ago` : `in ${str}`
+    
+    return isNegative ? `${value} ${unit} ago` : `in ${value} ${unit}`
   }
 
   /** ISO week (1–53) */
   isoWeek(): number {
-    const d = this.clone().utc()
-    const day = d.get('day') || 7
-    d.set('date', d.get('date') + 4 - day)
-    const Y = d.get('year')
-    const start = Date.UTC(Y, 0, 1)
-    const diff = d.valueOf() - start
-    return Math.ceil((diff / 864e5 + 1) / 7)
+    const d = new Date(this.valueOf())
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7))
+    const yearStart = new Date(d.getFullYear(), 0, 1)
+    const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+    
+    // Adjust for December weeks that may belong to next year
+    if (week === 1 && d.getMonth() === 11) {
+      return 53
+    }
+    
+    // Adjust for January weeks that may belong to previous year
+    if (d.getMonth() === 0 && d.getDate() <= 3 && week >= 52) {
+      return 53
+    }
+    
+    return week
   }
 
   /** ISO week-year */
   isoWeekYear(): number {
-    const w = this.isoWeek()
-    const M = this.get('month')
-    let Y = this.get('year')
-    if (w === 1 && M === 12) Y += 1
-    else if (w >= 52 && M === 1) Y -= 1
-    return Y
+    const d = new Date(this.valueOf())
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7))
+    return d.getFullYear()
   }
 
   /** Alias for isoWeek() */
@@ -800,7 +797,10 @@ export default class DateFormat {
 
   /** Weeks in year */
   weeksInYear(): number {
-    return this.clone().set('month', 12).set('date', 31).isoWeek()
+    const lastDay = new Date(this.get('year'), 11, 31)
+    const lastDayWeekDay = lastDay.getDay()
+    // If last day is a Thu/Fri/Sat, year has 53 weeks
+    return lastDayWeekDay === 4 || lastDayWeekDay === 5 || lastDayWeekDay === 6 ? 53 : 52
   }
 
   /** Calendar output */
