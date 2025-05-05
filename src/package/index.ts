@@ -1,10 +1,13 @@
 // src/index.ts
 
-import DateFormat, { Duration } from './DateFormat';
-import type { Unit, PluginFn, LocaleData } from './DateFormat';
+import DateFormat, { Duration } from "./DateFormat";
+import type { Unit, PluginFn, LocaleData } from "./DateFormat";
 
 export interface DateFormatStatic {
-  (input?: string | number | Date | DateFormat, opts?: { utc?: boolean }): DateFormat;
+  (
+    input?: string | number | Date | DateFormat,
+    opts?: { utc?: boolean },
+  ): DateFormat;
   parse(str: string, fmt: string, strict?: boolean): DateFormat;
   min(...args: (string | number | Date | DateFormat)[]): DateFormat;
   max(...args: (string | number | Date | DateFormat)[]): DateFormat;
@@ -13,16 +16,17 @@ export interface DateFormatStatic {
   use(plugin: PluginFn): typeof DateFormat;
 }
 
-const dateFormat = ((input: string | number | Date | DateFormat = Date.now(), opts: { utc?: boolean } = {}) =>
-        new DateFormat(input, opts)
-) as DateFormatStatic;
+const dateFormat = ((
+  input: string | number | Date | DateFormat = Date.now(),
+  opts: { utc?: boolean } = {},
+) => new DateFormat(input, opts)) as DateFormatStatic;
 
 // Attach static methods
-dateFormat.parse    = DateFormat.parse;
-dateFormat.min      = DateFormat.min;
-dateFormat.max      = DateFormat.max;
+dateFormat.parse = DateFormat.parse;
+dateFormat.min = DateFormat.min;
+dateFormat.max = DateFormat.max;
 dateFormat.duration = DateFormat.duration;
-dateFormat.locale   = DateFormat.locale;
-dateFormat.use      = DateFormat.use;
+dateFormat.locale = DateFormat.locale;
+dateFormat.use = DateFormat.use;
 
-export { DateFormat, Duration, Unit, PluginFn, LocaleData,dateFormat }
+export { DateFormat, Duration, Unit, PluginFn, LocaleData, dateFormat };
