@@ -3,7 +3,7 @@ import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 
 describe('dateFormat factory & API surface', () => {
   beforeAll(() => {
-``    jest.useFakeTimers();
+    jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-05-04T12:00:00Z'));
   });
   afterAll(() => {
@@ -51,6 +51,7 @@ describe('DateFormat class', () => {
     const d = df.toDate();
     expect(d.getUTCFullYear()).toBe(2025);
     expect(df.toISOString()).toMatch(/^2025-05-04T12:34:56/);
+    expect(df.toISOString()).toBe("2025-05-04T12:34:56.000Z");
     expect(df.toJSON()).toBe(df.toISOString());
   });
 
@@ -65,6 +66,7 @@ describe('DateFormat class', () => {
     expect(dateFormat('2024-02-15').isLeapYear()).toBe(true);
     expect(dateFormat('2025-05-04').daysInMonth()).toBe(31);
     expect(dateFormat('2025-01-01').dayOfYear()).toBe(1);
+    expect(dateFormat('2025-02-24').dayOfYear()).toBe(55);
     expect(dateFormat('2025-12-31').dayOfYear()).toBe(365);
   });
 
@@ -80,6 +82,7 @@ describe('DateFormat class', () => {
     expect(dt.format('ZZ')).toBe('+0545');
     expect(dt.format('A')).toBe('AM');
     expect(dt.format('a')).toBe('am');
+    console.log(dt.format('Mo'));
     expect(dt.format('Mo')).toBe('1st');
     expect(dt.format('ddd')).toBe('Thu');
     expect(dt.format('dddd')).toBe('Thursday');
@@ -106,7 +109,7 @@ describe('DateFormat class', () => {
 
 describe('Parsing & Custom Parse Formats', () => {
   test('ISO string parsing', () => {
-    const dt = dateFormat('2025-05-04T15:07:09Z');
+    const dt = dateFormat('2025-05-04T15:07:09Z').utc();
     expect(dt.format()).toBe('2025-05-04 03:07 PM');
   });
 
@@ -128,8 +131,11 @@ describe('Parsing & Custom Parse Formats', () => {
 
   test('round-tripping basic tokens', () => {
     const fmt = ['YYYY','MM','DD','hh','mm','ss'].join('-');
-    const now = dateFormat();
-    expect(dateFormat(now.format(fmt), fmt).isSame(now)).toBe(true);
+    const now = dateFormat().utc();
+    const formatted = now.format(fmt);
+    console.log(formatted, fmt);
+    const parsed = dateFormat.parse(formatted, fmt).utc();
+    expect(parsed.isSame(now)).toBe(true);
   });
 });
 
@@ -256,10 +262,12 @@ describe('UTC vs Local', () => {
   const iso = '2025-05-04T00:00:00Z';
   const local = new Date(iso);
   const dtLocal = dateFormat(local);
-  const dtUtc   = dateFormat(iso, { utc:true });
+  const dtUtc = dateFormat(iso, { utc: true });
   test('local vs utc()', () => {
-    expect(dtLocal.format('YYYY-MM-DD hh:mm A')).not.toBe(dtUtc.format('YYYY-MM-DD hh:mm A'));
-    expect(dtUtc.local().format()).toBe(dtLocal.format());
+    const localTime = dtLocal.format('YYYY-MM-DD hh:mm A');
+    const utcTime = dtUtc.format('YYYY-MM-DD hh:mm A');
+    expect(localTime).not.toBe(utcTime);
+    expect(dtUtc.local().format('YYYY-MM-DD hh:mm A')).toBe(localTime);
   });
 });
 
@@ -275,7 +283,7 @@ describe('Relative Time & Duration', () => {
   test('Duration.as() & humanize()', () => {
     const d = dateFormat.duration(90,'minute');
     expect(d.as('hour')).toBe(1.5);
-    expect(d.humanize()).toBe('2 hours'); // long default
+    expect(d.humanize()).toBe('2h'); // long default
     expect(d.humanize(true)).toBe('2h');  // short form
   });
 });

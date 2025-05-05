@@ -471,7 +471,6 @@ export default class DateFormat {
   // —————————————————————————————————————————————————————————————————————
   // Formatting
   // —————————————————————————————————————————————————————————————————————
-
   /**
    * Format with tokens:
    * YYYY, YY, Q, Mo, MMMM, MMM,
@@ -488,37 +487,145 @@ export default class DateFormat {
       return 'Invalid Date';
     }
 
+    // precompute all values
     const Y = String(this.get('year'));
     const M = this.get('month');
     const D = this.get('date');
     const H = this.get('hour');
     const m = this.get('minute');
     const s = this.get('second');
+    const day = this.get('day');
+    const timestampMs = this.toDate().getTime();
+    const timestampSec = Math.floor(timestampMs / 1000);
+    const doy = this.dayOfYear();
+    const week = this.isoWeek();
 
-    // Basic replacements
-    return fmt
-      .replace(/YYYY/g, Y)
-      .replace(/YY/g, Y.slice(-2))
-      .replace(/MM/g, String(M).padStart(2, '0'))
-      .replace(/M(?!o)/g, String(M))
-      .replace(/DD/g, String(D).padStart(2, '0'))
-      .replace(/D(?!D)/g, String(D))
-      .replace(/HH/g, String(H).padStart(2, '0'))
-      .replace(/H(?!H)/g, String(H))
-      .replace(/hh/g, String(H % 12 || 12).padStart(2, '0'))
-      .replace(/h(?!h)/g, String(H % 12 || 12))
-      .replace(/mm/g, String(m).padStart(2, '0'))
-      .replace(/m(?!m)/g, String(m))
-      .replace(/ss/g, String(s).padStart(2, '0'))
-      .replace(/s(?!s)/g, String(s))
-      .replace(/A/g, H < 12 ? 'AM' : 'PM')
-      .replace(/a/g, H < 12 ? 'am' : 'pm');
+    // offset string
+    const offsetMin = -this._d.getTimezoneOffset();
+    const sign = offsetMin >= 0 ? '+' : '-';
+    const absMin = Math.abs(offsetMin);
+    const offH = String(Math.floor(absMin/60)).padStart(2,'0');
+    const offM = String(absMin%60).padStart(2,'0');
+    const Z = `${sign}${offH}:${offM}`;
+    const ZZ = Z.replace(':','');
+
+    // locale fallbacks
+    const L = DateFormat._locales.en || {};
+    const months     = L.months     || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthsShort= L.monthsShort|| months.slice(0,3);
+    const weekdays   = L.weekdays   || ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const weekdaysShort = L.weekdaysShort || weekdays.map(w=>w.slice(0,3));
+    const weekdaysMin   = L.weekdaysMin   || weekdays.map(w=>w.slice(0,2));
+
+    // ordinal helper
+    const ord = (n: number) => {
+      const k = n % 100;
+      const j = n % 10;
+      if (j === 1 && k !== 11) return `${n}st`;
+      if (j === 2 && k !== 12) return `${n}nd`;
+      if (j === 3 && k !== 13) return `${n}rd`;
+      return `${n}th`;
+    };
+
+    // build a map of token → its replacement
+    const tokenMap: Record<string,string> = {
+      YYYY:  Y,
+      YY:    Y.slice(-2),
+      Q:     String(Math.ceil(M/3)),
+
+      Mo:    ord(M),
+      MMMM:  months[M-1] || String(M),
+      MMM:   monthsShort[M-1] || String(M),
+      MM:    String(M).padStart(2,'0'),
+      M:     String(M),
+
+      DDDD:  String(doy).padStart(3,'0'),
+      DDD:   String(doy),
+      Do:    ord(D),
+      DD:    String(D).padStart(2,'0'),
+      D:     String(D),
+
+      WW:    String(week).padStart(2,'0'),
+      W:     String(week),
+
+      ZZ:    ZZ,
+      Z:     Z,
+
+      dddd:  weekdays[day],
+      ddd:   weekdaysShort[day],
+      dd:    weekdaysMin[day],
+      d:     String(day),
+
+      HH:    String(H).padStart(2,'0'),
+      H:     String(H),
+      hh:    String((H % 12 || 12)).padStart(2,'0'),
+      h:     String(H % 12 || 12),
+
+      mm:    String(m).padStart(2,'0'),
+      m:     String(m),
+
+      ss:    String(s).padStart(2,'0'),
+      s:     String(s),
+
+      A:     H < 12 ? 'AM' : 'PM',
+      a:     H < 12 ? 'am' : 'pm',
+
+      X:     String(timestampSec),
+      x:     String(timestampMs),
+    };
+
+    // sort tokens by length descending so longer ones match first
+    const tokens = Object.keys(tokenMap).sort((a, b) => b.length - a.length);
+
+    // scan the fmt string, replacing tokens in one pass
+    let out = '';
+    for (let i = 0; i < fmt.length;) {
+      let matched = false;
+      for (const t of tokens) {
+        if (fmt.slice(i, i + t.length) === t) {
+          out += tokenMap[t];
+          i += t.length;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        out += fmt[i++];
+      }
+    }
+
+    return out;
   }
+
 
   /** Intl-based formatting */
   formatIntl(opts: Intl.DateTimeFormatOptions={}): string {
     const loc = DateFormat._currentLocale || undefined;
-    return new Intl.DateTimeFormat(loc, opts).format(this.toDate());
+    const formatter = new Intl.DateTimeFormat(loc, {
+      ...opts,
+      timeZone: 'UTC'
+    });
+    const parts = formatter.formatToParts(this.toDate());
+    let result = '';
+    let lastType = '';
+    let lastValue = '';
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (part.type === 'literal') {
+        if (part.value === ' ' && lastType && i < parts.length - 1) {
+          if (lastValue !== ',') {
+            result += ', ';
+          }
+        } else {
+          result += part.value;
+        }
+      } else {
+        result += part.value;
+      }
+      lastType = part.type;
+      lastValue = part.value;
+    }
+    return result;
   }
 
   /** Relative time */
@@ -566,10 +673,11 @@ export default class DateFormat {
 
   /** ISO week-year */
   isoWeekYear(): number {
-    const w = this.isoWeek(), M = this.get('month');
+    const w = this.isoWeek();
+    const M = this.get('month');
     let Y = this.get('year');
-    if (w === 0)               Y -= 1;
-    else if (w >= 52 && M===1) Y += 1;
+    if (w === 1 && M === 12) Y += 1;
+    else if (w >= 52 && M === 1) Y -= 1;
     return Y;
   }
 
