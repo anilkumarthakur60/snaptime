@@ -1,10 +1,6 @@
 import type { Unit, LocaleData, PluginFn } from './type'
 import Duration from './Duration'
 
-// Interface for custom plugin methods
-export interface DateFormatPluginMethods {
-  testPluginMethod?: () => string
-}
 
 export default class DateFormat {
   private static _plugins: PluginFn[] = []
