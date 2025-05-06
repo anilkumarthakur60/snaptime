@@ -9,7 +9,7 @@ describe('dateFormat factory & API surface', () => {
   afterAll(() => {
     jest.useRealTimers()
   })
-//pass
+  //pass
   test('factory returns a chainable instance', () => {
     const inst = dateFormat('2025-05-04T15:00:00')
     expect(typeof inst.format).toBe('function')
