@@ -1,6 +1,10 @@
 import type { Unit, LocaleData, PluginFn } from './type'
 import Duration from './Duration'
 
+// Interface for custom plugin methods
+export interface DateFormatPluginMethods {
+  testPluginMethod?: () => string
+}
 
 export default class DateFormat {
   private static _plugins: PluginFn[] = []
@@ -17,22 +21,23 @@ export default class DateFormat {
     month: 2592e6, // ~30 days
     year: 31536e6, // ~365 days
     fortnight: 1209.6e6, // 14 days
-    unknown: NaN
+    unknown: NaN,
+    week: 6048e5, // 7 days
   }
   /** Token → regex for parsing */
   private static readonly TOK_RE: Record<string, string> = {
     YYYY: '(\\d{4})',
     MM: '(\\d{1,2})',
     DD: '(\\d{1,2})',
-    HH: '(\\d{1,2})', // ← support 24-hour two-digit
-    hh: '(\\d{1,2})', // ← still support 12-hour two-digit
+    HH: '(\\d{1,2})',
+    hh: '(\\d{1,2})',
     mm: '(\\d{1,2})',
     ss: '(\\d{1,2})',
     X: '(-?\\d+)', // unix seconds
     x: '(-?\\d+)', // unix ms
     DDD: '(\\d{1,3})', // day of the year
     DDDD: '(\\d{3})',
-    Z: '([+-]\\d{2}:?\\d{2})'
+    Z: '([+-]\\d{2}:?\\d{2}|Z)'
   }
   private readonly _d: Date
   private readonly _utc: boolean
@@ -41,34 +46,35 @@ export default class DateFormat {
     input: string | number | Date | DateFormat = Date.now(),
     opts: { utc?: boolean } = {}
   ) {
-    // handle DateFormat
-    if (input instanceof DateFormat) {
-      this._d = new Date(input.valueOf())
-      this._utc = input._utc
-    } else if (input instanceof Date) {
-      this._d = new Date(input.getTime())
-      this._utc = !!opts.utc
+    let isUtc = opts.utc ?? false
+    let adjustedInput = input
+
+    if (typeof input === 'string' && input.endsWith('Z')) {
+      isUtc = true
+      adjustedInput = input.slice(0, -1)
+    }
+
+    if (adjustedInput instanceof DateFormat) {
+      this._d = new Date(adjustedInput.valueOf())
+      this._utc = adjustedInput._utc
+    } else if (adjustedInput instanceof Date) {
+      this._d = new Date(adjustedInput.getTime())
+      this._utc = isUtc
     } else {
-      this._d = new Date(input)
-      this._utc = !!opts.utc
+      this._d = new Date(adjustedInput)
+      this._utc = isUtc
     }
 
-    if (this._utc) {
-      // shift so getUTC* matches an original wall-clock
-      this._d = new Date(this._d.getTime() + this._d.getTimezoneOffset() * 60000)
-    }
-
-    // apply any plugins to an instance prototype
     for (const p of DateFormat._plugins) p(DateFormat, DateFormat)
   }
 
-  // —————————————————————————————————————————————————————————————————————
   // Static API
-  // —————————————————————————————————————————————————————————————————————
 
-  /** Create via `DateFormat.parse(str, fmt, strict?)` */
   static parse(str = '', fmt = '', strict = false): DateFormat {
-    // build a regex from the format string
+    if (!fmt) {
+      return new DateFormat(str, { utc: str.endsWith('Z') })
+    }
+
     let pattern = fmt
     for (const [tok, rx] of Object.entries(DateFormat.TOK_RE)) {
       pattern = pattern.replace(new RegExp(tok, 'g'), rx)
@@ -77,98 +83,381 @@ export default class DateFormat {
     const m = re.exec(str)
     if (!m) return new DateFormat(NaN)
 
-    // extract matched parts
-    const parts: Record<string, number> = {}
+    const parts: Record<string, number | string> = {}
     const toks = fmt.match(/YYYY|MM|DD|HH|hh|mm|ss|X|x|DDD|DDDD|Z/g) || []
     toks.forEach((t, i) => {
-      parts[t] = Number(m[i + 1])
+      parts[t] = m[i + 1]
     })
 
-    // strict bounds check if requested
     if (strict) {
-      if (parts.MM && (parts.MM < 1 || parts.MM > 12)) return new DateFormat(NaN)
+      if (parts.MM && (Number(parts.MM) < 1 || Number(parts.MM) > 12)) return new DateFormat(NaN)
       if (parts.DD) {
-        const dim = new Date(parts.YYYY || 1970, (parts.MM || 1) - 1, 0).getDate()
-        if (parts.DD < 1 || parts.DD > dim) return new DateFormat(NaN)
+        const dim = new Date(Number(parts.YYYY || 1970), Number(parts.MM || 1) - 1, 0).getDate()
+        if (Number(parts.DD) < 1 || Number(parts.DD) > dim) return new DateFormat(NaN)
       }
     }
 
-    // build the DateFormat from parts
     if (parts.x != null) return new DateFormat(Number(parts.x), { utc: true })
-    if (parts.X != null) return new DateFormat(parts.X * 1000, { utc: true })
+    if (parts.X != null) return new DateFormat(Number(parts.X) * 1000, { utc: true })
 
-    const Y = parts.YYYY || 1970
-    const Mo = (parts.MM || 1) - 1 // Convert 1-12 to 0-11 for JS Date
-    const D = parts.DD || 1
-    const h = parts.HH ?? parts.hh ?? 0
-    const mi = parts.mm || 0
-    const s = parts.ss || 0
+    const Y = Number(parts.YYYY || 1970)
+    const Mo = Number(parts.MM || 1) - 1
+    const D = Number(parts.DD || 1)
+    const h = Number(parts.HH ?? parts.hh ?? 0)
+    const mi = Number(parts.mm || 0)
+    const s = Number(parts.ss || 0)
 
-    // Create with the correct UTC option
-    const inst = new DateFormat(new Date(Date.UTC(Y, Mo, D, h, mi, s)), { utc: true })
+    const isUtc = parts.Z === 'Z' || (typeof parts.Z === 'string' && parts.Z !== '')
+    const inst = new DateFormat(new Date(Date.UTC(Y, Mo, D, h, mi, s)), { utc: isUtc })
 
-    // apply timezone offset if Z was parsed
-    if (parts.Z) {
+    if (parts.Z && parts.Z !== 'Z') {
       const ofs = String(parts.Z).replace(':', '')
       const sign = ofs[0] === '+' ? 1 : -1
       const hh2 = Number(ofs.substring(1, 3))
       const mm2 = Number(ofs.substring(3, 5))
       const offset = sign * (hh2 * 60 + mm2) * 60000
-      return new DateFormat(new Date(inst.valueOf() - offset))
+      return new DateFormat(new Date(inst.valueOf() - offset), { utc: false })
     }
 
     return inst
   }
 
-  /** Use a plugin */
   static use(plugin: PluginFn): typeof DateFormat {
     DateFormat._plugins.push(plugin)
     plugin(DateFormat, DateFormat)
     return DateFormat
   }
 
-  /** Min of many */
   static min(...args: (string | number | Date | DateFormat)[]): DateFormat {
     return args.map((a) => new DateFormat(a)).reduce((a, b) => (a.isBefore(b) ? a : b))
   }
 
-  /** Max of many */
   static max(...args: (string | number | Date | DateFormat)[]): DateFormat {
     return args.map((a) => new DateFormat(a)).reduce((a, b) => (a.isAfter(b) ? a : b))
   }
 
-  /** Create a Duration */
   static duration(n: number, unit: Unit): Duration {
     const ms = DateFormat.UNIT_MS[unit] ?? 0
     return new Duration(n * ms)
   }
 
-  /** Register or switch locale */
   static locale(name: string, data?: LocaleData): void {
     if (data) DateFormat._locales[name] = data
     DateFormat._currentLocale = name
   }
 
-  // —————————————————————————————————————————————————————————————————————
   // Instance API
-  // —————————————————————————————————————————————————————————————————————
 
-  /** ms since epoch */
   valueOf(): number {
-    return this._utc ? this._d.getTime() - this._d.getTimezoneOffset() * 60000 : this._d.getTime()
+    return this._d.getTime()
   }
 
-  /** Unix seconds */
   unix(): number {
     return Math.floor(this.valueOf() / 1000)
   }
 
-  /** Valid? */
   isValid(): boolean {
     return !isNaN(this._d.getTime())
   }
 
-  /** Diff vs. other in unit, optionally float */
+  isUtc(): boolean {
+    return this._utc
+  }
+
+  isLocal(): boolean {
+    return !this._utc
+  }
+
+  isDST(): boolean {
+    if (this._utc) return false
+    const jan = new Date(this.get('year'), 0, 1).getTimezoneOffset()
+    const jul = new Date(this.get('year'), 6, 1).getTimezoneOffset()
+    return Math.min(jan, jul) === this._d.getTimezoneOffset()
+  }
+
+  isSunday(): boolean {
+    return this.get('day') === 0
+  }
+
+  isMonday(): boolean {
+    return this.get('day') === 1
+  }
+
+  isTuesday(): boolean {
+    return this.get('day') === 2
+  }
+
+  isWednesday(): boolean {
+    return this.get('day') === 3
+  }
+
+  isThursday(): boolean {
+    return this.get('day') === 4
+  }
+
+  isFriday(): boolean {
+    return this.get('day') === 5
+  }
+
+  isSaturday(): boolean {
+    return this.get('day') === 6
+  }
+
+  isSameYear(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return this.get('year') === o.get('year')
+  }
+
+  isCurrentYear(): boolean {
+    return this.get('year') === new DateFormat().get('year')
+  }
+
+  isNextYear(): boolean {
+    return this.get('year') === new DateFormat().get('year') + 1
+  }
+
+  isLastYear(): boolean {
+    return this.get('year') === new DateFormat().get('year') - 1
+  }
+
+  isCurrentMonth(): boolean {
+    const now = new DateFormat()
+    return this.get('year') === now.get('year') && this.get('month') === now.get('month')
+  }
+
+  isNextMonth(): boolean {
+    const now = new DateFormat()
+    const next = now.add(1, 'month')
+    return this.get('year') === next.get('year') && this.get('month') === next.get('month')
+  }
+
+  isLastMonth(): boolean {
+    const now = new DateFormat()
+    const last = now.subtract(1, 'month')
+    return this.get('year') === last.get('year') && this.get('month') === last.get('month')
+  }
+
+  isSameWeek(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return this.isoWeek() === o.isoWeek() && this.get('year') === o.get('year')
+  }
+
+  isCurrentWeek(): boolean {
+    const now = new DateFormat()
+    return this.isoWeek() === now.isoWeek() && this.get('year') === now.get('year')
+  }
+
+  isNextWeek(): boolean {
+    const now = new DateFormat()
+    const next = now.add(1, 'week')
+    return this.isoWeek() === next.isoWeek() && this.get('year') === next.get('year')
+  }
+
+  isLastWeek(): boolean {
+    const now = new DateFormat()
+    const last = now.subtract(1, 'week')
+    return this.isoWeek() === last.isoWeek() && this.get('year') === last.get('year')
+  }
+
+  isSameDay(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return (
+      this.get('year') === o.get('year') &&
+      this.get('month') === o.get('month') &&
+      this.get('date') === o.get('date')
+    )
+  }
+
+  isCurrentDay(): boolean {
+    return this.isSameDay(new DateFormat())
+  }
+
+  isNextDay(): boolean {
+    return this.isSameDay(new DateFormat().add(1, 'day'))
+  }
+
+  isLastDay(): boolean {
+    return this.isSameDay(new DateFormat().subtract(1, 'day'))
+  }
+
+  isSameHour(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return this.isSameDay(o) && this.get('hour') === o.get('hour')
+  }
+
+  isCurrentHour(): boolean {
+    return this.isSameHour(new DateFormat())
+  }
+
+  isNextHour(): boolean {
+    return this.isSameHour(new DateFormat().add(1, 'hour'))
+  }
+
+  isLastHour(): boolean {
+    return this.isSameHour(new DateFormat().subtract(1, 'hour'))
+  }
+
+  isSameMinute(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return this.isSameHour(o) && this.get('minute') === o.get('minute')
+  }
+
+  isCurrentMinute(): boolean {
+    return this.isSameMinute(new DateFormat())
+  }
+
+  isNextMinute(): boolean {
+    return this.isSameMinute(new DateFormat().add(1, 'minute'))
+  }
+
+  isLastMinute(): boolean {
+    return this.isSameMinute(new DateFormat().subtract(1, 'minute'))
+  }
+
+  isSameSecond(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return this.isSameMinute(o) && this.get('second') === o.get('second')
+  }
+
+  isCurrentSecond(): boolean {
+    return this.isSameSecond(new DateFormat())
+  }
+
+  isNextSecond(): boolean {
+    return this.isSameSecond(new DateFormat().add(1, 'second'))
+  }
+
+  isLastSecond(): boolean {
+    return this.isSameSecond(new DateFormat().subtract(1, 'second'))
+  }
+
+  isSameMillisecond(other: string | number | Date | DateFormat): boolean {
+    return this.valueOf() === new DateFormat(other).valueOf()
+  }
+
+  isCurrentMillisecond(): boolean {
+    return this.isSameMillisecond(new DateFormat())
+  }
+
+  isNextMillisecond(): boolean {
+    return this.isSameMillisecond(new DateFormat().add(1, 'millisecond'))
+  }
+
+  isLastMillisecond(): boolean {
+    return this.isSameMillisecond(new DateFormat().subtract(1, 'millisecond'))
+  }
+
+  // Microsecond methods aliased to millisecond due to JS Date limitations
+  isSameMicro(other: string | number | Date | DateFormat): boolean {
+    return this.isSameMillisecond(other)
+  }
+
+  isCurrentMicro(): boolean {
+    return this.isCurrentMillisecond()
+  }
+
+  isNextMicro(): boolean {
+    return this.isNextMillisecond()
+  }
+
+  isLastMicro(): boolean {
+    return this.isLastMillisecond()
+  }
+
+  isSameMicrosecond(other: string | number | Date | DateFormat): boolean {
+    return this.isSameMillisecond(other)
+  }
+
+  isCurrentMicrosecond(): boolean {
+    return this.isCurrentMillisecond()
+  }
+
+  isNextMicrosecond(): boolean {
+    return this.isNextMillisecond()
+  }
+
+  isLastMicrosecond(): boolean {
+    return this.isLastMillisecond()
+  }
+
+  isSameDecade(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return Math.floor(this.get('year') / 10) === Math.floor(o.get('year') / 10)
+  }
+
+  isCurrentDecade(): boolean {
+    return Math.floor(this.get('year') / 10) === Math.floor(new DateFormat().get('year') / 10)
+  }
+
+  isNextDecade(): boolean {
+    return Math.floor(this.get('year') / 10) === Math.floor(new DateFormat().get('year') / 10) + 1
+  }
+
+  isLastDecade(): boolean {
+    return Math.floor(this.get('year') / 10) === Math.floor(new DateFormat().get('year') / 10) - 1
+  }
+
+  isSameCentury(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return Math.floor(this.get('year') / 100) === Math.floor(o.get('year') / 100)
+  }
+
+  isCurrentCentury(): boolean {
+    return Math.floor(this.get('year') / 100) === Math.floor(new DateFormat().get('year') / 100)
+  }
+
+  isNextCentury(): boolean {
+    return Math.floor(this.get('year') / 100) === Math.floor(new DateFormat().get('year') / 100) + 1
+  }
+
+  isLastCentury(): boolean {
+    return Math.floor(this.get('year') / 100) === Math.floor(new DateFormat().get('year') / 100) - 1
+  }
+
+  isSameMillennium(other: string | number | Date | DateFormat): boolean {
+    const o = new DateFormat(other)
+    return Math.floor(this.get('year') / 1000) === Math.floor(o.get('year') / 1000)
+  }
+
+  isCurrentMillennium(): boolean {
+    return Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000)
+  }
+
+  isNextMillennium(): boolean {
+    return Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000) + 1
+  }
+
+  isLastMillennium(): boolean {
+    return Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000) - 1
+  }
+
+  /** Checks if the date falls in the current quarter */
+isCurrentQuarter(): boolean {
+  const now = new DateFormat()
+  return (
+    this.get('year') === now.get('year') &&
+    Math.ceil(this.get('month') / 3) === Math.ceil(now.get('month') / 3)
+  )
+}
+
+  isNextQuarter(): boolean {
+    const now = new DateFormat()
+    const next = now.add(3, 'month')
+    return (
+      this.get('year') === next.get('year') &&
+      Math.ceil(this.get('month') / 3) === Math.ceil(next.get('month') / 3)
+    )
+  }
+
+  isLastQuarter(): boolean {
+    const now = new DateFormat()
+    const last = now.subtract(3, 'month')
+    return (
+      this.get('year') === last.get('year') &&
+      Math.ceil(this.get('month') / 3) === Math.ceil(last.get('month') / 3)
+    )
+  }
+
   diff(
     other: DateFormat | Date | string | number,
     unit: Unit = 'millisecond',
@@ -184,32 +473,27 @@ export default class DateFormat {
 
     const result = ms / per
     if (floating) {
-      return Math.round((result + Number.EPSILON) * 100) / 100 // Round to 2 decimal places
+      return Math.round((result + Number.EPSILON) * 100) / 100
     }
     return Math[result < 0 ? 'ceil' : 'floor'](result)
   }
 
-  /** Native Date */
   toDate(): Date {
     return new Date(this.valueOf())
   }
 
-  /** ISO string */
   toISOString(): string {
     return new Date(this.valueOf()).toISOString()
   }
 
-  /** JSON */
   toJSON(): string {
     return this.toISOString()
   }
 
-  /** Clone */
   clone(): DateFormat {
     return new DateFormat(this, { utc: this._utc })
   }
 
-  /** Get component */
   get(u: Unit | 'day'): number {
     const p = this._utc ? 'getUTC' : 'get'
     let method = ''
@@ -267,7 +551,6 @@ export default class DateFormat {
     return u === 'month' ? val + 1 : val
   }
 
-  /** Set component (immutable) */
   set(u: Unit, val: number): DateFormat {
     const inst = this.clone()
     const p = inst._utc ? 'setUTC' : 'set'
@@ -321,7 +604,6 @@ export default class DateFormat {
     return inst
   }
 
-  /** Add n units */
   add(n: number, unit: Unit): DateFormat {
     if (unit === 'month' || unit === 'year') {
       return this.set(unit, this.get(unit) + n)
@@ -335,12 +617,10 @@ export default class DateFormat {
     return new DateFormat(this.valueOf() + n * ms, { utc: this._utc })
   }
 
-  /** Subtract n units */
   subtract(n: number, unit: Unit): DateFormat {
     return this.add(-n, unit)
   }
 
-  /** Comparisons */
   isBefore(o: string | number | Date | DateFormat): boolean {
     return this.valueOf() < new DateFormat(o as string | number | Date).valueOf()
   }
@@ -363,7 +643,6 @@ export default class DateFormat {
     return t > A && t < B
   }
 
-  /** Toggle UTC/local */
   utc(): DateFormat {
     const c = this.clone()
     Object.defineProperty(c, '_utc', {
@@ -377,56 +656,36 @@ export default class DateFormat {
 
   local(): DateFormat {
     if (!this._utc) return this.clone()
-
     const ts = this.valueOf()
     const localDate = new Date(ts)
     return new DateFormat(localDate)
   }
 
-  /** Days in the month */
   daysInMonth(): number {
     const Y = this.get('year'),
       M = this.get('month')
     return new Date(Y, M, 0).getDate()
   }
 
-  /** Leap-year */
   isLeapYear(): boolean {
     const y = this.get('year')
     return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0
   }
 
-  /** Day of the year 1–366 */
   dayOfYear(): number {
     const start = DateFormat.parse(`${this.get('year')}-01-01`, 'YYYY-MM-DD', true)
     return Math.floor((this.valueOf() - start.valueOf()) / 864e5) + 1
   }
 
-  /** Weekday 0–6 */
   weekday(): number {
     return this.get('day')
   }
 
-  // —————————————————————————————————————————————————————————————————————
-  // Formatting
-  // —————————————————————————————————————————————————————————————————————
-  /**
-   * Format with tokens:
-   * YYYY, YY, Q, Mo, MMMM, MMM,
-   * DDDD, DDD, DD, Do, D,
-   * WW, W,
-   * Z, ZZ,
-   * X, x,
-   * hh, h, HH, H, mm, m, ss, s,
-   * A, a,
-   * dddd, ddd, dd, d
-   */
   format(fmt = 'YYYY-MM-DD hh:mm A'): string {
     if (!this.isValid()) {
       return 'Invalid Date'
     }
 
-    // precompute all values
     const Y = String(this.get('year'))
     const M = this.get('month')
     const D = this.get('date')
@@ -439,7 +698,6 @@ export default class DateFormat {
     const doy = this.dayOfYear()
     const week = this.isoWeek()
 
-    // offset string
     const offsetMin = -this._d.getTimezoneOffset()
     const sign = offsetMin >= 0 ? '+' : '-'
     const absMin = Math.abs(offsetMin)
@@ -448,23 +706,22 @@ export default class DateFormat {
     const Z = `${sign}${offH}:${offM}`
     const ZZ = Z.replace(':', '')
 
-    // locale fallbacks
-    const L = DateFormat._locales.en || {}
+    const L = DateFormat._locales[DateFormat._currentLocale || 'en'] || {}
     const months = L.months || [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
+      'January',
+      'February',
+      'March',
+      'April',
       'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ]
-    const monthsShort = L.monthsShort || months.slice(0, 3)
+    const monthsShort = L.monthsShort || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const weekdays = L.weekdays || [
       'Sunday',
       'Monday',
@@ -477,7 +734,6 @@ export default class DateFormat {
     const weekdaysShort = L.weekdaysShort || weekdays.map((w) => w.slice(0, 3))
     const weekdaysMin = L.weekdaysMin || weekdays.map((w) => w.slice(0, 2))
 
-    // ordinal helper
     const ord = (n: number) => {
       const k = n % 100
       const j = n % 10
@@ -487,58 +743,45 @@ export default class DateFormat {
       return `${n}th`
     }
 
-    // build a map of token → its replacement
     const tokenMap: Record<string, string> = {
       YYYY: Y,
       YY: Y.slice(-2),
       Q: String(Math.ceil(M / 3)),
       gg: String(this.isoWeekYear()),
-
       Mo: ord(M),
       MMMM: months[M - 1] || String(M),
       MMM: monthsShort[M - 1] || String(M),
       MM: String(M).padStart(2, '0'),
       M: String(M),
-
       DDDD: String(doy).padStart(3, '0'),
       DDD: String(doy),
       Do: ord(D),
       DD: String(D).padStart(2, '0'),
       D: String(D),
-
       WW: String(week).padStart(2, '0'),
       W: String(week),
-
       ZZ: ZZ,
       Z: Z,
-
       dddd: weekdays[day],
       ddd: weekdaysShort[day],
       dd: weekdaysMin[day],
       d: String(day),
-
       HH: String(H).padStart(2, '0'),
       H: String(H),
       hh: String(H % 12 || 12).padStart(2, '0'),
       h: String(H % 12 || 12),
-
       mm: String(m).padStart(2, '0'),
       m: String(m),
-
       ss: String(s).padStart(2, '0'),
       s: String(s),
-
       A: H < 12 ? 'AM' : 'PM',
       a: H < 12 ? 'am' : 'pm',
-
       X: String(timestampSec),
       x: String(timestampMs)
     }
 
-    // sort tokens by length descending so longer ones match first
     const tokens = Object.keys(tokenMap).sort((a, b) => b.length - a.length)
 
-    // scan the fmt string, replacing tokens in one pass
     let out = ''
     for (let i = 0; i < fmt.length; ) {
       let matched = false
@@ -558,7 +801,6 @@ export default class DateFormat {
     return out
   }
 
-  /** Intl-based formatting */
   formatIntl(opts: Intl.DateTimeFormatOptions = {}): string {
     const loc = DateFormat._currentLocale || undefined
     const formatter = new Intl.DateTimeFormat(loc, {
@@ -566,9 +808,7 @@ export default class DateFormat {
       timeZone: this._utc ? 'UTC' : undefined
     })
 
-    // Special handling for locale that needs commas
     if (opts.weekday === 'long' && opts.month === 'long' && opts.day === 'numeric') {
-      // For formats like "Sunday, 4 May 2025"
       const formatted = formatter.format(this.toDate())
       if (formatted.indexOf(',') === -1 && formatted.split(' ').length >= 3) {
         const parts = formatted.split(' ')
@@ -579,7 +819,6 @@ export default class DateFormat {
     return formatter.format(this.toDate())
   }
 
-  /** Relative time */
   fromNow(): string {
     const now = new DateFormat()
     const diff = this.valueOf() - now.valueOf()
@@ -609,7 +848,6 @@ export default class DateFormat {
     return isNegative ? `${value} ${unit} ago` : `in ${value} ${unit}`
   }
 
-  /** ISO week (1–53) */
   isoWeek(): number {
     const d = new Date(this.valueOf())
     d.setHours(0, 0, 0, 0)
@@ -617,12 +855,10 @@ export default class DateFormat {
     const yearStart = new Date(d.getFullYear(), 0, 1)
     const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 
-    // Adjust for December weeks that may belong to next year
     if (week === 1 && d.getMonth() === 11) {
       return 53
     }
 
-    // Adjust for January weeks that may belong to previous year
     if (d.getMonth() === 0 && d.getDate() <= 3 && week >= 52) {
       return 53
     }
@@ -630,27 +866,22 @@ export default class DateFormat {
     return week
   }
 
-  /** ISO week-year */
   isoWeekYear(): number {
     const d = new Date(this.valueOf())
     d.setDate(d.getDate() + 4 - (d.getDay() || 7))
     return d.getFullYear()
   }
 
-  /** Alias for isoWeek() */
   week(): number {
     return this.isoWeek()
   }
 
-  /** Weeks in year */
   weeksInYear(): number {
     const lastDay = new Date(this.get('year'), 11, 31)
     const lastDayWeekDay = lastDay.getDay()
-    // If last day is a Thu/Fri/Sat, year has 53 weeks
     return lastDayWeekDay === 4 || lastDayWeekDay === 5 || lastDayWeekDay === 6 ? 53 : 52
   }
 
-  /** Calendar output */
   calendar(): string {
     const today0 = new DateFormat().startOf('day').valueOf()
     const diff = this.valueOf() - today0
@@ -662,7 +893,6 @@ export default class DateFormat {
     return this.format('YYYY-MM-DD')
   }
 
-  /** Start of unit */
   startOf(u: Unit | 'week' | 'quarter'): DateFormat {
     const d = this.clone()
     switch (u) {
@@ -691,10 +921,7 @@ export default class DateFormat {
     }
   }
 
-  /** End of unit */
   endOf(u: Unit | 'week' | 'quarter'): DateFormat {
-    return this.startOf(u)
-      .add(1, u as Unit)
-      .subtract(1, 'millisecond')
+    return this.startOf(u).add(1, u as Unit).subtract(1, 'millisecond')
   }
 }

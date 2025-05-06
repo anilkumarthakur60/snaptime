@@ -55,7 +55,8 @@ export default class Duration {
       month: 2592e6, // ~30 days
       year: 31536e6, // ~365 days
       fortnight: 1209.6e6, // 14 days
-      unknown: NaN
+      unknown: NaN,
+      week: 6048e5, // 7 days
     }
     return this._ms / (map[unit] ?? 1)
   }

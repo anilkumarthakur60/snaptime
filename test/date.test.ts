@@ -27,6 +27,14 @@ describe('dateFormat factory & API surface', () => {
 })
 
 describe('DateFormat class', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   test('isValid', () => {
     expect(dateFormat('2025-05-04').isValid()).toBe(true)
     expect(dateFormat('foo').isValid()).toBe(false)
@@ -109,6 +117,14 @@ describe('DateFormat class', () => {
 })
 
 describe('Parsing & Custom Parse Formats', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   test('ISO string parsing', () => {
     const dt = dateFormat('2025-05-04T15:07:09Z').utc()
     expect(dt.format()).toBe('2025-05-04 03:07 PM')
@@ -148,6 +164,14 @@ describe('Parsing & Custom Parse Formats', () => {
 })
 
 describe('Formatting tokens', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   const dt = dateFormat('2025-11-23T00:05:07')
 
   test('zero-padded basics', () => {
@@ -202,6 +226,14 @@ describe('Formatting tokens', () => {
 })
 
 describe('Getters, Setters & Immutability', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   const dt = dateFormat('2025-12-31T23:59:59.500')
 
   test('get() for all components', () => {
@@ -232,6 +264,14 @@ describe('Getters, Setters & Immutability', () => {
 })
 
 describe('Arithmetic & Chaining', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   const base = dateFormat('2025-01-01T00:00:00')
 
   test('add & subtract all units', () => {
@@ -257,6 +297,14 @@ describe('Arithmetic & Chaining', () => {
 })
 
 describe('Comparisons', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   const a = dateFormat('2025-01-01'),
     b = dateFormat('2025-01-02')
   test('isBefore/isAfter/isSame', () => {
@@ -272,6 +320,14 @@ describe('Comparisons', () => {
 })
 
 describe('UTC vs Local', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   const iso = '2025-05-04T00:00:00Z'
   const local = new Date(iso)
   const dtLocal = dateFormat(local)
@@ -286,6 +342,14 @@ describe('UTC vs Local', () => {
 })
 
 describe('Relative Time & Duration', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   test('fromNow()', () => {
     expect(dateFormat().subtract(30, 'second').fromNow()).toBe('30 seconds ago')
     expect(dateFormat().subtract(5, 'minute').fromNow()).toBe('5 minutes ago')
@@ -303,6 +367,14 @@ describe('Relative Time & Duration', () => {
 })
 
 describe('ISO Week & Weeks In Year', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   test('isoWeek() boundaries', () => {
     expect(dateFormat('2021-01-04').isoWeek()).toBe(1)
     expect(dateFormat('2020-12-31').isoWeek()).toBe(53)
@@ -319,6 +391,14 @@ describe('ISO Week & Weeks In Year', () => {
 })
 
 describe('Calendar Time', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   const now = dateFormat()
   test('Today / Yesterday / Tomorrow', () => {
     expect(now.calendar()).toMatch(/^Today at \d\d:\d\d [AP]M$/)
@@ -331,6 +411,14 @@ describe('Calendar Time', () => {
 })
 
 describe('Static Min/Max', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ advanceTimers: true })
+    jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
+  })
+
+  afterAll(() => {
+    jest.useRealTimers()
+  })
   test('mixed inputs', () => {
     const a = dateFormat('2025-01-01'),
       b = dateFormat('2024-12-31')

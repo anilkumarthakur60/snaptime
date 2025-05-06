@@ -6,6 +6,7 @@ describe('dateFormat factory & API surface', () => {
     jest.useFakeTimers({ advanceTimers: true })
     jest.setSystemTime(new Date('2025-05-04T12:00:00Z'))
   })
+
   afterAll(() => {
     jest.useRealTimers()
   })

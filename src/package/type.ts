@@ -13,6 +13,7 @@ export type Unit =
   | 'year'
   | 'fortnight'
   | 'unknown'
+  | 'week'
 
 export interface LocaleData {
   months?: string[]
@@ -47,14 +48,14 @@ export interface LocaleData {
 
 /** Static side of the factory */
 export interface DateFormatStatic {
-  new (input?: string | number | Date | DateFormat, opts?: { utc?: boolean }): DateFormat
-  parse(str: string, fmt: string, strict?: boolean): DateFormat
-  min(...args: (string | number | Date | DateFormat)[]): DateFormat
-  max(...args: (string | number | Date | DateFormat)[]): DateFormat
-  duration(n: number, unit: Unit): Duration
-  locale(name: string, data?: LocaleData): void
-  use(plugin: PluginFn): typeof DateFormat
-}
-
+    (input?: string | number | Date | DateFormat, opts?: { utc?: boolean }): DateFormat
+    parse(str: string, fmt: string, strict?: boolean): DateFormat
+    min(...args: (string | number | Date | DateFormat)[]): DateFormat
+    max(...args: (string | number | Date | DateFormat)[]): DateFormat
+    duration(n: number, unit: Unit): Duration
+    locale(name: string, data?: LocaleData): void
+    use(plugin: PluginFn): typeof DateFormat
+  }
+  
 /** Plugin function type */
 export type PluginFn = (DF: typeof DateFormat, inst: typeof DateFormat) => void
