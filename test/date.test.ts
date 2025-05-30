@@ -50,7 +50,7 @@ describe('DateFormat class', () => {
     expect(b.diff(a, 'day')).toBe(3)
     expect(a.diff(b, 'day')).toBe(-3)
     const c = dateFormat('2025-05-04T12:00:00')
-    expect(c.diff(b, 'day', true)).toBe(0.26)
+    expect(c.diff(b, 'day', true)).toBe(0.5)
     expect(c.diff(b, 'day')).toBe(0)
   })
 
@@ -99,8 +99,7 @@ describe('DateFormat class', () => {
   test('parse strict mode', () => {
     const good = DateFormat.parse('2025-05-04', 'YYYY-MM-DD', true)
     expect(good.isValid()).toBe(true)
-    expect(good.format('YYYY-MM-DD')).toBe('2025-05-03')
-
+    expect(good.format('YYYY-MM-DD')).toBe('2025-05-04')
     const bad = DateFormat.parse('2025-13-04', 'YYYY-MM-DD', true)
     expect(bad.isValid()).toBe(false)
   })
@@ -137,7 +136,7 @@ describe('Parsing & Custom Parse Formats', () => {
   })
 
   test('custom parse formats', () => {
-    expect(dateFormat.parse('04-05-2025', 'DD-MM-YYYY').format('YYYY-MM-DD')).toBe('2025-05-03')
+    expect(dateFormat.parse('04-05-2025', 'DD-MM-YYYY').format('YYYY-MM-DD')).toBe('2025-05-04')
 
     const t = dateFormat.parse('12:34:56', 'hh:mm:ss')
     expect(t.isValid()).toBe(true)
@@ -159,7 +158,7 @@ describe('Parsing & Custom Parse Formats', () => {
     const parsed = DateFormat.parse(formatted, fmt)
 
     // Compare only the date components - adjusted to match implementation
-    expect(parsed.format('YYYY-MM-DD')).toBe('2025-04-29')
+    expect(parsed.format('YYYY-MM-DD')).toBe('2025-05-01')
   })
 })
 
@@ -399,13 +398,15 @@ describe('Calendar Time', () => {
   afterAll(() => {
     jest.useRealTimers()
   })
-  const now = dateFormat()
   test('Today / Yesterday / Tomorrow', () => {
+    const now = dateFormat()
     expect(now.calendar()).toMatch(/^Today at \d\d:\d\d [AP]M$/)
     expect(now.subtract(1, 'day').calendar()).toMatch(/^Yesterday at \d\d:\d\d [AP]M$/)
     expect(now.add(1, 'day').calendar()).toMatch(/^Tomorrow at \d\d:\d\d [AP]M$/)
   })
+
   test('fallback older', () => {
+    const now = dateFormat()
     expect(now.subtract(2, 'day').calendar()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 })

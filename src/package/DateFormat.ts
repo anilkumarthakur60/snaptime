@@ -22,7 +22,7 @@ export default class DateFormat {
     year: 31536e6, // ~365 days
     fortnight: 1209.6e6, // 14 days
     unknown: NaN,
-    week: 6048e5, // 7 days
+    week: 6048e5 // 7 days
   }
   /** Token → regex for parsing */
   private static readonly TOK_RE: Record<string, string> = {
@@ -47,68 +47,109 @@ export default class DateFormat {
     opts: { utc?: boolean } = {}
   ) {
     let isUtc = opts.utc ?? false
-    let adjustedInput = input
+    let adjustedInput: string | number | Date | DateFormat = input
 
-    // Treat ISO-like strings without 'Z' as UTC for test consistency
+    // Regex for ISO8601 strings without timezone (e.g. "2025-05-04T12:34:56" or with fractional seconds)
+    const ISO_WITHOUT_TZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/
+
+    // If a plain ISO string comes in, treat it as UTC for consistency
     if (typeof input === 'string') {
       if (input.endsWith('Z')) {
         isUtc = true
         adjustedInput = input.slice(0, -1)
-      } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(input)) {
-        isUtc = true // Assume UTC for ISO format without Z
+      } else if (ISO_WITHOUT_TZ.test(input)) {
+        isUtc = true
+        // leave adjustedInput as the full string
       }
     }
 
+    // 1) Cloning an existing DateFormat
     if (adjustedInput instanceof DateFormat) {
       this._d = new Date(adjustedInput.valueOf())
       this._utc = adjustedInput._utc
+
+      // 2) Cloning a native Date
     } else if (adjustedInput instanceof Date) {
       this._d = new Date(adjustedInput.getTime())
       this._utc = isUtc
+
+      // 3) Numeric timestamp (ms since epoch)
+    } else if (typeof adjustedInput === 'number') {
+      this._d = new Date(adjustedInput)
+      this._utc = isUtc
+
+      // 4) String input (may include +HH:mm offsets, or local format)
     } else {
-      // Ensure current time is treated as UTC when no input is provided
-      const dateInput = typeof adjustedInput === 'number' || adjustedInput === Date.now()
-        ? new Date(adjustedInput)
-        : new Date(adjustedInput + (isUtc ? 'Z' : ''));
-      this._d = dateInput;
-      this._utc = isUtc;
+      if (isUtc && ISO_WITHOUT_TZ.test(adjustedInput)) {
+        // pure ISO date-time with no TZ ⇒ append 'Z' to force UTC parsing
+        this._d = new Date(adjustedInput + 'Z')
+      } else {
+        // let JS Date handle offsets or local strings
+        this._d = new Date(adjustedInput)
+      }
+      this._utc = isUtc
     }
 
-    for (const p of DateFormat._plugins) p(DateFormat, DateFormat)
+    // Apply any loaded plugins
+    for (const plugin of DateFormat._plugins) {
+      plugin(DateFormat, DateFormat)
+    }
   }
 
   // Static API
 
+  /**
+   * Parse a string according to a format string.
+   * @param str    The input string
+   * @param fmt    The format tokens, e.g. 'YYYY-MM-DD'
+   * @param strict If true, will validate MM/DD bounds and treat date-only as local
+   */
   static parse(str = '', fmt = '', strict = false): DateFormat {
+    // If no custom format, fall back to the constructor’s parsing logic:
     if (!fmt) {
       return new DateFormat(str, { utc: str.endsWith('Z') })
     }
 
+    // 1) Build a regex from TOK_RE
     let pattern = fmt
     for (const [tok, rx] of Object.entries(DateFormat.TOK_RE)) {
       pattern = pattern.replace(new RegExp(tok, 'g'), rx)
     }
     const re = new RegExp(`^${pattern}$`)
     const m = re.exec(str)
-    if (!m) return new DateFormat(NaN)
+    if (!m) {
+      // failed to even match
+      return new DateFormat(NaN)
+    }
 
+    // 2) Extract the matched parts
     const parts: Record<string, number | string> = {}
     const toks = fmt.match(/YYYY|MM|DD|HH|hh|mm|ss|X|x|DDD|DDDD|Z/g) || []
     toks.forEach((t, i) => {
       parts[t] = m[i + 1]
     })
 
+    // 3) Strict numeric bounds checking for MM/DD
     if (strict) {
-      if (parts.MM && (Number(parts.MM) < 1 || Number(parts.MM) > 12)) return new DateFormat(NaN)
-      if (parts.DD) {
-        const dim = new Date(Number(parts.YYYY || 1970), Number(parts.MM || 1) - 1, 0).getDate()
-        if (Number(parts.DD) < 1 || Number(parts.DD) > dim) return new DateFormat(NaN)
+      const mm = parts.MM != null ? Number(parts.MM) : null
+      if (mm !== null && (mm < 1 || mm > 12)) return new DateFormat(NaN)
+      const dd = parts.DD != null ? Number(parts.DD) : null
+      if (dd !== null) {
+        // days in month for that year/month
+        const dim = new Date(Number(parts.YYYY || 1970), mm ?? 1, 0).getDate()
+        if (dd < 1 || dd > dim) return new DateFormat(NaN)
       }
     }
 
-    if (parts.x != null) return new DateFormat(Number(parts.x), { utc: true })
-    if (parts.X != null) return new DateFormat(Number(parts.X) * 1000, { utc: true })
+    // 4) Unix timestamps short-circuit
+    if (parts.x != null) {
+      return new DateFormat(Number(parts.x), { utc: true })
+    }
+    if (parts.X != null) {
+      return new DateFormat(Number(parts.X) * 1000, { utc: true })
+    }
 
+    // 5) Build the date components
     const Y = Number(parts.YYYY || 1970)
     const Mo = Number(parts.MM || 1) - 1
     const D = Number(parts.DD || 1)
@@ -116,18 +157,36 @@ export default class DateFormat {
     const mi = Number(parts.mm || 0)
     const s = Number(parts.ss || 0)
 
-    const isUtc = parts.Z === 'Z' || (typeof parts.Z === 'string' && parts.Z !== '')
-    const inst = new DateFormat(new Date(Date.UTC(Y, Mo, D, h, mi, s)), { utc: isUtc })
+    // Does the input explicitly carry a Z or ±HH:mm?
+    const sawZ = parts.Z === 'Z'
+    const sawOff = typeof parts.Z === 'string' && parts.Z !== 'Z' && parts.Z !== undefined
 
-    if (parts.Z && parts.Z !== 'Z') {
-      const ofs = String(parts.Z).replace(':', '')
+    // 6) If strict _and_ it's a pure date (no HH/mm/ss tokens), parse as local midnight:
+    //    so that format('YYYY-MM-DD') always yields the same day everywhere.
+    const onlyDateTokens =
+      !fmt.includes('H') && !fmt.includes('h') && !fmt.includes('m') && !fmt.includes('s')
+    if (strict && onlyDateTokens && !sawOff && !sawZ) {
+      // Local midnight constructor:
+      return new DateFormat(new Date(Y, Mo, D, 0, 0, 0), { utc: false })
+    }
+
+    // 7) Otherwise, parse as UTC, and then adjust for any explicit offset
+    //    (we’ll let the Date.UTC + manual offset logic handle that).
+    const baseUtcMs = Date.UTC(Y, Mo, D, h, mi, s)
+    const inst = new DateFormat(baseUtcMs, { utc: sawZ || sawOff })
+
+    if (sawOff) {
+      // e.g. "+05:45" → "+0545"
+      const ofs = (parts.Z as string).replace(':', '')
       const sign = ofs[0] === '+' ? 1 : -1
       const hh2 = Number(ofs.substring(1, 3))
       const mm2 = Number(ofs.substring(3, 5))
-      const offset = sign * (hh2 * 60 + mm2) * 60000
-      return new DateFormat(new Date(inst.valueOf() - offset), { utc: false })
+      const offset = sign * (hh2 * 60 + mm2) * 60_000
+      // subtract that offset to get the correct UTC instant
+      return new DateFormat(inst.valueOf() - offset, { utc: false })
     }
 
+    // 8) Finally, return the instance (in UTC mode if we saw a 'Z', else local)
     return inst
   }
 
@@ -433,11 +492,15 @@ export default class DateFormat {
   }
 
   isNextMillennium(): boolean {
-    return Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000) + 1
+    return (
+      Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000) + 1
+    )
   }
 
   isLastMillennium(): boolean {
-    return Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000) - 1
+    return (
+      Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000) - 1
+    )
   }
 
   isCurrentQuarter(): boolean {
@@ -729,7 +792,20 @@ export default class DateFormat {
       'November',
       'December'
     ]
-    const monthsShort = L.monthsShort || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const monthsShort = L.monthsShort || [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ]
     const weekdays = L.weekdays || [
       'Sunday',
       'Monday',
@@ -933,6 +1009,31 @@ export default class DateFormat {
   }
 
   endOf(u: Unit | 'week' | 'quarter'): DateFormat {
-    return this.startOf(u).add(1, u as Unit).subtract(1, 'millisecond')
+    return this.startOf(u)
+      .add(1, u as Unit)
+      .subtract(1, 'millisecond')
+  }
+  quarter(): number {
+    return Math.ceil(this.get('month') / 3)
+  }
+
+  toObject(): {
+    year: number
+    month: number
+    date: number
+    hour: number
+    minute: number
+    second: number
+    millisecond: number
+  } {
+    return {
+      year: this.get('year'),
+      month: this.get('month'),
+      date: this.get('date'),
+      hour: this.get('hour'),
+      minute: this.get('minute'),
+      second: this.get('second'),
+      millisecond: this.get('millisecond')
+    }
   }
 }

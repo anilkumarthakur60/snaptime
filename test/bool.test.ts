@@ -20,7 +20,7 @@ describe('dateFormat factory & API surface', () => {
 
   test('isUtc', () => {
     expect(dateFormat('2025-05-04T12:00:00Z').isUtc()).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isUtc()).toBe(false)
+    expect(dateFormat('2025-05-04 12:00:00').isUtc()).toBe(false)
   })
 
   test('isLocal', () => {
@@ -70,8 +70,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameYear', () => {
-    expect(dateFormat('2025-01-01T12:00:00').isSameYear(dateFormat('2025-12-31T12:00:00'))).toBe(true)
-    expect(dateFormat('2025-01-01T12:00:00').isSameYear(dateFormat('2026-01-01T12:00:00'))).toBe(false)
+    expect(dateFormat('2025-01-01T12:00:00').isSameYear(dateFormat('2025-12-31T12:00:00'))).toBe(
+      true
+    )
+    expect(dateFormat('2025-01-01T12:00:00').isSameYear(dateFormat('2026-01-01T12:00:00'))).toBe(
+      false
+    )
   })
 
   test('isCurrentYear', () => {
@@ -105,8 +109,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameWeek', () => {
-    expect(dateFormat('2025-05-04T12:00:00').isSameWeek(dateFormat('2025-05-05T12:00:00'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isSameWeek(dateFormat('2025-05-11T12:00:00'))).toBe(false)
+    expect(dateFormat('2025-05-04T12:00:00').isSameWeek(dateFormat('2025-05-05T12:00:00'))).toBe(
+      false
+    )
+    expect(dateFormat('2025-05-03T12:00:00').isSameWeek(dateFormat('2025-05-04T12:00:00'))).toBe(
+      true
+    )
   })
 
   test('isCurrentWeek', () => {
@@ -125,8 +133,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameDay', () => {
-    expect(dateFormat('2025-05-04T12:00:00').isSameDay(dateFormat('2025-05-04T15:00:00'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isSameDay(dateFormat('2025-05-05T12:00:00'))).toBe(false)
+    expect(dateFormat('2025-05-04T12:00:00').isSameDay(dateFormat('2025-05-04T15:00:00'))).toBe(
+      true
+    )
+    expect(dateFormat('2025-05-04T12:00:00').isSameDay(dateFormat('2025-05-05T12:00:00'))).toBe(
+      false
+    )
   })
 
   test('isCurrentDay', () => {
@@ -145,8 +157,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameHour', () => {
-    expect(dateFormat('2025-05-04T12:00:00').isSameHour(dateFormat('2025-05-04T12:30:00'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isSameHour(dateFormat('2025-05-04T13:00:00'))).toBe(false)
+    expect(dateFormat('2025-05-04T12:00:00').isSameHour(dateFormat('2025-05-04T12:30:00'))).toBe(
+      true
+    )
+    expect(dateFormat('2025-05-04T12:00:00').isSameHour(dateFormat('2025-05-04T13:00:00'))).toBe(
+      false
+    )
   })
 
   test('isCurrentHour', () => {
@@ -165,8 +181,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameMinute', () => {
-    expect(dateFormat('2025-05-04T12:00:00').isSameMinute(dateFormat('2025-05-04T12:00:30'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isSameMinute(dateFormat('2025-05-04T12:01:00'))).toBe(false)
+    expect(dateFormat('2025-05-04T12:00:00').isSameMinute(dateFormat('2025-05-04T12:00:30'))).toBe(
+      true
+    )
+    expect(dateFormat('2025-05-04T12:00:00').isSameMinute(dateFormat('2025-05-04T12:01:00'))).toBe(
+      false
+    )
   })
 
   test('isCurrentMinute', () => {
@@ -185,8 +205,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameSecond', () => {
-    expect(dateFormat('2025-05-04T12:00:00').isSameSecond(dateFormat('2025-05-04T12:00:00'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isSameSecond(dateFormat('2025-05-04T12:00:01'))).toBe(false)
+    expect(dateFormat('2025-05-04T12:00:00').isSameSecond(dateFormat('2025-05-04T12:00:00'))).toBe(
+      true
+    )
+    expect(dateFormat('2025-05-04T12:00:00').isSameSecond(dateFormat('2025-05-04T12:00:01'))).toBe(
+      false
+    )
   })
 
   test('isCurrentSecond', () => {
@@ -205,8 +229,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameMillisecond', () => {
-    expect(dateFormat('2025-05-04T12:00:00.000').isSameMillisecond(dateFormat('2025-05-04T12:00:00.000'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00.000').isSameMillisecond(dateFormat('2025-05-04T12:00:00.001'))).toBe(false)
+    expect(
+      dateFormat('2025-05-04T12:00:00.000').isSameMillisecond(dateFormat('2025-05-04T12:00:00.000'))
+    ).toBe(true)
+    expect(
+      dateFormat('2025-05-04T12:00:00.000').isSameMillisecond(dateFormat('2025-05-04T12:00:00.001'))
+    ).toBe(false)
   })
 
   test('isCurrentMillisecond', () => {
@@ -226,8 +254,12 @@ describe('dateFormat factory & API surface', () => {
 
   // Microsecond tests aliased to millisecond due to JavaScript Date limitations
   test('isSameMicrosecond', () => {
-    expect(dateFormat('2025-05-04T12:00:00.000').isSameMicrosecond(dateFormat('2025-05-04T12:00:00.000'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00.000').isSameMicrosecond(dateFormat('2025-05-04T12:00:00.001'))).toBe(false)
+    expect(
+      dateFormat('2025-05-04T12:00:00.000').isSameMicrosecond(dateFormat('2025-05-04T12:00:00.000'))
+    ).toBe(true)
+    expect(
+      dateFormat('2025-05-04T12:00:00.000').isSameMicrosecond(dateFormat('2025-05-04T12:00:00.001'))
+    ).toBe(false)
   })
 
   test('isCurrentMicrosecond', () => {
@@ -246,8 +278,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameDecade', () => {
-    expect(dateFormat('2025-05-04T12:00:00').isSameDecade(dateFormat('2029-05-04T12:00:00'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isSameDecade(dateFormat('2035-05-04T12:00:00'))).toBe(false)
+    expect(dateFormat('2025-05-04T12:00:00').isSameDecade(dateFormat('2029-05-04T12:00:00'))).toBe(
+      true
+    )
+    expect(dateFormat('2025-05-04T12:00:00').isSameDecade(dateFormat('2035-05-04T12:00:00'))).toBe(
+      false
+    )
   })
 
   test('isCurrentDecade', () => {
@@ -266,8 +302,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameCentury', () => {
-    expect(dateFormat('2025-05-04T12:00:00').isSameCentury(dateFormat('2099-05-04T12:00:00'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isSameCentury(dateFormat('2100-05-04T12:00:00'))).toBe(false)
+    expect(dateFormat('2025-05-04T12:00:00').isSameCentury(dateFormat('2099-05-04T12:00:00'))).toBe(
+      true
+    )
+    expect(dateFormat('2025-05-04T12:00:00').isSameCentury(dateFormat('2100-05-04T12:00:00'))).toBe(
+      false
+    )
   })
 
   test('isCurrentCentury', () => {
@@ -286,8 +326,12 @@ describe('dateFormat factory & API surface', () => {
   })
 
   test('isSameMillennium', () => {
-    expect(dateFormat('2025-05-04T12:00:00').isSameMillennium(dateFormat('2999-05-04T12:00:00'))).toBe(true)
-    expect(dateFormat('2025-05-04T12:00:00').isSameMillennium(dateFormat('3000-05-04T12:00:00'))).toBe(false)
+    expect(
+      dateFormat('2025-05-04T12:00:00').isSameMillennium(dateFormat('2999-05-04T12:00:00'))
+    ).toBe(true)
+    expect(
+      dateFormat('2025-05-04T12:00:00').isSameMillennium(dateFormat('3000-05-04T12:00:00'))
+    ).toBe(false)
   })
 
   test('isCurrentMillennium', () => {
