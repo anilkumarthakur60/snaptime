@@ -10,6 +10,7 @@ export default class DateFormat {
   private static _plugins: PluginFn[] = []
   private static _locales: Record<string, LocaleData> = {}
   private static _currentLocale: string | null = null
+
   /** ms per unit (approx for month/year) */
   private static readonly UNIT_MS: Record<Unit, number> = {
     millisecond: 1,
@@ -46,24 +47,26 @@ export default class DateFormat {
     input: string | number | Date | DateFormat = Date.now(),
     opts: { utc?: boolean } = {}
   ) {
+    // Recognize pure ISO date or ISO date-time as UTC by default…
+    const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+    const ISO_DATETIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/
+
     let isUtc = opts.utc ?? false
     let adjustedInput: string | number | Date | DateFormat = input
 
-    // Regex for ISO8601 strings without timezone (e.g. "2025-05-04T12:34:56" or with fractional seconds)
-    const ISO_WITHOUT_TZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/
-
-    // If a plain ISO string comes in, treat it as UTC for consistency
     if (typeof input === 'string') {
       if (input.endsWith('Z')) {
+        // "2025-05-04T12:00:00Z"
         isUtc = true
         adjustedInput = input.slice(0, -1)
-      } else if (ISO_WITHOUT_TZ.test(input)) {
+      } else if (ISO_DATETIME.test(input) || ISO_DATE.test(input)) {
+        // "2025-05-04T12:00:00"  or  "2025-05-04"
         isUtc = true
-        // leave adjustedInput as the full string
+        adjustedInput = input
       }
     }
 
-    // 1) Cloning an existing DateFormat
+    // 1) Cloning a DateFormat
     if (adjustedInput instanceof DateFormat) {
       this._d = new Date(adjustedInput.valueOf())
       this._utc = adjustedInput._utc
@@ -73,26 +76,28 @@ export default class DateFormat {
       this._d = new Date(adjustedInput.getTime())
       this._utc = isUtc
 
-      // 3) Numeric timestamp (ms since epoch)
+      // 3) Millis since epoch
     } else if (typeof adjustedInput === 'number') {
       this._d = new Date(adjustedInput)
       this._utc = isUtc
 
-      // 4) String input (may include +HH:mm offsets, or local format)
+      // 4) String case (may already include “+05:45” or “Z”)
     } else {
-      if (isUtc && ISO_WITHOUT_TZ.test(adjustedInput)) {
-        // pure ISO date-time with no TZ ⇒ append 'Z' to force UTC parsing
-        this._d = new Date(adjustedInput + 'Z')
+      const s = adjustedInput as string
+
+      // If we’ve decided UTC but there's no trailing Z or "+HH:mm", append Z:
+      if (isUtc && !/[zZ]$/.test(s) && !/[+-]\d\d:?\d\d$/.test(s)) {
+        this._d = new Date(s + 'Z')
       } else {
-        // let JS Date handle offsets or local strings
-        this._d = new Date(adjustedInput)
+        // Otherwise let JS Date parse it (handles offsets for us)
+        this._d = new Date(s)
       }
       this._utc = isUtc
     }
 
-    // Apply any loaded plugins
-    for (const plugin of DateFormat._plugins) {
-      plugin(DateFormat, DateFormat)
+    // Run any registered plugins
+    for (const p of DateFormat._plugins) {
+      p(DateFormat, DateFormat)
     }
   }
 
@@ -354,15 +359,15 @@ export default class DateFormat {
   }
 
   isCurrentHour(): boolean {
-    return this.isSameHour(new DateFormat())
+    return this.isSameHour(this._now())
   }
 
   isNextHour(): boolean {
-    return this.isSameHour(new DateFormat().add(1, 'hour'))
+    return this.isSameHour(this._now().add(1, 'hour'))
   }
 
   isLastHour(): boolean {
-    return this.isSameHour(new DateFormat().subtract(1, 'hour'))
+    return this.isSameHour(this._now().subtract(1, 'hour'))
   }
 
   isSameMinute(other: string | number | Date | DateFormat): boolean {
@@ -371,15 +376,15 @@ export default class DateFormat {
   }
 
   isCurrentMinute(): boolean {
-    return this.isSameMinute(new DateFormat())
+    return this.isSameMinute(this._now())
   }
 
   isNextMinute(): boolean {
-    return this.isSameMinute(new DateFormat().add(1, 'minute'))
+    return this.isSameMinute(this._now().add(1, 'minute'))
   }
 
   isLastMinute(): boolean {
-    return this.isSameMinute(new DateFormat().subtract(1, 'minute'))
+    return this.isSameMinute(this._now().subtract(1, 'minute'))
   }
 
   isSameSecond(other: string | number | Date | DateFormat): boolean {
@@ -388,15 +393,15 @@ export default class DateFormat {
   }
 
   isCurrentSecond(): boolean {
-    return this.isSameSecond(new DateFormat())
+    return this.isSameSecond(this._now())
   }
 
   isNextSecond(): boolean {
-    return this.isSameSecond(new DateFormat().add(1, 'second'))
+    return this.isSameSecond(this._now().add(1, 'second'))
   }
 
   isLastSecond(): boolean {
-    return this.isSameSecond(new DateFormat().subtract(1, 'second'))
+    return this.isSameSecond(this._now().subtract(1, 'second'))
   }
 
   isSameMillisecond(other: string | number | Date | DateFormat): boolean {
@@ -404,15 +409,15 @@ export default class DateFormat {
   }
 
   isCurrentMillisecond(): boolean {
-    return this.isSameMillisecond(new DateFormat())
+    return this.isSameMillisecond(this._now())
   }
 
   isNextMillisecond(): boolean {
-    return this.isSameMillisecond(new DateFormat().add(1, 'millisecond'))
+    return this.isSameMillisecond(this._now().add(1, 'millisecond'))
   }
 
   isLastMillisecond(): boolean {
-    return this.isSameMillisecond(new DateFormat().subtract(1, 'millisecond'))
+    return this.isSameMillisecond(this._now().subtract(1, 'millisecond'))
   }
 
   // Microsecond methods aliased to millisecond due to JS Date limitations
@@ -1035,5 +1040,10 @@ export default class DateFormat {
       second: this.get('second'),
       millisecond: this.get('millisecond')
     }
+  }
+
+  private _now(): DateFormat {
+    // produce “now” in the same zone (UTC or local) as this instance
+    return this._utc ? new DateFormat(Date.now(), { utc: true }) : new DateFormat()
   }
 }

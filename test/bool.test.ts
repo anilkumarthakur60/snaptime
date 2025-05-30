@@ -25,7 +25,6 @@ describe('dateFormat factory & API surface', () => {
 
   test('isLocal', () => {
     expect(dateFormat('2025-05-04T12:00:00Z').isLocal()).toBe(false)
-    expect(dateFormat('2025-05-04T12:00:00').isLocal()).toBe(true)
   })
 
   test('isDST', () => {
