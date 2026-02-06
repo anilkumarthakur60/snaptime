@@ -1,5 +1,5 @@
-import DateFormat from './DateFormat'
-import Duration from './Duration'
+import DateFormat from './dateformat/DateFormat'
+import Duration from './duration/Duration'
 import type { Unit, PluginFn, LocaleData, DateFormatStatic } from './type'
 
 const dateFormat: DateFormatStatic = Object.assign(
