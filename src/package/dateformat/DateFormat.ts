@@ -173,11 +173,11 @@ export default class DateFormat {
     return DateFormat._locales[name || DateFormat._currentLocale || 'en'] || {}
   }
 
-  static isMoment(obj: any): obj is DateFormat {
+  static isMoment(obj: unknown): obj is DateFormat {
     return obj instanceof DateFormat
   }
 
-  static isDate(obj: any): obj is Date {
+  static isDate(obj: unknown): obj is Date {
     return isDate(obj)
   }
 

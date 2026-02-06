@@ -44,6 +44,6 @@ export function normalizeUnit(unit: string): Unit {
   return aliases[normalized] ?? 'unknown'
 }
 
-export function isDate(obj: any): obj is Date {
+export function isDate(obj: unknown): obj is Date {
   return obj instanceof Date && !isNaN(obj.getTime())
 }

@@ -45,21 +45,21 @@ export interface LocaleData {
 }
 
 /** Plugin function type */
-export type PluginFn = (DF: any, inst: any) => void
+export type PluginFn = (DF: unknown, inst: unknown) => void
 
 /** Static side of the factory */
 export interface DateFormatStatic {
-  (input?: string | number | Date, opts?: { utc?: boolean }): any
-  parse(str: string, fmt: string, strict?: boolean): any
-  min(...args: (string | number | Date | any)[]): any
-  max(...args: (string | number | Date | any)[]): any
-  duration(n: number, unit: Unit): any
+  (input?: string | number | Date, opts?: { utc?: boolean }): unknown
+  parse(str: string, fmt: string, strict?: boolean): unknown
+  min(...args: (string | number | Date | unknown)[]): unknown
+  max(...args: (string | number | Date | unknown)[]): unknown
+  duration(n: number, unit: Unit): unknown
   locale(name: string, data?: LocaleData): void
   defineLocale(name: string, data: LocaleData): LocaleData
   updateLocale(name: string, data?: LocaleData | null): LocaleData | void
   localeData(name?: string): LocaleData
-  use(plugin: PluginFn): any
-  isMoment(obj: any): boolean
-  isDate(obj: any): boolean
+  use(plugin: PluginFn): unknown
+  isMoment(obj: unknown): boolean
+  isDate(obj: unknown): boolean
   normalizeUnits(unit: string): Unit | null
 }

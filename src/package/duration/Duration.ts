@@ -26,7 +26,7 @@ export default class Duration {
     return new Duration(total)
   }
 
-  static isDuration(obj: any): obj is Duration {
+  static isDuration(obj: unknown): obj is Duration {
     return obj instanceof Duration
   }
 
@@ -134,7 +134,7 @@ export default class Duration {
     return new Duration(this._ms)
   }
 
-  humanize(withSuffix = false, _thresholds?: Record<string, number>): string {
+  humanize(withSuffix = false): string {
     return DurationFormatter.humanize(this._ms, withSuffix)
   }
 

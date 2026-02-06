@@ -171,11 +171,11 @@ export class FormatTokens {
       const ms = u ? d.getUTCMilliseconds() : d.getMilliseconds()
       return String(Math.floor(ms / 10)).padStart(2, '0')
     },
-    S: (d, u) => {
-      const ms = u ? d.getUTCMilliseconds() : d.getMilliseconds()
+    S: (d) => {
+      const ms = d.getMilliseconds()
       return String(Math.floor(ms / 100))
     },
-    Z: (d, _u) => {
+    Z: (d) => {
       const off = -d.getTimezoneOffset()
       const sign = off >= 0 ? '+' : '-'
       const absOff = Math.abs(off)
@@ -183,7 +183,7 @@ export class FormatTokens {
       const m = absOff % 60
       return `${sign}${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
     },
-    ZZ: (d, _u) => {
+    ZZ: (d) => {
       const off = -d.getTimezoneOffset()
       const sign = off >= 0 ? '+' : '-'
       const absOff = Math.abs(off)
@@ -191,8 +191,8 @@ export class FormatTokens {
       const m = absOff % 60
       return `${sign}${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}`
     },
-    X: (d, _u) => Math.floor(d.getTime() / 1000).toString(),
-    x: (d, _u) => d.getTime().toString(),
+    X: (d) => Math.floor(d.getTime() / 1000).toString(),
+    x: (d) => d.getTime().toString(),
     GGGG: (d, u) => {
       const jan4 = u
         ? new Date(Date.UTC(d.getUTCFullYear(), 0, 4))

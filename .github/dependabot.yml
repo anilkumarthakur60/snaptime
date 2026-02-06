@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+      time: '10:00'
+      timezone: 'UTC'
+
+    # Limit how many Dependabot PRs can be open at once
+    open-pull-requests-limit: 20
+
+    # Group related updates into single PRs
+    groups:
+      production-dependencies:
+        dependency-type: 'production'
+      development-dependencies:
+        dependency-type: 'development'
+
+    # Allow only safe updates to be auto-merged
+    allow:
+      - dependency-type: 'development'
+        update-types:
+          - 'version-update:semver-patch'
+          - 'version-update:semver-minor'
+
+      - dependency-type: 'production'
+        update-types:
+          - 'version-update:semver-patch'
+
+    # Enable auto-merge (checks must pass)
+    automerge: true
+
+    # Ignore breaking (major) version updates
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - 'version-update:semver-major'
