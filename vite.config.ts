@@ -6,7 +6,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, "src/package/index.ts"),
-      name: "@anilkumarthakur/d8",
+      name: "@anilkumarthakur/snaptime",
       fileName: (format) => `index.${format}.js`,
     },
     sourcemap: false,
