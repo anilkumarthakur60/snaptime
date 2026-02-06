@@ -237,7 +237,7 @@ Duration.parse('1h30m')
 ```bash
 $ npm run build
 
-> @anilkumarthakur/d8@0.0.0 build
+> @anilkumarthakur/snaptime@0.0.0 build
 > tsc && vite build
 
 ✓ 15 modules transformed
