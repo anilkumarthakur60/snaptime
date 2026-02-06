@@ -23,7 +23,8 @@ export default class DateFormat {
     year: 31536e6, // ~365 days
     fortnight: 1209.6e6, // 14 days
     unknown: NaN,
-    week: 6048e5 // 7 days
+    week: 6048e5, // 7 days
+    quarter: 7776e6 // ~3 months
   }
   /** Token → regex for parsing */
   private static readonly TOK_RE: Record<string, string> = {
@@ -217,6 +218,69 @@ export default class DateFormat {
   static locale(name: string, data?: LocaleData): void {
     if (data) DateFormat._locales[name] = data
     DateFormat._currentLocale = name
+  }
+
+  static defineLocale(name: string, data: LocaleData): LocaleData {
+    DateFormat._locales[name] = data
+    return data
+  }
+
+  static updateLocale(name: string, data?: LocaleData): LocaleData | void {
+    if (data === null) {
+      delete DateFormat._locales[name]
+      return
+    }
+    if (data) {
+      DateFormat._locales[name] = { ...DateFormat._locales[name], ...data }
+      DateFormat._currentLocale = name
+      return DateFormat._locales[name]
+    }
+    return DateFormat._locales[name]
+  }
+
+  static localeData(name?: string): LocaleData {
+    return DateFormat._locales[name || DateFormat._currentLocale || 'en'] || {}
+  }
+
+  static isMoment(obj: any): obj is DateFormat {
+    return obj instanceof DateFormat
+  }
+
+  static isDate(obj: any): obj is Date {
+    return obj instanceof Date
+  }
+
+  static normalizeUnits(unit: string): Unit | null {
+    const normalized: Record<string, Unit> = {
+      y: 'year',
+      year: 'year',
+      years: 'year',
+      M: 'month',
+      month: 'month',
+      months: 'month',
+      w: 'week',
+      week: 'week',
+      weeks: 'week',
+      d: 'day',
+      day: 'day',
+      days: 'day',
+      h: 'hour',
+      hour: 'hour',
+      hours: 'hour',
+      m: 'minute',
+      minute: 'minute',
+      minutes: 'minute',
+      s: 'second',
+      second: 'second',
+      seconds: 'second',
+      ms: 'millisecond',
+      millisecond: 'millisecond',
+      milliseconds: 'millisecond',
+      Q: 'quarter',
+      quarter: 'quarter',
+      quarters: 'quarter'
+    }
+    return normalized[unit.toLowerCase()] || null
   }
 
   // Instance API
@@ -709,14 +773,47 @@ export default class DateFormat {
     return this.valueOf() === new DateFormat(o as string | number | Date).valueOf()
   }
 
+  isSameOrBefore(o: string | number | Date | DateFormat, unit?: Unit): boolean {
+    const other = new DateFormat(o as string | number | Date)
+    if (unit) {
+      return this.startOf(unit).valueOf() <= other.startOf(unit).valueOf()
+    }
+    return this.valueOf() <= other.valueOf()
+  }
+
+  isSameOrAfter(o: string | number | Date | DateFormat, unit?: Unit): boolean {
+    const other = new DateFormat(o as string | number | Date)
+    if (unit) {
+      return this.startOf(unit).valueOf() >= other.startOf(unit).valueOf()
+    }
+    return this.valueOf() >= other.valueOf()
+  }
+
   isBetween(
     a: string | number | Date | DateFormat,
-    b: string | number | Date | DateFormat
+    b: string | number | Date | DateFormat,
+    unit?: Unit,
+    inclusivity?: string
   ): boolean {
     const t = this.valueOf()
     const A = new DateFormat(a as string | number | Date).valueOf()
     const B = new DateFormat(b as string | number | Date).valueOf()
-    return t > A && t < B
+    
+    if (unit) {
+      const ts = this.startOf(unit).valueOf()
+      const As = new DateFormat(a as string | number | Date).startOf(unit).valueOf()
+      const Bs = new DateFormat(b as string | number | Date).startOf(unit).valueOf()
+      
+      if (!inclusivity) inclusivity = '()'
+      const leftOp = inclusivity[0] === '[' ? (v: number, w: number) => v >= w : (v: number, w: number) => v > w
+      const rightOp = inclusivity[1] === ']' ? (v: number, w: number) => v <= w : (v: number, w: number) => v < w
+      return leftOp(ts, As) && rightOp(ts, Bs)
+    }
+    
+    if (!inclusivity) inclusivity = '()'
+    const leftOp = inclusivity[0] === '[' ? (v: number, w: number) => v >= w : (v: number, w: number) => v > w
+    const rightOp = inclusivity[1] === ']' ? (v: number, w: number) => v <= w : (v: number, w: number) => v < w
+    return leftOp(t, A) && rightOp(t, B)
   }
 
   utc(): DateFormat {
@@ -761,6 +858,16 @@ export default class DateFormat {
     if (!this.isValid()) {
       return 'Invalid Date'
     }
+
+    // Extract escaped text (within brackets)
+    const escaped: Record<number, string> = {}
+    let escapedCount = 0
+    let processedFmt = fmt.replace(/\[([^\]]*)\]/g, (_match, text) => {
+      const placeholder = `__ESCAPED_${escapedCount}__`
+      escaped[escapedCount] = text
+      escapedCount++
+      return placeholder
+    })
 
     const Y = String(this.get('year'))
     const M = this.get('month')
@@ -835,8 +942,12 @@ export default class DateFormat {
     const tokenMap: Record<string, string> = {
       YYYY: Y,
       YY: Y.slice(-2),
+      Y: Y,
       Q: String(Math.ceil(M / 3)),
+      Qo: ord(Math.ceil(M / 3)),
       gg: String(this.isoWeekYear()),
+      GGGG: String(this.isoWeekYear()),
+      GG: String(this.isoWeekYear()).slice(-2),
       Mo: ord(M),
       MMMM: months[M - 1] || String(M),
       MMM: monthsShort[M - 1] || String(M),
@@ -849,6 +960,9 @@ export default class DateFormat {
       D: String(D),
       WW: String(week).padStart(2, '0'),
       W: String(week),
+      Wo: ord(week),
+      E: String((day || 7)), // ISO day of week
+      e: String(day), // locale day of week
       ZZ: ZZ,
       Z: Z,
       dddd: weekdays[day],
@@ -859,6 +973,8 @@ export default class DateFormat {
       H: String(H),
       hh: String(H % 12 || 12).padStart(2, '0'),
       h: String(H % 12 || 12),
+      k: String(H || 24),
+      kk: String(H || 24).padStart(2, '0'),
       mm: String(m).padStart(2, '0'),
       m: String(m),
       ss: String(s).padStart(2, '0'),
@@ -872,10 +988,10 @@ export default class DateFormat {
     const tokens = Object.keys(tokenMap).sort((a, b) => b.length - a.length)
 
     let out = ''
-    for (let i = 0; i < fmt.length; ) {
+    for (let i = 0; i < processedFmt.length; ) {
       let matched = false
       for (const t of tokens) {
-        if (fmt.slice(i, i + t.length) === t) {
+        if (processedFmt.slice(i, i + t.length) === t) {
           out += tokenMap[t]
           i += t.length
           matched = true
@@ -883,8 +999,13 @@ export default class DateFormat {
         }
       }
       if (!matched) {
-        out += fmt[i++]
+        out += processedFmt[i++]
       }
+    }
+
+    // Restore escaped text
+    for (const [key, value] of Object.entries(escaped)) {
+      out = out.replace(`__ESCAPED_${key}__`, value)
     }
 
     return out
@@ -934,6 +1055,102 @@ export default class DateFormat {
       unit = value === 1 ? 'day' : 'days'
     }
 
+    return isNegative ? `${value} ${unit} ago` : `in ${value} ${unit}`
+  }
+
+  from(other: string | number | Date | DateFormat, withoutSuffix = false): string {
+    const otherMoment = new DateFormat(other as string | number | Date)
+    const diff = this.valueOf() - otherMoment.valueOf()
+    const isNegative = diff < 0
+    const absMs = Math.abs(diff)
+
+    let value: number
+    let unit: string
+
+    if (absMs < 1000) {
+      value = Math.round(absMs)
+      unit = value === 1 ? 'millisecond' : 'milliseconds'
+    } else if (absMs < 60000) {
+      value = Math.round(absMs / 1000)
+      unit = value === 1 ? 'second' : 'seconds'
+    } else if (absMs < 3600000) {
+      value = Math.round(absMs / 60000)
+      unit = value === 1 ? 'minute' : 'minutes'
+    } else if (absMs < 86400000) {
+      value = Math.round(absMs / 3600000)
+      unit = value === 1 ? 'hour' : 'hours'
+    } else {
+      value = Math.round(absMs / 86400000)
+      unit = value === 1 ? 'day' : 'days'
+    }
+
+    if (withoutSuffix) {
+      return `${value} ${unit}`
+    }
+    return isNegative ? `${value} ${unit} ago` : `in ${value} ${unit}`
+  }
+
+  to(other: string | number | Date | DateFormat, withoutSuffix = false): string {
+    const otherMoment = new DateFormat(other as string | number | Date)
+    const diff = otherMoment.valueOf() - this.valueOf()
+    const isNegative = diff < 0
+    const absMs = Math.abs(diff)
+
+    let value: number
+    let unit: string
+
+    if (absMs < 1000) {
+      value = Math.round(absMs)
+      unit = value === 1 ? 'millisecond' : 'milliseconds'
+    } else if (absMs < 60000) {
+      value = Math.round(absMs / 1000)
+      unit = value === 1 ? 'second' : 'seconds'
+    } else if (absMs < 3600000) {
+      value = Math.round(absMs / 60000)
+      unit = value === 1 ? 'minute' : 'minutes'
+    } else if (absMs < 86400000) {
+      value = Math.round(absMs / 3600000)
+      unit = value === 1 ? 'hour' : 'hours'
+    } else {
+      value = Math.round(absMs / 86400000)
+      unit = value === 1 ? 'day' : 'days'
+    }
+
+    if (withoutSuffix) {
+      return `${value} ${unit}`
+    }
+    return isNegative ? `${value} ${unit} ago` : `in ${value} ${unit}`
+  }
+
+  toNow(withoutSuffix = false): string {
+    const now = new DateFormat()
+    const diff = now.valueOf() - this.valueOf()
+    const isNegative = diff < 0
+    const absMs = Math.abs(diff)
+
+    let value: number
+    let unit: string
+
+    if (absMs < 1000) {
+      value = Math.round(absMs)
+      unit = value === 1 ? 'millisecond' : 'milliseconds'
+    } else if (absMs < 60000) {
+      value = Math.round(absMs / 1000)
+      unit = value === 1 ? 'second' : 'seconds'
+    } else if (absMs < 3600000) {
+      value = Math.round(absMs / 60000)
+      unit = value === 1 ? 'minute' : 'minutes'
+    } else if (absMs < 86400000) {
+      value = Math.round(absMs / 3600000)
+      unit = value === 1 ? 'hour' : 'hours'
+    } else {
+      value = Math.round(absMs / 86400000)
+      unit = value === 1 ? 'day' : 'days'
+    }
+
+    if (withoutSuffix) {
+      return `${value} ${unit}`
+    }
     return isNegative ? `${value} ${unit} ago` : `in ${value} ${unit}`
   }
 

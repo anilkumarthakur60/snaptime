@@ -12,7 +12,13 @@ const dateFormat: DateFormatStatic = Object.assign(
     max: DateFormat.max,
     duration: DateFormat.duration,
     locale: DateFormat.locale,
-    use: DateFormat.use
+    defineLocale: DateFormat.defineLocale,
+    updateLocale: DateFormat.updateLocale,
+    localeData: DateFormat.localeData,
+    use: DateFormat.use,
+    isMoment: DateFormat.isMoment,
+    isDate: DateFormat.isDate,
+    normalizeUnits: DateFormat.normalizeUnits
   }
 )
 

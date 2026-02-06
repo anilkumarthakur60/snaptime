@@ -14,6 +14,7 @@ export type Unit =
   | 'fortnight'
   | 'unknown'
   | 'week'
+  | 'quarter'
 
 export interface LocaleData {
   months?: string[]
@@ -54,7 +55,13 @@ export interface DateFormatStatic {
     max(...args: (string | number | Date | DateFormat)[]): DateFormat
     duration(n: number, unit: Unit): Duration
     locale(name: string, data?: LocaleData): void
+    defineLocale(name: string, data: LocaleData): LocaleData
+    updateLocale(name: string, data?: LocaleData | null): LocaleData | void
+    localeData(name?: string): LocaleData
     use(plugin: PluginFn): typeof DateFormat
+    isMoment(obj: any): obj is DateFormat
+    isDate(obj: any): obj is Date
+    normalizeUnits(unit: string): Unit | null
   }
   
 /** Plugin function type */
