@@ -261,17 +261,14 @@ test('humanize logic')
 ## 🚀 Next Steps
 
 1. **Add Locale System**
-
    - Create locale modules in `locales/`
    - Support multiple language/region formats
 
 2. **Extend Plugin System**
-
    - Document plugin API
    - Add example plugins
 
 3. **Performance Optimization**
-
    - Profile hot paths
    - Benchmark vs Moment.js
 
