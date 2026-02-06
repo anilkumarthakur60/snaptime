@@ -2,7 +2,7 @@ import type { Unit } from '../type'
 import { UNIT_MS } from '../utils/constants'
 
 /** Date manipulation (get/set/add/subtract) */
-export class DateManipulation {
+export class DateMutator {
   static get(date: Date, isUTC: boolean, unit: Unit | 'day'): number {
     const p = isUTC ? 'getUTC' : 'get'
     let method = ''

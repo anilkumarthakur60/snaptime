@@ -1,5 +1,5 @@
 /** Duration component extraction utilities */
-export class DurationComponent {
+export class DurationExtractor {
   static milliseconds(ms: number): number {
     return Math.floor(Math.abs(ms) % 1000)
   }

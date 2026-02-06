@@ -1,5 +1,5 @@
 /** Duration formatting utilities */
-export class DurationFormatter {
+export class TimeDurationFormatter {
   static humanize(ms: number, withSuffix: boolean = false): string {
     const absMsVal = Math.abs(ms)
     const isNegative = ms < 0

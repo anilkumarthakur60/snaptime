@@ -1,25 +1,34 @@
-import DateFormat from './dateformat/DateFormat'
-import Duration from './duration/Duration'
+import SnapTime from './dateformat/snaptime'
+import TimeDuration from './duration/time-duration'
 import type { Unit, PluginFn, LocaleData, DateFormatStatic } from './type'
 
 const dateFormat: DateFormatStatic = Object.assign(
-  (input: string | number | Date | DateFormat = Date.now(), opts: { utc?: boolean } = {}) => {
-    return new DateFormat(input, opts)
+  (input: string | number | Date | SnapTime = Date.now(), opts: { utc?: boolean } = {}) => {
+    return new SnapTime(input, opts)
   },
   {
-    parse: DateFormat.parse,
-    min: DateFormat.min,
-    max: DateFormat.max,
-    duration: DateFormat.duration,
-    locale: DateFormat.locale,
-    defineLocale: DateFormat.defineLocale,
-    updateLocale: DateFormat.updateLocale,
-    localeData: DateFormat.localeData,
-    use: DateFormat.use,
-    isMoment: DateFormat.isMoment,
-    isDate: DateFormat.isDate,
-    normalizeUnits: DateFormat.normalizeUnits
+    parse: SnapTime.parse,
+    min: SnapTime.min,
+    max: SnapTime.max,
+    duration: SnapTime.duration,
+    locale: SnapTime.locale,
+    defineLocale: SnapTime.defineLocale,
+    updateLocale: SnapTime.updateLocale,
+    localeData: SnapTime.localeData,
+    use: SnapTime.use,
+    isMoment: SnapTime.isMoment,
+    isDate: SnapTime.isDate,
+    normalizeUnits: SnapTime.normalizeUnits
   }
 )
 
-export { DateFormat, Duration, Unit, PluginFn, LocaleData, dateFormat }
+export {
+  SnapTime,
+  TimeDuration,
+  SnapTime as DateFormat,
+  TimeDuration as Duration,
+  Unit,
+  PluginFn,
+  LocaleData,
+  dateFormat
+}

@@ -1,20 +1,20 @@
 import type { Unit, LocaleData, PluginFn } from '../type'
-import Duration from '../duration'
+import TimeDuration from '../duration/time-duration'
 import { UNIT_MS } from '../utils/constants'
 import { parseDateLike } from '../utils/parsers'
 import { normalizeUnit, isDate } from '../utils/validators'
 import { FormatEngine } from '../format/engine'
-import { Comparisons } from './comparisons'
-import { DateManipulation } from './manipulation'
-import { DateQueries } from './queries'
-import { RelativeTime } from './relative-time'
+import { DateComparator } from './comparator'
+import { DateMutator } from './mutator'
+import { DateInspector } from './inspector'
+import { RelativeTimeFormatter } from './relative-formatter'
 
-export interface DateFormatPluginMethods {
+export interface SnapTimePluginMethods {
   testPluginMethod?: () => string
 }
 
-/** Main DateFormat class for date/time manipulation */
-export default class DateFormat {
+/** Main SnapTime class for date/time manipulation */
+export default class SnapTime {
   private static _plugins: PluginFn[] = []
   private static _locales: Record<string, LocaleData> = {}
   private static _currentLocale: string | null = null
@@ -22,26 +22,23 @@ export default class DateFormat {
   private readonly _d: Date
   private readonly _utc: boolean
 
-  constructor(
-    input: string | number | Date | DateFormat = Date.now(),
-    opts: { utc?: boolean } = {}
-  ) {
-    const { date, isUTC } = parseDateLike(input instanceof DateFormat ? input.valueOf() : input)
+  constructor(input: string | number | Date | SnapTime = Date.now(), opts: { utc?: boolean } = {}) {
+    const { date, isUTC } = parseDateLike(input instanceof SnapTime ? input.valueOf() : input)
 
     this._d = new Date(date)
     this._utc = opts.utc ?? isUTC
 
     // Run registered plugins
-    for (const p of DateFormat._plugins) {
-      p(DateFormat, DateFormat)
+    for (const p of SnapTime._plugins) {
+      p(SnapTime, SnapTime)
     }
   }
 
   // ==================== Static API ====================
 
-  static parse(str = '', fmt = '', strict = false): DateFormat {
+  static parse(str = '', fmt = '', strict = false): SnapTime {
     if (!fmt) {
-      return new DateFormat(str, { utc: str.endsWith('Z') })
+      return new SnapTime(str, { utc: str.endsWith('Z') })
     }
 
     // Build regex from token patterns
@@ -68,7 +65,7 @@ export default class DateFormat {
     const re = new RegExp(`^${pattern}$`)
     const m = re.exec(str)
     if (!m) {
-      return new DateFormat(NaN)
+      return new SnapTime(NaN)
     }
 
     const parts: Record<string, number | string> = {}
@@ -80,20 +77,20 @@ export default class DateFormat {
     // Validation in strict mode
     if (strict) {
       const mm = parts.MM != null ? Number(parts.MM) : null
-      if (mm !== null && (mm < 1 || mm > 12)) return new DateFormat(NaN)
+      if (mm !== null && (mm < 1 || mm > 12)) return new SnapTime(NaN)
       const dd = parts.DD != null ? Number(parts.DD) : null
       if (dd !== null) {
         const dim = new Date(Number(parts.YYYY || 1970), mm ?? 1, 0).getDate()
-        if (dd < 1 || dd > dim) return new DateFormat(NaN)
+        if (dd < 1 || dd > dim) return new SnapTime(NaN)
       }
     }
 
     // Unix timestamps
     if (parts.x != null) {
-      return new DateFormat(Number(parts.x), { utc: true })
+      return new SnapTime(Number(parts.x), { utc: true })
     }
     if (parts.X != null) {
-      return new DateFormat(Number(parts.X) * 1000, { utc: true })
+      return new SnapTime(Number(parts.X) * 1000, { utc: true })
     }
 
     const Y = Number(parts.YYYY || 1970)
@@ -109,11 +106,11 @@ export default class DateFormat {
       !fmt.includes('H') && !fmt.includes('h') && !fmt.includes('m') && !fmt.includes('s')
 
     if (strict && onlyDateTokens && !sawOff && !sawZ) {
-      return new DateFormat(new Date(Y, Mo, D, 0, 0, 0), { utc: false })
+      return new SnapTime(new Date(Y, Mo, D, 0, 0, 0), { utc: false })
     }
 
     const baseUtcMs = Date.UTC(Y, Mo, D, h, mi, s)
-    const inst = new DateFormat(baseUtcMs, { utc: sawZ || sawOff })
+    const inst = new SnapTime(baseUtcMs, { utc: sawZ || sawOff })
 
     if (sawOff) {
       const ofs = (parts.Z as string).replace(':', '')
@@ -121,60 +118,60 @@ export default class DateFormat {
       const hh2 = Number(ofs.substring(1, 3))
       const mm2 = Number(ofs.substring(3, 5))
       const offset = sign * (hh2 * 60 + mm2) * 60_000
-      return new DateFormat(inst.valueOf() - offset, { utc: false })
+      return new SnapTime(inst.valueOf() - offset, { utc: false })
     }
 
     return inst
   }
 
-  static use(plugin: PluginFn): typeof DateFormat {
-    DateFormat._plugins.push(plugin)
-    plugin(DateFormat, DateFormat)
-    return DateFormat
+  static use(plugin: PluginFn): typeof SnapTime {
+    SnapTime._plugins.push(plugin)
+    plugin(SnapTime, SnapTime)
+    return SnapTime
   }
 
-  static min(...args: (string | number | Date | DateFormat)[]): DateFormat {
-    return args.map((a) => new DateFormat(a)).reduce((a, b) => (a.isBefore(b) ? a : b))
+  static min(...args: (string | number | Date | SnapTime)[]): SnapTime {
+    return args.map((a) => new SnapTime(a)).reduce((a, b) => (a.isBefore(b) ? a : b))
   }
 
-  static max(...args: (string | number | Date | DateFormat)[]): DateFormat {
-    return args.map((a) => new DateFormat(a)).reduce((a, b) => (a.isAfter(b) ? a : b))
+  static max(...args: (string | number | Date | SnapTime)[]): SnapTime {
+    return args.map((a) => new SnapTime(a)).reduce((a, b) => (a.isAfter(b) ? a : b))
   }
 
-  static duration(n: number, unit: Unit): Duration {
+  static duration(n: number, unit: Unit): TimeDuration {
     const ms = UNIT_MS[unit] ?? 0
-    return new Duration(n * ms)
+    return new TimeDuration(n * ms)
   }
 
   static locale(name: string, data?: LocaleData): void {
-    if (data) DateFormat._locales[name] = data
-    DateFormat._currentLocale = name
+    if (data) SnapTime._locales[name] = data
+    SnapTime._currentLocale = name
   }
 
   static defineLocale(name: string, data: LocaleData): LocaleData {
-    DateFormat._locales[name] = data
+    SnapTime._locales[name] = data
     return data
   }
 
   static updateLocale(name: string, data?: LocaleData): LocaleData | void {
     if (data === null) {
-      delete DateFormat._locales[name]
+      delete SnapTime._locales[name]
       return
     }
     if (data) {
-      DateFormat._locales[name] = { ...DateFormat._locales[name], ...data }
-      DateFormat._currentLocale = name
-      return DateFormat._locales[name]
+      SnapTime._locales[name] = { ...SnapTime._locales[name], ...data }
+      SnapTime._currentLocale = name
+      return SnapTime._locales[name]
     }
-    return DateFormat._locales[name]
+    return SnapTime._locales[name]
   }
 
   static localeData(name?: string): LocaleData {
-    return DateFormat._locales[name || DateFormat._currentLocale || 'en'] || {}
+    return SnapTime._locales[name || SnapTime._currentLocale || 'en'] || {}
   }
 
-  static isMoment(obj: unknown): obj is DateFormat {
-    return obj instanceof DateFormat
+  static isMoment(obj: unknown): obj is SnapTime {
+    return obj instanceof SnapTime
   }
 
   static isDate(obj: unknown): obj is Date {
@@ -197,7 +194,7 @@ export default class DateFormat {
   }
 
   isValid(): boolean {
-    return DateQueries.isValid(this._d)
+    return DateInspector.isValid(this._d)
   }
 
   isUtc(): boolean {
@@ -210,92 +207,92 @@ export default class DateFormat {
 
   isDST(): boolean {
     if (this._utc) return false
-    return DateQueries.isDST(this._d, this.get('year'))
+    return DateInspector.isDST(this._d, this.get('year'))
   }
 
   get(u: Unit | 'day'): number {
-    return DateManipulation.get(this._d, this._utc, u)
+    return DateMutator.get(this._d, this._utc, u)
   }
 
-  set(u: Unit, val: number): DateFormat {
+  set(u: Unit, val: number): SnapTime {
     const inst = this.clone()
     const newDate = new Date(inst._d.getTime())
-    DateManipulation.set(newDate, inst._utc, u, val)
-    return new DateFormat(newDate, { utc: inst._utc })
+    DateMutator.set(newDate, inst._utc, u, val)
+    return new SnapTime(newDate, { utc: inst._utc })
   }
 
-  add(n: number, unit: Unit): DateFormat {
+  add(n: number, unit: Unit): SnapTime {
     if (unit === 'month' || unit === 'year') {
       return this.set(unit, this.get(unit) + n)
     }
-    const ms = DateManipulation.addMs(this.valueOf(), n, unit, false)
-    return new DateFormat(ms, { utc: this._utc })
+    const ms = DateMutator.addMs(this.valueOf(), n, unit, false)
+    return new SnapTime(ms, { utc: this._utc })
   }
 
-  subtract(n: number, unit: Unit): DateFormat {
+  subtract(n: number, unit: Unit): SnapTime {
     return this.add(-n, unit)
   }
 
   // Comparison methods
-  isBefore(o: string | number | Date | DateFormat): boolean {
-    return Comparisons.isBefore(this.valueOf(), new DateFormat(o).valueOf())
+  isBefore(o: string | number | Date | SnapTime): boolean {
+    return DateComparator.isBefore(this.valueOf(), new SnapTime(o).valueOf())
   }
 
-  isAfter(o: string | number | Date | DateFormat): boolean {
-    return Comparisons.isAfter(this.valueOf(), new DateFormat(o).valueOf())
+  isAfter(o: string | number | Date | SnapTime): boolean {
+    return DateComparator.isAfter(this.valueOf(), new SnapTime(o).valueOf())
   }
 
-  isSame(o: string | number | Date | DateFormat): boolean {
-    return Comparisons.isSame(this.valueOf(), new DateFormat(o).valueOf())
+  isSame(o: string | number | Date | SnapTime): boolean {
+    return DateComparator.isSame(this.valueOf(), new SnapTime(o).valueOf())
   }
 
-  isSameOrBefore(o: string | number | Date | DateFormat, unit?: Unit): boolean {
-    const other = new DateFormat(o)
+  isSameOrBefore(o: string | number | Date | SnapTime, unit?: Unit): boolean {
+    const other = new SnapTime(o)
     if (unit) {
-      return Comparisons.isSameOrBefore(
+      return DateComparator.isSameOrBefore(
         this.valueOf(),
         other.valueOf(),
         unit,
-        (v: number, u: Unit) => new DateFormat(v).startOf(u).valueOf()
+        (v: number, u: Unit) => new SnapTime(v).startOf(u).valueOf()
       )
     }
-    return Comparisons.isSameOrBefore(this.valueOf(), other.valueOf())
+    return DateComparator.isSameOrBefore(this.valueOf(), other.valueOf())
   }
 
-  isSameOrAfter(o: string | number | Date | DateFormat, unit?: Unit): boolean {
-    const other = new DateFormat(o)
+  isSameOrAfter(o: string | number | Date | SnapTime, unit?: Unit): boolean {
+    const other = new SnapTime(o)
     if (unit) {
-      return Comparisons.isSameOrAfter(
+      return DateComparator.isSameOrAfter(
         this.valueOf(),
         other.valueOf(),
         unit,
-        (v: number, u: Unit) => new DateFormat(v).startOf(u).valueOf()
+        (v: number, u: Unit) => new SnapTime(v).startOf(u).valueOf()
       )
     }
-    return Comparisons.isSameOrAfter(this.valueOf(), other.valueOf())
+    return DateComparator.isSameOrAfter(this.valueOf(), other.valueOf())
   }
 
   isBetween(
-    a: string | number | Date | DateFormat,
-    b: string | number | Date | DateFormat,
+    a: string | number | Date | SnapTime,
+    b: string | number | Date | SnapTime,
     unit?: Unit,
     inclusivity?: string
   ): boolean {
-    const A = new DateFormat(a).valueOf()
-    const B = new DateFormat(b).valueOf()
+    const A = new SnapTime(a).valueOf()
+    const B = new SnapTime(b).valueOf()
 
-    return Comparisons.isBetween(this.valueOf(), A, B, unit, inclusivity, (v: number, u: Unit) =>
-      new DateFormat(v).startOf(u).valueOf()
+    return DateComparator.isBetween(this.valueOf(), A, B, unit, inclusivity, (v: number, u: Unit) =>
+      new SnapTime(v).startOf(u).valueOf()
     )
   }
 
   diff(
-    other: DateFormat | Date | string | number,
+    other: SnapTime | Date | string | number,
     unit: Unit = 'millisecond',
     floating = false
   ): number {
-    const o = other instanceof DateFormat ? other : new DateFormat(other as string | number | Date)
-    return DateManipulation.diff(this.valueOf(), o.valueOf(), unit, floating)
+    const o = other instanceof SnapTime ? other : new SnapTime(other as string | number | Date)
+    return DateMutator.diff(this.valueOf(), o.valueOf(), unit, floating)
   }
 
   toDate(): Date {
@@ -310,11 +307,11 @@ export default class DateFormat {
     return this.toISOString()
   }
 
-  clone(): DateFormat {
-    return new DateFormat(this, { utc: this._utc })
+  clone(): SnapTime {
+    return new SnapTime(this, { utc: this._utc })
   }
 
-  utc(): DateFormat {
+  utc(): SnapTime {
     const c = this.clone()
     Object.defineProperty(c, '_utc', {
       value: true,
@@ -325,33 +322,33 @@ export default class DateFormat {
     return c
   }
 
-  local(): DateFormat {
+  local(): SnapTime {
     if (!this._utc) return this.clone()
-    return new DateFormat(this.valueOf())
+    return new SnapTime(this.valueOf())
   }
 
   daysInMonth(): number {
-    return DateQueries.daysInMonth(this.get('year'), this.get('month'))
+    return DateInspector.daysInMonth(this.get('year'), this.get('month'))
   }
 
   isLeapYear(): boolean {
-    return DateQueries.isLeapYear(this.get('year'))
+    return DateInspector.isLeapYear(this.get('year'))
   }
 
   dayOfYear(): number {
-    return DateQueries.dayOfYear(this._d, this._utc)
+    return DateInspector.dayOfYear(this._d, this._utc)
   }
 
   isoWeek(): number {
-    return DateQueries.isoWeek(this._d, this._utc)
+    return DateInspector.isoWeek(this._d, this._utc)
   }
 
   isoWeekYear(): number {
-    return DateQueries.isoWeekYear(this._d, this._utc)
+    return DateInspector.isoWeekYear(this._d, this._utc)
   }
 
   weeksInYear(): number {
-    return DateQueries.weeksInYear(this.get('year'))
+    return DateInspector.weeksInYear(this.get('year'))
   }
 
   quarter(): number {
@@ -390,74 +387,74 @@ export default class DateFormat {
     return this.get('day') === 6
   }
 
-  isSameHour(other: string | number | Date | DateFormat): boolean {
-    const o = new DateFormat(other)
+  isSameHour(other: string | number | Date | SnapTime): boolean {
+    const o = new SnapTime(other)
     return this.isSameDay(o) && this.get('hour') === o.get('hour')
   }
 
   isCurrentHour(): boolean {
-    return this.isSameHour(new DateFormat())
+    return this.isSameHour(new SnapTime())
   }
 
   isNextHour(): boolean {
-    return this.isSameHour(new DateFormat().add(1, 'hour'))
+    return this.isSameHour(new SnapTime().add(1, 'hour'))
   }
 
   isLastHour(): boolean {
-    return this.isSameHour(new DateFormat().subtract(1, 'hour'))
+    return this.isSameHour(new SnapTime().subtract(1, 'hour'))
   }
 
-  isSameMinute(other: string | number | Date | DateFormat): boolean {
-    const o = new DateFormat(other)
+  isSameMinute(other: string | number | Date | SnapTime): boolean {
+    const o = new SnapTime(other)
     return this.isSameHour(o) && this.get('minute') === o.get('minute')
   }
 
   isCurrentMinute(): boolean {
-    return this.isSameMinute(new DateFormat())
+    return this.isSameMinute(new SnapTime())
   }
 
   isNextMinute(): boolean {
-    return this.isSameMinute(new DateFormat().add(1, 'minute'))
+    return this.isSameMinute(new SnapTime().add(1, 'minute'))
   }
 
   isLastMinute(): boolean {
-    return this.isSameMinute(new DateFormat().subtract(1, 'minute'))
+    return this.isSameMinute(new SnapTime().subtract(1, 'minute'))
   }
 
-  isSameSecond(other: string | number | Date | DateFormat): boolean {
-    const o = new DateFormat(other)
+  isSameSecond(other: string | number | Date | SnapTime): boolean {
+    const o = new SnapTime(other)
     return this.isSameMinute(o) && this.get('second') === o.get('second')
   }
 
   isCurrentSecond(): boolean {
-    return this.isSameSecond(new DateFormat())
+    return this.isSameSecond(new SnapTime())
   }
 
   isNextSecond(): boolean {
-    return this.isSameSecond(new DateFormat().add(1, 'second'))
+    return this.isSameSecond(new SnapTime().add(1, 'second'))
   }
 
   isLastSecond(): boolean {
-    return this.isSameSecond(new DateFormat().subtract(1, 'second'))
+    return this.isSameSecond(new SnapTime().subtract(1, 'second'))
   }
 
-  isSameMillisecond(other: string | number | Date | DateFormat): boolean {
-    return this.valueOf() === new DateFormat(other).valueOf()
+  isSameMillisecond(other: string | number | Date | SnapTime): boolean {
+    return this.valueOf() === new SnapTime(other).valueOf()
   }
 
   isCurrentMillisecond(): boolean {
-    return this.isSameMillisecond(new DateFormat())
+    return this.isSameMillisecond(new SnapTime())
   }
 
   isNextMillisecond(): boolean {
-    return this.isSameMillisecond(new DateFormat().add(1, 'millisecond'))
+    return this.isSameMillisecond(new SnapTime().add(1, 'millisecond'))
   }
 
   isLastMillisecond(): boolean {
-    return this.isSameMillisecond(new DateFormat().subtract(1, 'millisecond'))
+    return this.isSameMillisecond(new SnapTime().subtract(1, 'millisecond'))
   }
 
-  isSameMicro(other: string | number | Date | DateFormat): boolean {
+  isSameMicro(other: string | number | Date | SnapTime): boolean {
     return this.isSameMillisecond(other)
   }
 
@@ -473,7 +470,7 @@ export default class DateFormat {
     return this.isLastMillisecond()
   }
 
-  isSameMicrosecond(other: string | number | Date | DateFormat): boolean {
+  isSameMicrosecond(other: string | number | Date | SnapTime): boolean {
     return this.isSameMillisecond(other)
   }
 
@@ -489,119 +486,115 @@ export default class DateFormat {
     return this.isLastMillisecond()
   }
 
-  isSameDecade(other: string | number | Date | DateFormat): boolean {
-    const o = new DateFormat(other)
+  isSameDecade(other: string | number | Date | SnapTime): boolean {
+    const o = new SnapTime(other)
     return Math.floor(this.get('year') / 10) === Math.floor(o.get('year') / 10)
   }
 
   isCurrentDecade(): boolean {
-    return Math.floor(this.get('year') / 10) === Math.floor(new DateFormat().get('year') / 10)
+    return Math.floor(this.get('year') / 10) === Math.floor(new SnapTime().get('year') / 10)
   }
 
   isNextDecade(): boolean {
-    return Math.floor(this.get('year') / 10) === Math.floor(new DateFormat().get('year') / 10) + 1
+    return Math.floor(this.get('year') / 10) === Math.floor(new SnapTime().get('year') / 10) + 1
   }
 
   isLastDecade(): boolean {
-    return Math.floor(this.get('year') / 10) === Math.floor(new DateFormat().get('year') / 10) - 1
+    return Math.floor(this.get('year') / 10) === Math.floor(new SnapTime().get('year') / 10) - 1
   }
 
-  isSameCentury(other: string | number | Date | DateFormat): boolean {
-    const o = new DateFormat(other)
+  isSameCentury(other: string | number | Date | SnapTime): boolean {
+    const o = new SnapTime(other)
     return Math.floor(this.get('year') / 100) === Math.floor(o.get('year') / 100)
   }
 
   isCurrentCentury(): boolean {
-    return Math.floor(this.get('year') / 100) === Math.floor(new DateFormat().get('year') / 100)
+    return Math.floor(this.get('year') / 100) === Math.floor(new SnapTime().get('year') / 100)
   }
 
   isNextCentury(): boolean {
-    return Math.floor(this.get('year') / 100) === Math.floor(new DateFormat().get('year') / 100) + 1
+    return Math.floor(this.get('year') / 100) === Math.floor(new SnapTime().get('year') / 100) + 1
   }
 
   isLastCentury(): boolean {
-    return Math.floor(this.get('year') / 100) === Math.floor(new DateFormat().get('year') / 100) - 1
+    return Math.floor(this.get('year') / 100) === Math.floor(new SnapTime().get('year') / 100) - 1
   }
 
-  isSameMillennium(other: string | number | Date | DateFormat): boolean {
-    const o = new DateFormat(other)
+  isSameMillennium(other: string | number | Date | SnapTime): boolean {
+    const o = new SnapTime(other)
     return Math.floor(this.get('year') / 1000) === Math.floor(o.get('year') / 1000)
   }
 
   isCurrentMillennium(): boolean {
-    return Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000)
+    return Math.floor(this.get('year') / 1000) === Math.floor(new SnapTime().get('year') / 1000)
   }
 
   isNextMillennium(): boolean {
-    return (
-      Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000) + 1
-    )
+    return Math.floor(this.get('year') / 1000) === Math.floor(new SnapTime().get('year') / 1000) + 1
   }
 
   isLastMillennium(): boolean {
-    return (
-      Math.floor(this.get('year') / 1000) === Math.floor(new DateFormat().get('year') / 1000) - 1
-    )
+    return Math.floor(this.get('year') / 1000) === Math.floor(new SnapTime().get('year') / 1000) - 1
   }
 
   // Same day/week/month/year predicates
-  isSameYear(other: string | number | Date | DateFormat): boolean {
-    return this.get('year') === new DateFormat(other).get('year')
+  isSameYear(other: string | number | Date | SnapTime): boolean {
+    return this.get('year') === new SnapTime(other).get('year')
   }
 
   isCurrentYear(): boolean {
-    return this.get('year') === new DateFormat().get('year')
+    return this.get('year') === new SnapTime().get('year')
   }
 
   isNextYear(): boolean {
-    return this.get('year') === new DateFormat().get('year') + 1
+    return this.get('year') === new SnapTime().get('year') + 1
   }
 
   isLastYear(): boolean {
-    return this.get('year') === new DateFormat().get('year') - 1
+    return this.get('year') === new SnapTime().get('year') - 1
   }
 
   isCurrentMonth(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     return this.get('year') === now.get('year') && this.get('month') === now.get('month')
   }
 
   isNextMonth(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     const next = now.add(1, 'month')
     return this.get('year') === next.get('year') && this.get('month') === next.get('month')
   }
 
   isLastMonth(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     const last = now.subtract(1, 'month')
     return this.get('year') === last.get('year') && this.get('month') === last.get('month')
   }
 
-  isSameWeek(other: string | number | Date | DateFormat): boolean {
-    const o = new DateFormat(other)
+  isSameWeek(other: string | number | Date | SnapTime): boolean {
+    const o = new SnapTime(other)
     return this.isoWeek() === o.isoWeek() && this.get('year') === o.get('year')
   }
 
   isCurrentWeek(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     return this.isoWeek() === now.isoWeek() && this.get('year') === now.get('year')
   }
 
   isNextWeek(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     const next = now.add(1, 'week')
     return this.isoWeek() === next.isoWeek() && this.get('year') === next.get('year')
   }
 
   isLastWeek(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     const last = now.subtract(1, 'week')
     return this.isoWeek() === last.isoWeek() && this.get('year') === last.get('year')
   }
 
-  isSameDay(other: string | number | Date | DateFormat): boolean {
-    const o = new DateFormat(other)
+  isSameDay(other: string | number | Date | SnapTime): boolean {
+    const o = new SnapTime(other)
     return (
       this.get('year') === o.get('year') &&
       this.get('month') === o.get('month') &&
@@ -610,19 +603,19 @@ export default class DateFormat {
   }
 
   isCurrentDay(): boolean {
-    return this.isSameDay(new DateFormat())
+    return this.isSameDay(new SnapTime())
   }
 
   isNextDay(): boolean {
-    return this.isSameDay(new DateFormat().add(1, 'day'))
+    return this.isSameDay(new SnapTime().add(1, 'day'))
   }
 
   isLastDay(): boolean {
-    return this.isSameDay(new DateFormat().subtract(1, 'day'))
+    return this.isSameDay(new SnapTime().subtract(1, 'day'))
   }
 
   isCurrentQuarter(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     return (
       this.get('year') === now.get('year') &&
       Math.ceil(this.get('month') / 3) === Math.ceil(now.get('month') / 3)
@@ -630,7 +623,7 @@ export default class DateFormat {
   }
 
   isNextQuarter(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     const next = now.add(3, 'month')
     return (
       this.get('year') === next.get('year') &&
@@ -639,7 +632,7 @@ export default class DateFormat {
   }
 
   isLastQuarter(): boolean {
-    const now = new DateFormat()
+    const now = new SnapTime()
     const last = now.subtract(3, 'month')
     return (
       this.get('year') === last.get('year') &&
@@ -655,7 +648,7 @@ export default class DateFormat {
   }
 
   formatIntl(opts: Intl.DateTimeFormatOptions = {}): string {
-    const loc = DateFormat._currentLocale || undefined
+    const loc = SnapTime._currentLocale || undefined
     const formatter = new Intl.DateTimeFormat(loc, {
       ...opts,
       timeZone: this._utc ? 'UTC' : undefined
@@ -665,23 +658,23 @@ export default class DateFormat {
 
   // Relative time methods
   fromNow(): string {
-    return RelativeTime.fromNow(this.valueOf())
+    return RelativeTimeFormatter.fromNow(this.valueOf())
   }
 
-  from(other: string | number | Date | DateFormat, withoutSuffix = false): string {
-    return RelativeTime.from(this.valueOf(), new DateFormat(other).valueOf(), withoutSuffix)
+  from(other: string | number | Date | SnapTime, withoutSuffix = false): string {
+    return RelativeTimeFormatter.from(this.valueOf(), new SnapTime(other).valueOf(), withoutSuffix)
   }
 
-  to(other: string | number | Date | DateFormat, withoutSuffix = false): string {
-    return RelativeTime.to(this.valueOf(), new DateFormat(other).valueOf(), withoutSuffix)
+  to(other: string | number | Date | SnapTime, withoutSuffix = false): string {
+    return RelativeTimeFormatter.to(this.valueOf(), new SnapTime(other).valueOf(), withoutSuffix)
   }
 
   toNow(withoutSuffix = false): string {
-    return RelativeTime.toNow(this.valueOf(), withoutSuffix)
+    return RelativeTimeFormatter.toNow(this.valueOf(), withoutSuffix)
   }
 
   calendar(): string {
-    const today0 = new DateFormat().startOf('day').valueOf()
+    const today0 = new SnapTime().startOf('day').valueOf()
     const diff = this.valueOf() - today0
     const D = 864e5
     const T = this.format('hh:mm A')
@@ -691,7 +684,7 @@ export default class DateFormat {
     return this.format('YYYY-MM-DD')
   }
 
-  startOf(u: Unit | 'week' | 'quarter'): DateFormat {
+  startOf(u: Unit | 'week' | 'quarter'): SnapTime {
     const d = this.clone()
     switch (u) {
       case 'year':
@@ -719,7 +712,7 @@ export default class DateFormat {
     }
   }
 
-  endOf(u: Unit | 'week' | 'quarter'): DateFormat {
+  endOf(u: Unit | 'week' | 'quarter'): SnapTime {
     return this.startOf(u)
       .add(1, u as Unit)
       .subtract(1, 'millisecond')

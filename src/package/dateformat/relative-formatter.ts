@@ -1,12 +1,12 @@
 /** Relative time and formatting */
-export class RelativeTime {
+export class RelativeTimeFormatter {
   static fromNow(ms: number): string {
     const now = Date.now()
     const diff = ms - now
     const isNegative = diff < 0
     const absMs = Math.abs(diff)
 
-    return RelativeTime.formatDiff(absMs, isNegative)
+    return RelativeTimeFormatter.formatDiff(absMs, isNegative)
   }
 
   static from(ms: number, otherMs: number, withoutSuffix = false): string {
@@ -14,7 +14,7 @@ export class RelativeTime {
     const isNegative = diff < 0
     const absMs = Math.abs(diff)
 
-    const formatted = RelativeTime.formatDiff(absMs, isNegative)
+    const formatted = RelativeTimeFormatter.formatDiff(absMs, isNegative)
     if (withoutSuffix) {
       return formatted.replace(' ago', '').replace('in ', '')
     }
@@ -26,7 +26,7 @@ export class RelativeTime {
     const isNegative = diff < 0
     const absMs = Math.abs(diff)
 
-    const formatted = RelativeTime.formatDiff(absMs, isNegative)
+    const formatted = RelativeTimeFormatter.formatDiff(absMs, isNegative)
     if (withoutSuffix) {
       return formatted.replace(' ago', '').replace('in ', '')
     }
@@ -39,7 +39,7 @@ export class RelativeTime {
     const isNegative = diff < 0
     const absMs = Math.abs(diff)
 
-    const formatted = RelativeTime.formatDiff(absMs, isNegative)
+    const formatted = RelativeTimeFormatter.formatDiff(absMs, isNegative)
     if (withoutSuffix) {
       return formatted.replace(' ago', '').replace('in ', '')
     }

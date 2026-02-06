@@ -1,18 +1,21 @@
 import type { Unit } from '../type'
 import { UNIT_MS } from '../utils/constants'
 import { isValidUnit } from '../utils/validators'
-import { DurationComponent } from './components'
-import { DurationFormatter } from './formatter'
+import { DurationExtractor } from './extractor'
+import { TimeDurationFormatter } from './time-duration-formatter'
+
+// Re-export for backward compatibility
+export { DurationExtractor, TimeDurationFormatter }
 
 /** A length of time with parse/add/subtract/humanize/format */
-export default class Duration {
+export default class TimeDuration {
   private _ms: number
 
   constructor(ms: number = 0) {
     this._ms = ms
   }
 
-  static parse(input: string): Duration {
+  static parse(input: string): TimeDuration {
     const re = /(\d+(?:\.\d+)?)(ms|[YyMwdhms])/g
     let total = 0
     let m: RegExpExecArray | null
@@ -23,11 +26,11 @@ export default class Duration {
       total += v * (UNIT_MS[this.normalizeUnitChar(unit)] ?? 1)
     }
 
-    return new Duration(total)
+    return new TimeDuration(total)
   }
 
-  static isDuration(obj: unknown): obj is Duration {
-    return obj instanceof Duration
+  static isTimeDuration(obj: unknown): obj is TimeDuration {
+    return obj instanceof TimeDuration
   }
 
   private static normalizeUnitChar(char: string): Unit {
@@ -57,35 +60,35 @@ export default class Duration {
 
   // Component getters (remainder values)
   milliseconds(): number {
-    return DurationComponent.milliseconds(this._ms)
+    return DurationExtractor.milliseconds(this._ms)
   }
 
   seconds(): number {
-    return DurationComponent.seconds(this._ms)
+    return DurationExtractor.seconds(this._ms)
   }
 
   minutes(): number {
-    return DurationComponent.minutes(this._ms)
+    return DurationExtractor.minutes(this._ms)
   }
 
   hours(): number {
-    return DurationComponent.hours(this._ms)
+    return DurationExtractor.hours(this._ms)
   }
 
   days(): number {
-    return DurationComponent.days(this._ms)
+    return DurationExtractor.days(this._ms)
   }
 
   weeks(): number {
-    return DurationComponent.weeks(this._ms)
+    return DurationExtractor.weeks(this._ms)
   }
 
   months(): number {
-    return DurationComponent.months(this._ms)
+    return DurationExtractor.months(this._ms)
   }
 
   years(): number {
-    return DurationComponent.years(this._ms)
+    return DurationExtractor.years(this._ms)
   }
 
   // Total getters (full conversion)
@@ -121,25 +124,25 @@ export default class Duration {
     return this.as('year')
   }
 
-  add(n: number, unit: Unit): Duration {
-    const u0 = Duration.parse(`1${unit[0]}`)
-    return new Duration(this._ms + n * u0._ms)
+  add(n: number, unit: Unit): TimeDuration {
+    const u0 = TimeDuration.parse(`1${unit[0]}`)
+    return new TimeDuration(this._ms + n * u0._ms)
   }
 
-  subtract(n: number, unit: Unit): Duration {
+  subtract(n: number, unit: Unit): TimeDuration {
     return this.add(-n, unit)
   }
 
-  clone(): Duration {
-    return new Duration(this._ms)
+  clone(): TimeDuration {
+    return new TimeDuration(this._ms)
   }
 
   humanize(withSuffix = false): string {
-    return DurationFormatter.humanize(this._ms, withSuffix)
+    return TimeDurationFormatter.humanize(this._ms, withSuffix)
   }
 
   format(fmt: string): string {
-    return DurationFormatter.format(this._ms, fmt)
+    return TimeDurationFormatter.format(this._ms, fmt)
   }
 
   toJSON(): string {
@@ -147,6 +150,6 @@ export default class Duration {
   }
 
   toISOString(): string {
-    return DurationFormatter.toISO8601(this._ms)
+    return TimeDurationFormatter.toISO8601(this._ms)
   }
 }

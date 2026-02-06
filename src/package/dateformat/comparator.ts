@@ -1,7 +1,7 @@
 import type { Unit } from '../type'
 
 /** Comparison methods */
-export class Comparisons {
+export class DateComparator {
   static isBefore(value: number, other: number): boolean {
     return value < other
   }

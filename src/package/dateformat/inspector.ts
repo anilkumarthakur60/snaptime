@@ -1,5 +1,5 @@
 /** Date query methods */
-export class DateQueries {
+export class DateInspector {
   static isValid(date: Date): boolean {
     return !isNaN(date.getTime())
   }
@@ -37,9 +37,8 @@ export class DateQueries {
     d.setDate(d.getDate() + 3 - (d.getDay() || 7))
     const yearStart = new Date(d.getFullYear(), 0, 1)
     const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-
     if (week < 1) {
-      return new DateQueries().isoWeekCalc(new Date(d.getFullYear() - 1, 11, 31), isUTC)
+      return new DateInspector().isoWeekCalc(new Date(d.getFullYear() - 1, 11, 31), isUTC)
     }
     if (week > 52) {
       const nextYearStart = new Date(d.getFullYear() + 1, 0, 1)
@@ -66,6 +65,6 @@ export class DateQueries {
 
   static weeksInYear(year: number): number {
     const lastDay = new Date(year, 11, 31)
-    return new DateQueries().isoWeekCalc(lastDay, false) === 1 ? 52 : 53
+    return new DateInspector().isoWeekCalc(lastDay, false) === 1 ? 52 : 53
   }
 }
