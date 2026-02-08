@@ -15,7 +15,9 @@ export class FormatEngine {
     for (const token of sortedTokens) {
       const tokenRegex = new RegExp(token, 'g')
       const formatter = FormatTokens.FORMAT_TOKENS[token]
-      result = result.replace(tokenRegex, () => formatter(date, isUTC))
+      if (formatter) {
+        result = result.replace(tokenRegex, () => formatter(date, isUTC))
+      }
     }
 
     return result

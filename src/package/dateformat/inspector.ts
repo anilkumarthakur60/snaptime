@@ -16,7 +16,7 @@ export class DateInspector {
 
   static getWeekday(day: number): string {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    return days[day]
+    return days[day] ?? 'Sunday'
   }
 
   static daysInMonth(year: number, month: number): number {

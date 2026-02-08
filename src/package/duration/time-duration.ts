@@ -21,8 +21,8 @@ export default class TimeDuration {
     let m: RegExpExecArray | null
 
     while ((m = re.exec(input))) {
-      const v = parseFloat(m[1])
-      const unit = m[2]
+      const v = parseFloat(m[1] ?? '0')
+      const unit = m[2] ?? ''
       total += v * (UNIT_MS[this.normalizeUnitChar(unit)] ?? 1)
     }
 

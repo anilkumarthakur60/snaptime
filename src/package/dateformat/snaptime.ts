@@ -71,7 +71,7 @@ export default class SnapTime {
     const parts: Record<string, number | string> = {}
     const toks = fmt.match(/YYYY|MM|DD|HH|hh|mm|ss|X|x|DDD|DDDD|Z/g) || []
     toks.forEach((t, i) => {
-      parts[t] = m[i + 1]
+      parts[t] = m[i + 1] ?? ''
     })
 
     // Validation in strict mode

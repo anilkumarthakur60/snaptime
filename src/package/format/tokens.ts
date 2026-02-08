@@ -28,7 +28,7 @@ export class FormatTokens {
         'December'
       ]
       const m = u ? d.getUTCMonth() : d.getMonth()
-      return months[m]
+      return months[m] ?? 'January'
     },
     MMM: (d, u) => {
       const months = [
@@ -46,7 +46,7 @@ export class FormatTokens {
         'Dec'
       ]
       const m = u ? d.getUTCMonth() : d.getMonth()
-      return months[m]
+      return months[m] ?? 'Jan'
     },
     MM: (d, u) => {
       const m = u ? d.getUTCMonth() : d.getMonth()
@@ -59,8 +59,8 @@ export class FormatTokens {
     Qo: (d, u) => {
       const m = u ? d.getUTCMonth() : d.getMonth()
       const q = Math.floor(m / 3) + 1
-      const suffix = ['st', 'nd', 'rd', 'th'][q - 1] || 'th'
-      return `${q}${suffix}`
+      const suffix = ['st', 'nd', 'rd', 'th'][q - 1]
+      return `${q}${suffix ?? 'th'}`
     },
     Q: (d, u) => {
       const m = u ? d.getUTCMonth() : d.getMonth()
@@ -89,22 +89,22 @@ export class FormatTokens {
     dddd: (d, u) => {
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
       const day = u ? d.getUTCDay() : d.getDay()
-      return days[day]
+      return days[day] ?? 'Sunday'
     },
     ddd: (d, u) => {
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
       const day = u ? d.getUTCDay() : d.getDay()
-      return days[day]
+      return days[day] ?? 'Sun'
     },
     dd: (d, u) => {
       const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
       const day = u ? d.getUTCDay() : d.getDay()
-      return days[day]
+      return days[day] ?? 'Su'
     },
     do: (d, u) => {
       const day = u ? d.getUTCDate() : d.getDate()
-      const suffix = ['st', 'nd', 'rd', 'th'][(day - 1) % 10] || 'th'
-      return `${day}${suffix}`
+      const suffix = ['st', 'nd', 'rd', 'th'][(day - 1) % 10]
+      return `${day}${suffix ?? 'th'}`
     },
     E: (d, u) => {
       const day = u ? d.getUTCDay() : d.getDay()
@@ -222,8 +222,8 @@ export class FormatTokens {
       weekStart.setDate(jan4.getDate() - day)
       const diff = d.getTime() - weekStart.getTime()
       const week = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1
-      const suffix = ['st', 'nd', 'rd', 'th'][week % 10] || 'th'
-      return `${week}${suffix}`
+      const suffix = ['st', 'nd', 'rd', 'th'][week % 10]
+      return `${week}${suffix ?? 'th'}`
     },
     W: (d, u) => {
       const jan4 = u
