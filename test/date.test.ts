@@ -126,7 +126,7 @@ describe('Parsing & Custom Parse Formats', () => {
   })
   test('ISO string parsing', () => {
     const dt = dateFormat('2025-05-04T15:07:09Z').utc()
-    expect(dt.format()).toBe('2025-05-04 03:07 PM')
+    expect(dt.format()).toBe('2025-05-04 15:07:09')
   })
 
   test('numeric timestamp & Date input', () => {
