@@ -1043,7 +1043,9 @@ describe('formatIntl()', () => {
     const mockFormatter = {
       format: jest.fn().mockReturnValue('Thursday January 15')
     }
-    const spy = jest.spyOn(Intl, 'DateTimeFormat').mockReturnValueOnce(mockFormatter as any)
+    const spy = jest
+      .spyOn(Intl, 'DateTimeFormat')
+      .mockReturnValueOnce(mockFormatter as unknown as Intl.DateTimeFormat)
     const result = d.formatIntl({ weekday: 'long', month: 'long', day: 'numeric' })
     expect(result).toBe('Thursday, January 15')
     spy.mockRestore()

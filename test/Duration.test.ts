@@ -120,7 +120,7 @@ describe('Duration.as()', () => {
   })
 
   test('completely undefined unit falls back to dividing by 1 (returns ms value)', () => {
-    expect(new Duration(1000).as('nonexistent' as any)).toBe(1000)
+    expect(new Duration(1000).as('nonexistent' as unknown as never)).toBe(1000)
   })
 })
 
