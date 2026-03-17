@@ -12,15 +12,15 @@ export default class Duration {
 
   private static readonly MS_PER_UNIT: Partial<Record<Unit, number>> = {
     millisecond: 1,
-    second:      1_000,
-    minute:      60_000,
-    hour:        3_600_000,
-    day:         86_400_000,
-    date:        86_400_000,
-    week:        604_800_000,
-    fortnight:   1_209_600_000,
-    month:       2_592_000_000,
-    year:        31_536_000_000,
+    second: 1_000,
+    minute: 60_000,
+    hour: 3_600_000,
+    day: 86_400_000,
+    date: 86_400_000,
+    week: 604_800_000,
+    fortnight: 1_209_600_000,
+    month: 2_592_000_000,
+    year: 31_536_000_000
   }
 
   static parse(input: string): Duration {
@@ -74,7 +74,7 @@ export default class Duration {
       year: 31536e6, // ~365 days
       fortnight: 1209.6e6, // 14 days
       unknown: NaN,
-      week: 6048e5, // 7 days
+      week: 6048e5 // 7 days
     }
     return this._ms / (map[unit] ?? 1)
   }

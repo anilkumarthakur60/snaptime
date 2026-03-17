@@ -47,18 +47,16 @@ const dateFormat = Object.assign(
   },
   {
     // Core static methods
-    parse:    (str: string, fmt: string, strict?: boolean) => DateFormat.parse(str, fmt, strict),
-    min:      (...args: (string | number | Date | DateFormat)[]) => DateFormat.min(...args),
-    max:      (...args: (string | number | Date | DateFormat)[]) => DateFormat.max(...args),
+    parse: (str: string, fmt: string, strict?: boolean) => DateFormat.parse(str, fmt, strict),
+    min: (...args: (string | number | Date | DateFormat)[]) => DateFormat.min(...args),
+    max: (...args: (string | number | Date | DateFormat)[]) => DateFormat.max(...args),
     duration: (n: number, unit: Unit) => DateFormat.duration(n, unit),
-    locale:   (name: string, data?: LocaleData) => DateFormat.locale(name, data),
-    use:      (plugin: PluginFn) => DateFormat.use(plugin),
+    locale: (name: string, data?: LocaleData) => DateFormat.locale(name, data),
+    use: (plugin: PluginFn) => DateFormat.use(plugin),
 
     // Date range
-    range: (
-      start: string | number | Date | DateFormat,
-      end: string | number | Date | DateFormat
-    ) => new DateRange(start, end),
+    range: (start: string | number | Date | DateFormat, end: string | number | Date | DateFormat) =>
+      new DateRange(start, end),
 
     // Natural language
     natural: (input: string, ref?: DateFormat) => parseNatural(input, ref),

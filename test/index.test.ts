@@ -13,7 +13,7 @@ import dateFormat, {
   nextBusinessDay,
   prevBusinessDay,
   businessDaysBetween,
-  getHolidays,
+  getHolidays
 } from '../src/package/index'
 
 // ---------------------------------------------------------------------------

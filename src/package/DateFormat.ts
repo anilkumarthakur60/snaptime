@@ -1,4 +1,14 @@
-import type { Unit, LocaleData, PluginFn, PreciseDiffResult, AgeResult, CountdownResult, CalendarCell, CalendarGridOptions, FiscalConfig } from './type'
+import type {
+  Unit,
+  LocaleData,
+  PluginFn,
+  PreciseDiffResult,
+  AgeResult,
+  CountdownResult,
+  CalendarCell,
+  CalendarGridOptions,
+  FiscalConfig
+} from './type'
 import Duration from './Duration'
 
 export default class DateFormat {
@@ -568,25 +578,25 @@ export default class DateFormat {
   }
 
   private static readonly LOCAL_GETTERS: Record<string, (d: Date) => number> = {
-    year:        d => d.getFullYear(),
-    month:       d => d.getMonth() + 1,
-    date:        d => d.getDate(),
-    day:         d => d.getDay(),
-    hour:        d => d.getHours(),
-    minute:      d => d.getMinutes(),
-    second:      d => d.getSeconds(),
-    millisecond: d => d.getMilliseconds(),
+    year: (d) => d.getFullYear(),
+    month: (d) => d.getMonth() + 1,
+    date: (d) => d.getDate(),
+    day: (d) => d.getDay(),
+    hour: (d) => d.getHours(),
+    minute: (d) => d.getMinutes(),
+    second: (d) => d.getSeconds(),
+    millisecond: (d) => d.getMilliseconds()
   }
 
   private static readonly UTC_GETTERS: Record<string, (d: Date) => number> = {
-    year:        d => d.getUTCFullYear(),
-    month:       d => d.getUTCMonth() + 1,
-    date:        d => d.getUTCDate(),
-    day:         d => d.getUTCDay(),
-    hour:        d => d.getUTCHours(),
-    minute:      d => d.getUTCMinutes(),
-    second:      d => d.getUTCSeconds(),
-    millisecond: d => d.getUTCMilliseconds(),
+    year: (d) => d.getUTCFullYear(),
+    month: (d) => d.getUTCMonth() + 1,
+    date: (d) => d.getUTCDate(),
+    day: (d) => d.getUTCDay(),
+    hour: (d) => d.getUTCHours(),
+    minute: (d) => d.getUTCMinutes(),
+    second: (d) => d.getUTCSeconds(),
+    millisecond: (d) => d.getUTCMilliseconds()
   }
 
   get(u: Unit | 'day'): number {
@@ -597,23 +607,51 @@ export default class DateFormat {
   }
 
   private static readonly LOCAL_SETTERS: Record<string, (d: Date, v: number) => void> = {
-    year:        (d, v) => { d.setFullYear(v) },
-    month:       (d, v) => { d.setMonth(v - 1) },
-    date:        (d, v) => { d.setDate(v) },
-    hour:        (d, v) => { d.setHours(v) },
-    minute:      (d, v) => { d.setMinutes(v) },
-    second:      (d, v) => { d.setSeconds(v) },
-    millisecond: (d, v) => { d.setMilliseconds(v) },
+    year: (d, v) => {
+      d.setFullYear(v)
+    },
+    month: (d, v) => {
+      d.setMonth(v - 1)
+    },
+    date: (d, v) => {
+      d.setDate(v)
+    },
+    hour: (d, v) => {
+      d.setHours(v)
+    },
+    minute: (d, v) => {
+      d.setMinutes(v)
+    },
+    second: (d, v) => {
+      d.setSeconds(v)
+    },
+    millisecond: (d, v) => {
+      d.setMilliseconds(v)
+    }
   }
 
   private static readonly UTC_SETTERS: Record<string, (d: Date, v: number) => void> = {
-    year:        (d, v) => { d.setUTCFullYear(v) },
-    month:       (d, v) => { d.setUTCMonth(v - 1) },
-    date:        (d, v) => { d.setUTCDate(v) },
-    hour:        (d, v) => { d.setUTCHours(v) },
-    minute:      (d, v) => { d.setUTCMinutes(v) },
-    second:      (d, v) => { d.setUTCSeconds(v) },
-    millisecond: (d, v) => { d.setUTCMilliseconds(v) },
+    year: (d, v) => {
+      d.setUTCFullYear(v)
+    },
+    month: (d, v) => {
+      d.setUTCMonth(v - 1)
+    },
+    date: (d, v) => {
+      d.setUTCDate(v)
+    },
+    hour: (d, v) => {
+      d.setUTCHours(v)
+    },
+    minute: (d, v) => {
+      d.setUTCMinutes(v)
+    },
+    second: (d, v) => {
+      d.setUTCSeconds(v)
+    },
+    millisecond: (d, v) => {
+      d.setUTCMilliseconds(v)
+    }
   }
 
   set(u: Unit, val: number): DateFormat {
@@ -705,16 +743,51 @@ export default class DateFormat {
   private _locale() {
     const L = DateFormat._locales[DateFormat._currentLocale || 'en'] || {}
     return {
-      months: L.months ?? ['January','February','March','April','May','June','July','August','September','October','November','December'],
-      monthsShort: L.monthsShort ?? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-      weekdays: L.weekdays ?? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+      months: L.months ?? [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+      ],
+      monthsShort: L.monthsShort ?? [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ],
+      weekdays: L.weekdays ?? [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday'
+      ],
       weekdaysShort: L.weekdaysShort,
-      weekdaysMin: L.weekdaysMin,
+      weekdaysMin: L.weekdaysMin
     }
   }
 
   private static _ordinal(n: number): string {
-    const k = n % 100, j = n % 10
+    const k = n % 100,
+      j = n % 10
     if (j === 1 && k !== 11) return `${n}st`
     if (j === 2 && k !== 12) return `${n}nd`
     if (j === 3 && k !== 13) return `${n}rd`
@@ -748,8 +821,8 @@ export default class DateFormat {
 
     const loc = this._locale()
     const { months, monthsShort, weekdays } = loc
-    const weekdaysShort = loc.weekdaysShort ?? weekdays.map(w => w.slice(0, 3))
-    const weekdaysMin = loc.weekdaysMin ?? weekdays.map(w => w.slice(0, 2))
+    const weekdaysShort = loc.weekdaysShort ?? weekdays.map((w) => w.slice(0, 3))
+    const weekdaysMin = loc.weekdaysMin ?? weekdays.map((w) => w.slice(0, 2))
 
     const ord = DateFormat._ordinal
 
@@ -984,8 +1057,20 @@ export default class DateFormat {
   toRFC2822(): string {
     // "Tue, 17 Mar 2026 09:00:00 +0530"
     const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const MONTHS_SHORT = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ]
     const d = this._d
     const offset = -d.getTimezoneOffset()
     const sign = offset >= 0 ? '+' : '-'
@@ -1042,7 +1127,8 @@ export default class DateFormat {
   // ── Precise diff & age ───────────────────────────────────────────────────────
 
   preciseDiff(other: DateFormat | Date | string | number): PreciseDiffResult {
-    const otherDf = other instanceof DateFormat ? other : new DateFormat(other as string | number | Date)
+    const otherDf =
+      other instanceof DateFormat ? other : new DateFormat(other as string | number | Date)
     const isAfter = this.valueOf() >= otherDf.valueOf()
     const a = isAfter ? otherDf : this
     const b = isAfter ? this : otherDf
@@ -1055,19 +1141,40 @@ export default class DateFormat {
     let seconds = b.get('second') - a.get('second')
     let milliseconds = b.get('millisecond') - a.get('millisecond')
 
-    if (milliseconds < 0) { milliseconds += 1000; seconds-- }
-    if (seconds < 0) { seconds += 60; minutes-- }
-    if (minutes < 0) { minutes += 60; hours-- }
-    if (hours < 0) { hours += 24; days-- }
+    if (milliseconds < 0) {
+      milliseconds += 1000
+      seconds--
+    }
+    if (seconds < 0) {
+      seconds += 60
+      minutes--
+    }
+    if (minutes < 0) {
+      minutes += 60
+      hours--
+    }
+    if (hours < 0) {
+      hours += 24
+      days--
+    }
     if (days < 0) {
       const prevMonth = new DateFormat(new Date(b.get('year'), b.get('month') - 2, 1))
       days += prevMonth.daysInMonth()
       months--
     }
-    if (months < 0) { months += 12; years-- }
+    if (months < 0) {
+      months += 12
+      years--
+    }
 
     return {
-      years, months, days, hours, minutes, seconds, milliseconds,
+      years,
+      months,
+      days,
+      hours,
+      minutes,
+      seconds,
+      milliseconds,
       humanize(): string {
         const parts: string[] = []
         if (years > 0) parts.push(`${years} year${years !== 1 ? 's' : ''}`)
@@ -1117,14 +1224,24 @@ export default class DateFormat {
     const milliseconds = Math.floor(abs % 1e3)
 
     return {
-      days, hours, minutes, seconds, milliseconds, total, isPast,
+      days,
+      hours,
+      minutes,
+      seconds,
+      milliseconds,
+      total,
+      isPast,
       format(tpl: string): string {
         const pad = (n: number, len: number) => String(n).padStart(len, '0')
         return tpl
-          .replace(/DD/g, pad(days, 2)).replace(/D/g, String(days))
-          .replace(/HH/g, pad(hours, 2)).replace(/H/g, String(hours))
-          .replace(/mm/g, pad(minutes, 2)).replace(/m/g, String(minutes))
-          .replace(/ss/g, pad(seconds, 2)).replace(/s/g, String(seconds))
+          .replace(/DD/g, pad(days, 2))
+          .replace(/D/g, String(days))
+          .replace(/HH/g, pad(hours, 2))
+          .replace(/H/g, String(hours))
+          .replace(/mm/g, pad(minutes, 2))
+          .replace(/m/g, String(minutes))
+          .replace(/ss/g, pad(seconds, 2))
+          .replace(/s/g, String(seconds))
       },
       humanize(): string {
         if (isPast) return 'already passed'
@@ -1161,20 +1278,35 @@ export default class DateFormat {
     // Previous-month padding
     for (let i = startPad - 1; i >= 0; i--) {
       const d = firstDay.subtract(i + 1, 'day').startOf('day')
-      cells.push({ date: d, isCurrentMonth: false, isToday: d.isSameDay(today), isWeekend: d.isWeekend() })
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
     }
 
     // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
       const d = new DateFormat(new Date(year, month - 1, day))
-      cells.push({ date: d, isCurrentMonth: true, isToday: d.isSameDay(today), isWeekend: d.isWeekend() })
+      cells.push({
+        date: d,
+        isCurrentMonth: true,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
     }
 
     // Next-month fill to reach exactly 42 cells (6 rows × 7 cols)
     let nextDay = 1
     while (cells.length < 42) {
       const d = new DateFormat(new Date(year, month, nextDay++))
-      cells.push({ date: d, isCurrentMonth: false, isToday: d.isSameDay(today), isWeekend: d.isWeekend() })
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
     }
 
     // Split into weeks

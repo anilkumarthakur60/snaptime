@@ -37,7 +37,7 @@ describe('DateCollection constructor', () => {
       '2026-01-01',
       new Date(2026, 5, 1),
       d('2026-09-01'),
-      new Date('2026-12-01').getTime(),
+      new Date('2026-12-01').getTime()
     ])
     expect(c.count()).toBe(4)
   })
@@ -156,7 +156,7 @@ describe('DateCollection.groupBy', () => {
     const c = new DateCollection([
       new DateFormat(new Date(2026, 0, 15, 9, 0)),
       new DateFormat(new Date(2026, 0, 15, 9, 30)),
-      new DateFormat(new Date(2026, 0, 15, 10, 0)),
+      new DateFormat(new Date(2026, 0, 15, 10, 0))
     ])
     const groups = c.groupBy('hour')
     expect(groups.size).toBe(2)
@@ -222,7 +222,7 @@ describe('DateCollection.unique', () => {
     const c = new DateCollection([
       new DateFormat(new Date(2026, 0, 15, 9, 0)),
       new DateFormat(new Date(2026, 0, 15, 17, 0)),
-      new DateFormat(new Date(2026, 0, 16, 9, 0)),
+      new DateFormat(new Date(2026, 0, 16, 9, 0))
     ])
     expect(c.unique('day').count()).toBe(2)
   })
@@ -231,7 +231,7 @@ describe('DateCollection.unique', () => {
     const c = new DateCollection([
       new DateFormat(new Date(2026, 0, 15, 9, 0)),
       new DateFormat(new Date(2026, 0, 15, 9, 30)),
-      new DateFormat(new Date(2026, 0, 15, 10, 0)),
+      new DateFormat(new Date(2026, 0, 15, 10, 0))
     ])
     expect(c.unique('hour').count()).toBe(2)
   })
@@ -240,7 +240,7 @@ describe('DateCollection.unique', () => {
     const c = new DateCollection([
       new DateFormat(new Date(2026, 0, 15, 9, 0, 0)),
       new DateFormat(new Date(2026, 0, 15, 9, 0, 30)),
-      new DateFormat(new Date(2026, 0, 15, 9, 1, 0)),
+      new DateFormat(new Date(2026, 0, 15, 9, 1, 0))
     ])
     expect(c.unique('minute').count()).toBe(2)
   })
@@ -249,7 +249,7 @@ describe('DateCollection.unique', () => {
     const c = new DateCollection([
       new DateFormat(new Date(2026, 0, 15, 9, 0, 0, 0)),
       new DateFormat(new Date(2026, 0, 15, 9, 0, 0, 500)),
-      new DateFormat(new Date(2026, 0, 15, 9, 0, 1, 0)),
+      new DateFormat(new Date(2026, 0, 15, 9, 0, 1, 0))
     ])
     expect(c.unique('second').count()).toBe(2)
   })

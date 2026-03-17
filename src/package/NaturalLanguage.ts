@@ -2,20 +2,39 @@ import DateFormat from './DateFormat'
 import type { Unit } from './type'
 
 const WEEKDAYS: Record<string, number> = {
-  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-  thursday: 4, friday: 5, saturday: 6
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6
 }
 
 const MONTHS: Record<string, number> = {
-  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
-  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12
 }
 
 const UNIT_MAP: Record<string, Unit> = {
-  day: 'day', days: 'day',
-  week: 'week', weeks: 'week',
-  month: 'month', months: 'month',
-  year: 'year', years: 'year'
+  day: 'day',
+  days: 'day',
+  week: 'week',
+  weeks: 'week',
+  month: 'month',
+  months: 'month',
+  year: 'year',
+  years: 'year'
 }
 
 function parseMonth(s: string): number | undefined {
@@ -119,7 +138,9 @@ export default function parseNatural(input: string, ref?: DateFormat): DateForma
   }
 
   // "last day of March" or "last day of March 2026"
-  m = lower.match(/^last\s+day\s+of\s+(january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+(\d{4}))?$/)
+  m = lower.match(
+    /^last\s+day\s+of\s+(january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+(\d{4}))?$/
+  )
   if (m) {
     const month = parseMonth(m[1])!
     const year = m[2] ? parseInt(m[2], 10) : base.get('year')
@@ -129,7 +150,9 @@ export default function parseNatural(input: string, ref?: DateFormat): DateForma
   }
 
   // "first day of March" or "first day of March 2026"
-  m = lower.match(/^first\s+day\s+of\s+(january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+(\d{4}))?$/)
+  m = lower.match(
+    /^first\s+day\s+of\s+(january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+(\d{4}))?$/
+  )
   if (m) {
     const month = parseMonth(m[1])!
     const year = m[2] ? parseInt(m[2], 10) : base.get('year')
@@ -137,7 +160,9 @@ export default function parseNatural(input: string, ref?: DateFormat): DateForma
   }
 
   // "Nth weekday of month" e.g. "3rd Friday of January" or "2nd Tuesday of March 2026"
-  m = lower.match(/^(\d+)(?:st|nd|rd|th)\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\s+of\s+(january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+(\d{4}))?$/)
+  m = lower.match(
+    /^(\d+)(?:st|nd|rd|th)\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\s+of\s+(january|february|march|april|may|june|july|august|september|october|november|december)(?:\s+(\d{4}))?$/
+  )
   if (m) {
     const n = parseOrdinal(m[1])
     const weekday = parseWeekday(m[2])!

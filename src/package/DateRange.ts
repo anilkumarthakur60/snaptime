@@ -124,7 +124,9 @@ export default class DateRange {
   }
 
   equals(other: DateRange): boolean {
-    return this.start.valueOf() === other.start.valueOf() && this.end.valueOf() === other.end.valueOf()
+    return (
+      this.start.valueOf() === other.start.valueOf() && this.end.valueOf() === other.end.valueOf()
+    )
   }
 
   toString(): string {

@@ -73,8 +73,10 @@ export function businessDaysBetween(
 
   while (true) {
     current = current.add(direction, 'day')
-    if ((direction === 1 && current.valueOf() >= endMs) ||
-      (direction === -1 && current.valueOf() <= endMs)) {
+    if (
+      (direction === 1 && current.valueOf() >= endMs) ||
+      (direction === -1 && current.valueOf() <= endMs)
+    ) {
       break
     }
     if (isBusinessDay(current, holidays)) {
@@ -154,107 +156,106 @@ export function getHolidays(country: HolidayCountry | string, year: number): str
   switch (country.toUpperCase()) {
     case 'US':
       return [
-        iso(y, 1, 1),                                          // New Year's Day
-        iso(y, 1, nthWeekday(y, 1, 1, 3)),                     // MLK Day (3rd Mon Jan)
-        iso(y, 2, nthWeekday(y, 2, 1, 3)),                     // Presidents' Day (3rd Mon Feb)
-        iso(y, 5, lastWeekday(y, 5, 1)),                        // Memorial Day (last Mon May)
-        iso(y, 6, 19),                                          // Juneteenth
-        iso(y, 7, 4),                                           // Independence Day
-        iso(y, 9, nthWeekday(y, 9, 1, 1)),                     // Labor Day (1st Mon Sep)
-        iso(y, 10, nthWeekday(y, 10, 1, 2)),                   // Columbus Day (2nd Mon Oct)
-        iso(y, 11, 11),                                         // Veterans Day
-        iso(y, 11, nthWeekday(y, 11, 4, 4)),                   // Thanksgiving (4th Thu Nov)
-        iso(y, 12, 25),                                         // Christmas
+        iso(y, 1, 1), // New Year's Day
+        iso(y, 1, nthWeekday(y, 1, 1, 3)), // MLK Day (3rd Mon Jan)
+        iso(y, 2, nthWeekday(y, 2, 1, 3)), // Presidents' Day (3rd Mon Feb)
+        iso(y, 5, lastWeekday(y, 5, 1)), // Memorial Day (last Mon May)
+        iso(y, 6, 19), // Juneteenth
+        iso(y, 7, 4), // Independence Day
+        iso(y, 9, nthWeekday(y, 9, 1, 1)), // Labor Day (1st Mon Sep)
+        iso(y, 10, nthWeekday(y, 10, 1, 2)), // Columbus Day (2nd Mon Oct)
+        iso(y, 11, 11), // Veterans Day
+        iso(y, 11, nthWeekday(y, 11, 4, 4)), // Thanksgiving (4th Thu Nov)
+        iso(y, 12, 25) // Christmas
       ]
 
     case 'UK':
       return [
-        iso(y, 1, 1),                                          // New Year's Day
-        goodFriday,                                             // Good Friday
-        easterMonday,                                           // Easter Monday
-        iso(y, 5, nthWeekday(y, 5, 1, 1)),                     // Early May Bank Holiday
-        iso(y, 5, lastWeekday(y, 5, 1)),                        // Spring Bank Holiday
-        iso(y, 8, lastWeekday(y, 8, 1)),                        // Summer Bank Holiday
-        iso(y, 12, 25),                                         // Christmas
-        iso(y, 12, 26),                                         // Boxing Day
+        iso(y, 1, 1), // New Year's Day
+        goodFriday, // Good Friday
+        easterMonday, // Easter Monday
+        iso(y, 5, nthWeekday(y, 5, 1, 1)), // Early May Bank Holiday
+        iso(y, 5, lastWeekday(y, 5, 1)), // Spring Bank Holiday
+        iso(y, 8, lastWeekday(y, 8, 1)), // Summer Bank Holiday
+        iso(y, 12, 25), // Christmas
+        iso(y, 12, 26) // Boxing Day
       ]
 
     case 'IN':
       return [
-        iso(y, 1, 1),                                          // New Year's Day
-        iso(y, 1, 26),                                          // Republic Day
-        iso(y, 3, 29),                                          // Holi (approx)
-        goodFriday,                                             // Good Friday
-        iso(y, 5, 1),                                           // May Day
-        iso(y, 8, 15),                                          // Independence Day
-        iso(y, 10, 2),                                          // Gandhi Jayanti
-        iso(y, 10, 24),                                         // Dussehra (approx)
-        iso(y, 11, 1),                                          // Diwali (approx)
-        iso(y, 11, 14),                                         // Children's Day
-        iso(y, 12, 25),                                         // Christmas
+        iso(y, 1, 1), // New Year's Day
+        iso(y, 1, 26), // Republic Day
+        iso(y, 3, 29), // Holi (approx)
+        goodFriday, // Good Friday
+        iso(y, 5, 1), // May Day
+        iso(y, 8, 15), // Independence Day
+        iso(y, 10, 2), // Gandhi Jayanti
+        iso(y, 10, 24), // Dussehra (approx)
+        iso(y, 11, 1), // Diwali (approx)
+        iso(y, 11, 14), // Children's Day
+        iso(y, 12, 25) // Christmas
       ]
 
     case 'DE':
       return [
-        iso(y, 1, 1),                                          // Neujahr
-        iso(y, 1, 6),                                           // Heilige Drei Konige
-        goodFriday,                                             // Karfreitag
-        easterSun,                                              // Ostersonntag
-        easterMonday,                                           // Ostermontag
-        iso(y, 5, 1),                                           // Tag der Arbeit
-        easterOffset(39),                                       // Christi Himmelfahrt
-        easterOffset(49),                                       // Pfingstsonntag
-        easterOffset(50),                                       // Pfingstmontag
-        easterOffset(60),                                       // Fronleichnam
-        iso(y, 10, 3),                                          // Tag der Deutschen Einheit
-        iso(y, 11, 1),                                          // Allerheiligen
-        iso(y, 12, 25),                                         // 1. Weihnachtstag
-        iso(y, 12, 26),                                         // 2. Weihnachtstag
+        iso(y, 1, 1), // Neujahr
+        iso(y, 1, 6), // Heilige Drei Konige
+        goodFriday, // Karfreitag
+        easterSun, // Ostersonntag
+        easterMonday, // Ostermontag
+        iso(y, 5, 1), // Tag der Arbeit
+        easterOffset(39), // Christi Himmelfahrt
+        easterOffset(49), // Pfingstsonntag
+        easterOffset(50), // Pfingstmontag
+        easterOffset(60), // Fronleichnam
+        iso(y, 10, 3), // Tag der Deutschen Einheit
+        iso(y, 11, 1), // Allerheiligen
+        iso(y, 12, 25), // 1. Weihnachtstag
+        iso(y, 12, 26) // 2. Weihnachtstag
       ]
 
     case 'FR':
       return [
-        iso(y, 1, 1),                                          // Jour de l'an
-        easterMonday,                                           // Lundi de Paques
-        iso(y, 5, 1),                                           // Fete du Travail
-        iso(y, 5, 8),                                           // Victoire 1945
-        easterOffset(39),                                       // Ascension
-        easterOffset(50),                                       // Lundi de Pentecote
-        iso(y, 7, 14),                                          // Fete nationale
-        iso(y, 8, 15),                                          // Assomption
-        iso(y, 11, 1),                                          // Toussaint
-        iso(y, 11, 11),                                         // Armistice
-        iso(y, 12, 25),                                         // Noel
+        iso(y, 1, 1), // Jour de l'an
+        easterMonday, // Lundi de Paques
+        iso(y, 5, 1), // Fete du Travail
+        iso(y, 5, 8), // Victoire 1945
+        easterOffset(39), // Ascension
+        easterOffset(50), // Lundi de Pentecote
+        iso(y, 7, 14), // Fete nationale
+        iso(y, 8, 15), // Assomption
+        iso(y, 11, 1), // Toussaint
+        iso(y, 11, 11), // Armistice
+        iso(y, 12, 25) // Noel
       ]
 
     case 'CA':
       return [
-        iso(y, 1, 1),                                          // New Year's Day
-        iso(y, 2, nthWeekday(y, 2, 1, 3)),                     // Family Day (3rd Mon Feb)
-        goodFriday,                                             // Good Friday
-        iso(y, 5, lastWeekday(y, 5, 1) > 24
-          ? lastWeekday(y, 5, 1) : lastWeekday(y, 5, 1)),      // Victoria Day (Mon before May 25)
-        iso(y, 7, 1),                                           // Canada Day
-        iso(y, 9, nthWeekday(y, 9, 1, 1)),                     // Labour Day (1st Mon Sep)
-        iso(y, 9, 30),                                          // National Day for Truth & Reconciliation
-        iso(y, 10, nthWeekday(y, 10, 1, 2)),                   // Thanksgiving (2nd Mon Oct)
-        iso(y, 11, 11),                                         // Remembrance Day
-        iso(y, 12, 25),                                         // Christmas
-        iso(y, 12, 26),                                         // Boxing Day
+        iso(y, 1, 1), // New Year's Day
+        iso(y, 2, nthWeekday(y, 2, 1, 3)), // Family Day (3rd Mon Feb)
+        goodFriday, // Good Friday
+        iso(y, 5, lastWeekday(y, 5, 1) > 24 ? lastWeekday(y, 5, 1) : lastWeekday(y, 5, 1)), // Victoria Day (Mon before May 25)
+        iso(y, 7, 1), // Canada Day
+        iso(y, 9, nthWeekday(y, 9, 1, 1)), // Labour Day (1st Mon Sep)
+        iso(y, 9, 30), // National Day for Truth & Reconciliation
+        iso(y, 10, nthWeekday(y, 10, 1, 2)), // Thanksgiving (2nd Mon Oct)
+        iso(y, 11, 11), // Remembrance Day
+        iso(y, 12, 25), // Christmas
+        iso(y, 12, 26) // Boxing Day
       ]
 
     case 'AU':
       return [
-        iso(y, 1, 1),                                          // New Year's Day
-        iso(y, 1, 26),                                          // Australia Day
-        goodFriday,                                             // Good Friday
-        easterOffset(-1),                                       // Easter Saturday
-        easterSun,                                              // Easter Sunday
-        easterMonday,                                           // Easter Monday
-        iso(y, 4, 25),                                          // ANZAC Day
-        iso(y, 6, nthWeekday(y, 6, 1, 2)),                     // Queen's Birthday (2nd Mon Jun)
-        iso(y, 12, 25),                                         // Christmas
-        iso(y, 12, 26),                                         // Boxing Day
+        iso(y, 1, 1), // New Year's Day
+        iso(y, 1, 26), // Australia Day
+        goodFriday, // Good Friday
+        easterOffset(-1), // Easter Saturday
+        easterSun, // Easter Sunday
+        easterMonday, // Easter Monday
+        iso(y, 4, 25), // ANZAC Day
+        iso(y, 6, nthWeekday(y, 6, 1, 2)), // Queen's Birthday (2nd Mon Jun)
+        iso(y, 12, 25), // Christmas
+        iso(y, 12, 26) // Boxing Day
       ]
 
     default:

@@ -203,8 +203,18 @@ describe('Static helpers', () => {
   test('locale() registers and switches locale', () => {
     DateFormat.locale('test-lang', {
       months: [
-        'Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis',
-        'Siete', 'Ocho', 'Nueve', 'Diez', 'Once', 'Doce'
+        'Uno',
+        'Dos',
+        'Tres',
+        'Cuatro',
+        'Cinco',
+        'Seis',
+        'Siete',
+        'Ocho',
+        'Nueve',
+        'Diez',
+        'Once',
+        'Doce'
       ]
     })
     DateFormat.locale('test-lang')
@@ -216,7 +226,9 @@ describe('Static helpers', () => {
 
   test('use() calls plugin function', () => {
     let called = false
-    DateFormat.use(() => { called = true })
+    DateFormat.use(() => {
+      called = true
+    })
     expect(called).toBe(true)
   })
 })
@@ -359,8 +371,10 @@ describe('Temporal is* checks', () => {
     test('isNextYear() → true for next year', () => expect(nextYear.isNextYear()).toBe(true))
     test('isLastYear() → false for current', () => expect(current.isLastYear()).toBe(false))
     test('isLastYear() → true for last year', () => expect(lastYear.isLastYear()).toBe(true))
-    test('isSameYear() same year → true', () => expect(current.isSameYear(new DateFormat('2026-06-01'))).toBe(true))
-    test('isSameYear() different year → false', () => expect(current.isSameYear(lastYear)).toBe(false))
+    test('isSameYear() same year → true', () =>
+      expect(current.isSameYear(new DateFormat('2026-06-01'))).toBe(true))
+    test('isSameYear() different year → false', () =>
+      expect(current.isSameYear(lastYear)).toBe(false))
   })
 
   describe('Month checks', () => {
@@ -377,8 +391,10 @@ describe('Temporal is* checks', () => {
     test('isNextWeek() → true for next week', () => expect(nextWeek.isNextWeek()).toBe(true))
     test('isLastWeek() → false for current', () => expect(current.isLastWeek()).toBe(false))
     test('isLastWeek() → true for last week', () => expect(lastWeek.isLastWeek()).toBe(true))
-    test('isSameWeek() same week → true', () => expect(current.isSameWeek(new DateFormat('2026-01-14'))).toBe(true))
-    test('isSameWeek() different week → false', () => expect(current.isSameWeek(nextWeek)).toBe(false))
+    test('isSameWeek() same week → true', () =>
+      expect(current.isSameWeek(new DateFormat('2026-01-14'))).toBe(true))
+    test('isSameWeek() different week → false', () =>
+      expect(current.isSameWeek(nextWeek)).toBe(false))
   })
 
   describe('Day checks', () => {
@@ -387,7 +403,8 @@ describe('Temporal is* checks', () => {
     test('isNextDay() → true for tomorrow', () => expect(tomorrow.isNextDay()).toBe(true))
     test('isLastDay() → false for current', () => expect(current.isLastDay()).toBe(false))
     test('isLastDay() → true for yesterday', () => expect(yesterday.isLastDay()).toBe(true))
-    test('isSameDay() same day → true', () => expect(current.isSameDay(new DateFormat('2026-01-15T08:00:00'))).toBe(true))
+    test('isSameDay() same day → true', () =>
+      expect(current.isSameDay(new DateFormat('2026-01-15T08:00:00'))).toBe(true))
     test('isSameDay() different day → false', () => expect(current.isSameDay(tomorrow)).toBe(false))
   })
 
@@ -399,8 +416,10 @@ describe('Temporal is* checks', () => {
     test('isCurrentHour() → true for now', () => expect(nowUTC.isCurrentHour()).toBe(true))
     test('isNextHour() → true for +1h', () => expect(nextHour.isNextHour()).toBe(true))
     test('isLastHour() → true for -1h', () => expect(lastHour.isLastHour()).toBe(true))
-    test('isSameHour() → true same hour', () => expect(nowUTC.isSameHour(new DateFormat('2026-01-15T12:30:00Z'))).toBe(true))
-    test('isSameHour() → false different hour', () => expect(nowUTC.isSameHour(nextHour)).toBe(false))
+    test('isSameHour() → true same hour', () =>
+      expect(nowUTC.isSameHour(new DateFormat('2026-01-15T12:30:00Z'))).toBe(true))
+    test('isSameHour() → false different hour', () =>
+      expect(nowUTC.isSameHour(nextHour)).toBe(false))
   })
 
   describe('Minute checks', () => {
@@ -411,7 +430,8 @@ describe('Temporal is* checks', () => {
     test('isCurrentMinute() → true', () => expect(nowUTC.isCurrentMinute()).toBe(true))
     test('isNextMinute() → true', () => expect(nextMin.isNextMinute()).toBe(true))
     test('isLastMinute() → true', () => expect(lastMin.isLastMinute()).toBe(true))
-    test('isSameMinute() → true', () => expect(nowUTC.isSameMinute(new DateFormat('2026-01-15T12:00:30Z'))).toBe(true))
+    test('isSameMinute() → true', () =>
+      expect(nowUTC.isSameMinute(new DateFormat('2026-01-15T12:00:30Z'))).toBe(true))
   })
 
   describe('Second checks', () => {
@@ -433,8 +453,10 @@ describe('Temporal is* checks', () => {
     test('isCurrentMillisecond() → true', () => expect(nowUTC.isCurrentMillisecond()).toBe(true))
     test('isNextMillisecond() → true', () => expect(nextMs.isNextMillisecond()).toBe(true))
     test('isLastMillisecond() → true', () => expect(lastMs.isLastMillisecond()).toBe(true))
-    test('isSameMillisecond() → true same ms', () => expect(nowUTC.isSameMillisecond(nowUTC.clone())).toBe(true))
-    test('isSameMillisecond() → false different ms', () => expect(nowUTC.isSameMillisecond(nextMs)).toBe(false))
+    test('isSameMillisecond() → true same ms', () =>
+      expect(nowUTC.isSameMillisecond(nowUTC.clone())).toBe(true))
+    test('isSameMillisecond() → false different ms', () =>
+      expect(nowUTC.isSameMillisecond(nextMs)).toBe(false))
   })
 
   describe('Micro aliases', () => {
@@ -457,7 +479,8 @@ describe('Temporal is* checks', () => {
     const d2010 = new DateFormat('2010-01-01')
 
     test('isSameDecade() same decade → true', () => expect(d2026.isSameDecade(d2020)).toBe(true))
-    test('isSameDecade() different decade → false', () => expect(d2026.isSameDecade(d2030)).toBe(false))
+    test('isSameDecade() different decade → false', () =>
+      expect(d2026.isSameDecade(d2030)).toBe(false))
     test('isCurrentDecade() → true', () => expect(d2026.isCurrentDecade()).toBe(true))
     test('isNextDecade() → true for 2030s', () => expect(d2030.isNextDecade()).toBe(true))
     test('isLastDecade() → true for 2010s', () => expect(d2010.isLastDecade()).toBe(true))
@@ -471,7 +494,8 @@ describe('Temporal is* checks', () => {
     test('isCurrentCentury() → true', () => expect(d2026.isCurrentCentury()).toBe(true))
     test('isNextCentury() → true for 2100', () => expect(d2100.isNextCentury()).toBe(true))
     test('isLastCentury() → true for 1999', () => expect(d1999.isLastCentury()).toBe(true))
-    test('isSameCentury() same century → true', () => expect(d2026.isSameCentury(new DateFormat('2055-01-01'))).toBe(true))
+    test('isSameCentury() same century → true', () =>
+      expect(d2026.isSameCentury(new DateFormat('2055-01-01'))).toBe(true))
   })
 
   describe('Millennium checks', () => {
@@ -482,7 +506,8 @@ describe('Temporal is* checks', () => {
     test('isCurrentMillennium() → true', () => expect(d2026.isCurrentMillennium()).toBe(true))
     test('isNextMillennium() → true for 3000', () => expect(d3000.isNextMillennium()).toBe(true))
     test('isLastMillennium() → true for 1500', () => expect(d1000.isLastMillennium()).toBe(true))
-    test('isSameMillennium() → true same millennium', () => expect(d2026.isSameMillennium(new DateFormat('2500-01-01'))).toBe(true))
+    test('isSameMillennium() → true same millennium', () =>
+      expect(d2026.isSameMillennium(new DateFormat('2500-01-01'))).toBe(true))
   })
 
   describe('Quarter checks (fake time = Jan 2026, Q1)', () => {
@@ -961,12 +986,20 @@ describe('format()', () => {
   test('custom locale months', () => {
     DateFormat.locale('fr-test', {
       months: [
-        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+        'Janvier',
+        'Février',
+        'Mars',
+        'Avril',
+        'Mai',
+        'Juin',
+        'Juillet',
+        'Août',
+        'Septembre',
+        'Octobre',
+        'Novembre',
+        'Décembre'
       ],
-      weekdays: [
-        'Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'
-      ]
+      weekdays: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
     })
     DateFormat.locale('fr-test')
     expect(d.format('MMMM')).toBe('Janvier')
@@ -1310,13 +1343,13 @@ describe('calendarGrid()', () => {
   test('returns 6 rows × 7 columns with weekStart=sunday', () => {
     const grid = jan2026.calendarGrid({ weekStart: 'sunday' })
     expect(grid.length).toBe(6)
-    grid.forEach(row => expect(row.length).toBe(7))
+    grid.forEach((row) => expect(row.length).toBe(7))
   })
 
   test('returns 6 rows × 7 columns with weekStart=monday', () => {
     const grid = jan2026.calendarGrid({ weekStart: 'monday' })
     expect(grid.length).toBe(6)
-    grid.forEach(row => expect(row.length).toBe(7))
+    grid.forEach((row) => expect(row.length).toBe(7))
   })
 
   test('first row contains previous month days when month does not start on week start (sunday)', () => {
@@ -1333,15 +1366,15 @@ describe('calendarGrid()', () => {
     const grid = jan2026.calendarGrid({ weekStart: 'sunday' })
     const lastRow = grid[5]
     // Last row should have Feb 2026 days
-    const nextMonthCells = lastRow.filter(c => !c.isCurrentMonth)
+    const nextMonthCells = lastRow.filter((c) => !c.isCurrentMonth)
     expect(nextMonthCells.length).toBeGreaterThan(0)
-    nextMonthCells.forEach(c => expect(c.date.get('month')).toBe(2))
+    nextMonthCells.forEach((c) => expect(c.date.get('month')).toBe(2))
   })
 
   test('isCurrentMonth flags are correct', () => {
     const grid = jan2026.calendarGrid({ weekStart: 'sunday' })
     const all = grid.flat()
-    all.forEach(cell => {
+    all.forEach((cell) => {
       if (cell.isCurrentMonth) {
         expect(cell.date.get('month')).toBe(1)
         expect(cell.date.get('year')).toBe(2026)
@@ -1352,7 +1385,7 @@ describe('calendarGrid()', () => {
   test('isWeekend flags correct for Saturday/Sunday cells', () => {
     const grid = jan2026.calendarGrid({ weekStart: 'sunday' })
     const all = grid.flat()
-    all.forEach(cell => {
+    all.forEach((cell) => {
       const day = cell.date.get('day')
       if (day === 0 || day === 6) {
         expect(cell.isWeekend).toBe(true)
@@ -1365,7 +1398,7 @@ describe('calendarGrid()', () => {
   test('all 31 January days appear in grid', () => {
     const grid = jan2026.calendarGrid({ weekStart: 'sunday' })
     const all = grid.flat()
-    const janDays = all.filter(c => c.isCurrentMonth)
+    const janDays = all.filter((c) => c.isCurrentMonth)
     expect(janDays.length).toBe(31)
   })
 

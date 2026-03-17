@@ -7,7 +7,7 @@ import {
   nextBusinessDay,
   prevBusinessDay,
   businessDaysBetween,
-  getHolidays,
+  getHolidays
 } from '../src/package/BusinessDay'
 
 // ---------------------------------------------------------------------------

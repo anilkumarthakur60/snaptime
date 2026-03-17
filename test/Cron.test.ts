@@ -5,7 +5,6 @@ import DateFormat from '../src/package/DateFormat'
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-const d = (s: string) => new DateFormat(s)
 
 // Build a DateFormat from local Date constructor so we can control
 // hour/minute without UTC confusion.

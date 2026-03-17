@@ -5,8 +5,8 @@ export default class DateCollection {
   private readonly _dates: DateFormat[]
 
   constructor(dates: (string | number | Date | DateFormat)[]) {
-    this._dates = dates.map(
-      (d) => (d instanceof DateFormat ? d.clone() : new DateFormat(d as string | number | Date))
+    this._dates = dates.map((d) =>
+      d instanceof DateFormat ? d.clone() : new DateFormat(d as string | number | Date)
     )
   }
 

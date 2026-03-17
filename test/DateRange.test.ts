@@ -5,14 +5,14 @@ import Duration from '../src/package/Duration'
 
 // Use UTC timestamps to keep tests machine-independent
 // Jan 1–31, 2026 UTC
-const JAN_1  = Date.UTC(2026, 0, 1)
-const JAN_2  = Date.UTC(2026, 0, 2)
-const JAN_3  = Date.UTC(2026, 0, 3)
+const JAN_1 = Date.UTC(2026, 0, 1)
+const JAN_2 = Date.UTC(2026, 0, 2)
+const JAN_3 = Date.UTC(2026, 0, 3)
 const JAN_15 = Date.UTC(2026, 0, 15)
 const JAN_31 = Date.UTC(2026, 0, 31)
-const FEB_1  = Date.UTC(2026, 1, 1)
+const FEB_1 = Date.UTC(2026, 1, 1)
 const FEB_28 = Date.UTC(2026, 1, 28)
-const MAR_1  = Date.UTC(2026, 2, 1)
+const MAR_1 = Date.UTC(2026, 2, 1)
 const DEC_1_2025 = Date.UTC(2025, 11, 1)
 
 describe('DateRange', () => {

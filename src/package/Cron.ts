@@ -12,8 +12,18 @@ const DAY_ABBR: Record<string, number> = {
 }
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
 ]
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -143,7 +153,10 @@ export default class Cron {
   }
 
   prev(from?: DateFormat): DateFormat {
-    let cursor = (from ?? new DateFormat()).set('second', 0).set('millisecond', 0).subtract(1, 'minute')
+    let cursor = (from ?? new DateFormat())
+      .set('second', 0)
+      .set('millisecond', 0)
+      .subtract(1, 'minute')
 
     for (let i = 0; i < MAX_ITER_MINUTES; i++) {
       if (this.matches(cursor)) return cursor
@@ -195,8 +208,8 @@ export default class Cron {
       const mins = [...this.minute.values].sort((a, b) => a - b)
       const hrs = [...this.hour.values].sort((a, b) => a - b)
 
-      const times = hrs.flatMap(h =>
-        mins.map(m => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+      const times = hrs.flatMap((h) =>
+        mins.map((m) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
       )
 
       parts.push(`At ${times.join(', ')}`)
@@ -212,7 +225,7 @@ export default class Cron {
 
     if (!this.month.any) {
       const vals = [...this.month.values].sort((a, b) => a - b)
-      parts.push(`in ${vals.map(v => MONTH_NAMES[v - 1]).join(', ')}`)
+      parts.push(`in ${vals.map((v) => MONTH_NAMES[v - 1]).join(', ')}`)
     }
 
     if (!this.dow.any) {
@@ -240,14 +253,12 @@ export default class Cron {
 
     const vals = [...this.dow.values].sort((a, b) => a - b)
 
-    const isConsecutive = vals.length > 1 && vals.every((v, i) =>
-      i === 0 || v === vals[i - 1] + 1
-    )
+    const isConsecutive = vals.length > 1 && vals.every((v, i) => i === 0 || v === vals[i - 1] + 1)
 
     if (isConsecutive && vals.length > 2) {
       return `${DAY_NAMES[vals[0]]} through ${DAY_NAMES[vals[vals.length - 1]]}`
     }
 
-    return vals.map(v => DAY_NAMES[v]).join(', ')
+    return vals.map((v) => DAY_NAMES[v]).join(', ')
   }
 }
