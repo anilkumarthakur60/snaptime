@@ -470,6 +470,18 @@ describe('Temporal is* checks', () => {
     test('isSameMicrosecond() is alias for isSameMillisecond()', () => {
       expect(a.isSameMicrosecond(b)).toBe(a.isSameMillisecond(b))
     })
+
+    test('isCurrentMicro() → true for current ms', () => {
+      expect(new DateFormat(FAKE_MS).isCurrentMicro()).toBe(true)
+    })
+
+    test('isNextMicro() → true for next ms', () => {
+      expect(new DateFormat(FAKE_MS + 1).isNextMicro()).toBe(true)
+    })
+
+    test('isLastMicro() → true for last ms', () => {
+      expect(new DateFormat(FAKE_MS - 1).isLastMicro()).toBe(true)
+    })
   })
 
   describe('Decade checks', () => {
@@ -1026,6 +1038,16 @@ describe('formatIntl()', () => {
     expect(result).toContain('January')
     expect(result).toContain('15')
   })
+
+  test('adds comma when locale returns no-comma weekday+month+day format', () => {
+    const mockFormatter = {
+      format: jest.fn().mockReturnValue('Thursday January 15')
+    }
+    const spy = jest.spyOn(Intl, 'DateTimeFormat').mockReturnValueOnce(mockFormatter as any)
+    const result = d.formatIntl({ weekday: 'long', month: 'long', day: 'numeric' })
+    expect(result).toBe('Thursday, January 15')
+    spy.mockRestore()
+  })
 })
 
 // ─── fromNow() ────────────────────────────────────────────────────────────────
@@ -1222,6 +1244,30 @@ describe('preciseDiff() / preciseFrom() / age()', () => {
     const result = b.preciseDiff(a)
     expect(result.years).toBe(0)
     expect(result.months).toBe(10)
+  })
+
+  test('seconds cascade (b.second < a.second, no ms adjustment needed)', () => {
+    const a = new DateFormat('2026-01-15T12:00:45Z')
+    const b = new DateFormat('2026-01-15T12:01:30Z')
+    const result = b.preciseDiff(a)
+    expect(result.seconds).toBe(45)
+    expect(result.minutes).toBe(0)
+  })
+
+  test('minutes cascade (b.minute < a.minute)', () => {
+    const a = new DateFormat('2026-01-15T12:45:00Z')
+    const b = new DateFormat('2026-01-15T13:30:00Z')
+    const result = b.preciseDiff(a)
+    expect(result.minutes).toBe(45)
+    expect(result.hours).toBe(0)
+  })
+
+  test('hours cascade (b.hour < a.hour across day boundary)', () => {
+    const a = new DateFormat('2026-01-15T20:00:00Z')
+    const b = new DateFormat('2026-01-16T10:00:00Z')
+    const result = b.preciseDiff(a)
+    expect(result.hours).toBe(14)
+    expect(result.days).toBe(0)
   })
 
   test('humanize() multi-unit', () => {

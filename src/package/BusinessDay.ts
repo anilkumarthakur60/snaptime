@@ -234,7 +234,7 @@ export function getHolidays(country: HolidayCountry | string, year: number): str
         iso(y, 1, 1), // New Year's Day
         iso(y, 2, nthWeekday(y, 2, 1, 3)), // Family Day (3rd Mon Feb)
         goodFriday, // Good Friday
-        iso(y, 5, lastWeekday(y, 5, 1) > 24 ? lastWeekday(y, 5, 1) : lastWeekday(y, 5, 1)), // Victoria Day (Mon before May 25)
+        iso(y, 5, lastWeekday(y, 5, 1)), // Victoria Day (Mon before May 25)
         iso(y, 7, 1), // Canada Day
         iso(y, 9, nthWeekday(y, 9, 1, 1)), // Labour Day (1st Mon Sep)
         iso(y, 9, 30), // National Day for Truth & Reconciliation

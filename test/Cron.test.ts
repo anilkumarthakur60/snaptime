@@ -236,6 +236,34 @@ describe('Cron.between', () => {
     const results = cron.between(start, end)
     expect(results).toHaveLength(0)
   })
+
+  test('impossible cron over large range → empty array', () => {
+    // "0 0 32 * *" is impossible (no 32nd day)
+    const cron = new Cron('0 0 32 * *')
+    const start = local(2026, 1, 1, 0, 0)
+    const end = local(2026, 12, 31, 23, 59)
+    const results = cron.between(start, end)
+    expect(results).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Error cases
+// ---------------------------------------------------------------------------
+describe('Cron error cases', () => {
+  test('prev() throws when no match found within 366 days', () => {
+    // "0 0 32 * *" is impossible
+    const cron = new Cron('0 0 32 * *')
+    const from = local(2026, 1, 15, 12, 0)
+    expect(() => cron.prev(from)).toThrow('No matching date found within 366 days')
+  })
+
+  test('next() throws when no match found within 366 days', () => {
+    // "0 0 32 * *" is impossible
+    const cron = new Cron('0 0 32 * *')
+    const from = local(2026, 1, 15, 12, 0)
+    expect(() => cron.next(from)).toThrow('No matching date found within 366 days')
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -274,6 +302,46 @@ describe('Cron.humanize', () => {
     const result = new Cron('0 9,17 * * *').humanize()
     expect(result).toContain('09:00')
     expect(result).toContain('17:00')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// DOW wraparound range (lo > hi)
+// ---------------------------------------------------------------------------
+describe('Cron DOW wraparound range', () => {
+  test('"* * * * 5-1" matches Friday, Saturday, Sunday, Monday', () => {
+    const cron = new Cron('* * * * 5-1')
+    // Jan 2026: Mon=12, Fri=16, Sat=17, Sun=18
+    expect(cron.matches(local(2026, 1, 12, 9, 0))).toBe(true) // Monday
+    expect(cron.matches(local(2026, 1, 16, 9, 0))).toBe(true) // Friday
+    expect(cron.matches(local(2026, 1, 17, 9, 0))).toBe(true) // Saturday
+    expect(cron.matches(local(2026, 1, 18, 9, 0))).toBe(true) // Sunday
+    expect(cron.matches(local(2026, 1, 13, 9, 0))).toBe(false) // Tuesday
+    expect(cron.matches(local(2026, 1, 14, 9, 0))).toBe(false) // Wednesday
+    expect(cron.matches(local(2026, 1, 15, 9, 0))).toBe(false) // Thursday
+  })
+})
+
+// ---------------------------------------------------------------------------
+// humanize – minute-only and hour-only branches (with other constraints)
+// ---------------------------------------------------------------------------
+describe('Cron.humanize additional branches', () => {
+  test('"30 * 15 * *" minute-only branch (non-wildcard minute with wildcard hour + dom constraint)', () => {
+    const result = new Cron('30 * 15 * *').humanize()
+    expect(result).toContain('minute')
+    expect(result).toContain('30')
+  })
+
+  test('"* 9 * * 1" hour-only branch (wildcard minute, specific hour + dow constraint)', () => {
+    const result = new Cron('* 9 * * 1').humanize()
+    expect(result).toContain('hour')
+    expect(result).toContain('9')
+  })
+
+  test('"* * * * 1,3" non-consecutive DOW → joined list', () => {
+    const result = new Cron('* * * * 1,3').humanize()
+    expect(result).toContain('Monday')
+    expect(result).toContain('Wednesday')
   })
 })
 

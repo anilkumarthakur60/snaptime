@@ -118,6 +118,10 @@ describe('Duration.as()', () => {
   test('unknown → NaN', () => {
     expect(new Duration(1000).as('unknown')).toBeNaN()
   })
+
+  test('completely undefined unit falls back to dividing by 1 (returns ms value)', () => {
+    expect(new Duration(1000).as('nonexistent' as any)).toBe(1000)
+  })
 })
 
 // ─── add() / subtract() ──────────────────────────────────────────────────────
@@ -352,6 +356,11 @@ describe('Duration.humanize(false) — long form', () => {
   test('singular: 1 second → "1 second"', () => {
     const result = new Duration(SEC).humanize(false)
     expect(result).toBe('1 second')
+  })
+
+  test('plural: 30 seconds → "30 seconds"', () => {
+    const result = new Duration(30 * SEC).humanize(false)
+    expect(result).toBe('30 seconds')
   })
 
   test('singular: 1 millisecond → "1 millisecond"', () => {

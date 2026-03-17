@@ -228,4 +228,37 @@ describe('Timezone', () => {
       expect(new Timezone('America/New_York').toString()).toBe('America/New_York')
     })
   })
+
+  // ── Additional edge cases for branch coverage ────────────────────────────────
+
+  describe('edge cases', () => {
+    test('offsetString with offset 0 → "+00:00"', () => {
+      const tz = new Timezone('UTC')
+      expect(tz.offsetString()).toBe('+00:00')
+    })
+
+    test('offsetString with positive offset → correct sign', () => {
+      const tz = new Timezone('Asia/Kolkata')
+      const offset = tz.offsetString()
+      expect(offset).toMatch(/^\+/)
+    })
+
+    test('offsetMinutes with no argument → uses current time', () => {
+      const tz = new Timezone('UTC')
+      const offsetMin = tz.offsetMinutes()
+      expect(Object.is(offsetMin, 0) || Object.is(offsetMin, -0)).toBe(true)
+    })
+
+    test('isDST returns false consistently for UTC', () => {
+      const tz = new Timezone('UTC')
+      expect(tz.isDST()).toBe(false)
+    })
+
+    test('offsetString minute padding works for non-zero minutes', () => {
+      const tz = new Timezone('Asia/Kolkata')
+      const offset = tz.offsetString()
+      // Asia/Kolkata is UTC+5:30, so should have :30
+      expect(offset).toContain(':30')
+    })
+  })
 })

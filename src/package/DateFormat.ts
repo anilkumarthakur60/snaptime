@@ -549,11 +549,6 @@ export default class DateFormat {
     const o = other instanceof DateFormat ? other : new DateFormat(other as string | number | Date)
     const ms = this.valueOf() - o.valueOf()
     const per = DateFormat.UNIT_MS[unit] || 1
-
-    if (per === 0) {
-      throw new Error(`Invalid unit "${unit}"`)
-    }
-
     const result = ms / per
     if (floating) {
       return Math.round((result + Number.EPSILON) * 100) / 100
@@ -937,20 +932,7 @@ export default class DateFormat {
     // Adjust to Thursday of the current week (ISO week starts Monday)
     d.setDate(d.getDate() + 3 - (d.getDay() || 7))
     const yearStart = new Date(d.getFullYear(), 0, 1)
-    const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-
-    // Handle edge cases for week 1 and 53
-    if (week < 1) {
-      return new DateFormat(new Date(d.getFullYear() - 1, 11, 31)).isoWeek()
-    }
-    if (week > 52) {
-      const nextYearStart = new Date(d.getFullYear() + 1, 0, 1)
-      if (d.getTime() >= nextYearStart.getTime()) {
-        return 1
-      }
-    }
-
-    return week
+    return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
   }
 
   isoWeekYear(): number {
