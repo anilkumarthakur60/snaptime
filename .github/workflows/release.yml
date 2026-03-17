@@ -1,0 +1,97 @@
+name: Release & Publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (skip actual npm publish)"
+        required: false
+        default: "false"
+        type: boolean
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Gate: tests must pass before publishing
+  # ──────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx jest --no-coverage
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Build & publish to npm
+  # ──────────────────────────────────────────────────────────────────────────────
+  publish:
+    name: Publish to npm
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create GitHub releases
+      id-token: write   # needed for npm provenance
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Verify dist output
+        run: |
+          ls -la dist/
+          test -f dist/index.es.js   || (echo "dist/index.es.js missing" && exit 1)
+          test -f dist/index.umd.js  || (echo "dist/index.umd.js missing" && exit 1)
+          test -f dist/index.d.ts    || (echo "dist/index.d.ts missing" && exit 1)
+
+      - name: Publish to npm
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Dry-run publish (preview only)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: npm publish --dry-run --access public
+
+      - name: Extract tag version
+        id: version
+        run: echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: ${{ github.event.inputs.dry_run != 'true' && startsWith(github.ref, 'refs/tags/') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            dist/index.es.js
+            dist/index.umd.js
+            dist/index.d.ts

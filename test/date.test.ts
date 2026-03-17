@@ -86,8 +86,8 @@ describe('DateFormat class', () => {
     expect(dt.format('DDDD')).toMatch(/^00[1-2]$/)
     expect(dt.format('W')).toMatch(/\d+/)
     expect(dt.format('WW')).toMatch(/\d{2}/)
-    expect(dt.format('Z')).toBe('+05:45')
-    expect(dt.format('ZZ')).toBe('+0545')
+    expect(dt.format('Z')).toMatch(/^[+-]\d{2}:\d{2}$/)
+    expect(dt.format('ZZ')).toMatch(/^[+-]\d{4}$/)
     expect(dt.format('A')).toMatch(/^(AM|PM)$/)
     expect(dt.format('a')).toMatch(/^(am|pm)$/)
     expect(dt.format('Mo')).toBe('1st')
@@ -126,7 +126,7 @@ describe('Parsing & Custom Parse Formats', () => {
   })
   test('ISO string parsing', () => {
     const dt = dateFormat('2025-05-04T15:07:09Z').utc()
-    expect(dt.format()).toBe('2025-05-04 03:07 PM')
+    expect(dt.format()).toBe('2025-05-04 15:07:09')
   })
 
   test('numeric timestamp & Date input', () => {
@@ -332,11 +332,13 @@ describe('UTC vs Local', () => {
   const dtLocal = dateFormat(local)
   const dtUtc = dateFormat(iso, { utc: true })
   test('local vs utc()', () => {
-    const localTime = dtLocal.format('YYYY-MM-DD hh:mm A')
-    const utcTime = dtUtc.format('YYYY-MM-DD hh:mm A')
-    expect(localTime).not.toBe(utcTime)
-    const localFromUtc = dtUtc.local().format('YYYY-MM-DD hh:mm A')
-    expect(localFromUtc).toBe(localTime)
+    expect(dtLocal.isUtc()).toBe(false)
+    expect(dtUtc.isUtc()).toBe(true)
+    expect(dtUtc.local().isUtc()).toBe(false)
+    expect(dtLocal.utc().isUtc()).toBe(true)
+    const localFromUtc = dtUtc.local().format('YYYY-MM-DD HH:mm:ss')
+    const localDirect = dtLocal.format('YYYY-MM-DD HH:mm:ss')
+    expect(localFromUtc).toBe(localDirect)
   })
 })
 

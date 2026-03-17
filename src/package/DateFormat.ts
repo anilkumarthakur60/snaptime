@@ -1,10 +1,15 @@
-import type { Unit, LocaleData, PluginFn } from './type'
+import type {
+  Unit,
+  LocaleData,
+  PluginFn,
+  PreciseDiffResult,
+  AgeResult,
+  CountdownResult,
+  CalendarCell,
+  CalendarGridOptions,
+  FiscalConfig
+} from './type'
 import Duration from './Duration'
-
-// Interface for custom plugin methods
-export interface DateFormatPluginMethods {
-  testPluginMethod?: () => string
-}
 
 export default class DateFormat {
   private static _plugins: PluginFn[] = []
@@ -25,6 +30,7 @@ export default class DateFormat {
     unknown: NaN,
     week: 6048e5 // 7 days
   }
+
   /** Token → regex for parsing */
   private static readonly TOK_RE: Record<string, string> = {
     YYYY: '(\\d{4})',
@@ -40,6 +46,7 @@ export default class DateFormat {
     DDDD: '(\\d{3})',
     Z: '([+-]\\d{2}:?\\d{2}|Z)'
   }
+
   private readonly _d: Date
   private readonly _utc: boolean
 
@@ -81,11 +88,11 @@ export default class DateFormat {
       this._d = new Date(adjustedInput)
       this._utc = isUtc
 
-      // 4) String case (may already include “+05:45” or “Z”)
+      // 4) String case (may already include "+05:45" or "Z")
     } else {
       const s = adjustedInput as string
 
-      // If we’ve decided UTC but there's no trailing Z or "+HH:mm", append Z:
+      // If we've decided UTC but there's no trailing Z or "+HH:mm", append Z:
       if (isUtc && !/[zZ]$/.test(s) && !/[+-]\d\d:?\d\d$/.test(s)) {
         this._d = new Date(s + 'Z')
       } else {
@@ -101,7 +108,7 @@ export default class DateFormat {
     }
   }
 
-  // Static API
+  // ── Static API ───────────────────────────────────────────────────────────────
 
   /**
    * Parse a string according to a format string.
@@ -110,7 +117,7 @@ export default class DateFormat {
    * @param strict If true, will validate MM/DD bounds and treat date-only as local
    */
   static parse(str = '', fmt = '', strict = false): DateFormat {
-    // If no custom format, fall back to the constructor’s parsing logic:
+    // If no custom format, fall back to the constructor's parsing logic:
     if (!fmt) {
       return new DateFormat(str, { utc: str.endsWith('Z') })
     }
@@ -176,7 +183,7 @@ export default class DateFormat {
     }
 
     // 7) Otherwise, parse as UTC, and then adjust for any explicit offset
-    //    (we’ll let the Date.UTC + manual offset logic handle that).
+    //    (we'll let the Date.UTC + manual offset logic handle that).
     const baseUtcMs = Date.UTC(Y, Mo, D, h, mi, s)
     const inst = new DateFormat(baseUtcMs, { utc: sawZ || sawOff })
 
@@ -219,7 +226,7 @@ export default class DateFormat {
     DateFormat._currentLocale = name
   }
 
-  // Instance API
+  // ── Instance API ─────────────────────────────────────────────────────────────
 
   valueOf(): number {
     return this._d.getTime()
@@ -542,11 +549,6 @@ export default class DateFormat {
     const o = other instanceof DateFormat ? other : new DateFormat(other as string | number | Date)
     const ms = this.valueOf() - o.valueOf()
     const per = DateFormat.UNIT_MS[unit] || 1
-
-    if (per === 0) {
-      throw new Error(`Invalid unit "${unit}"`)
-    }
-
     const result = ms / per
     if (floating) {
       return Math.round((result + Number.EPSILON) * 100) / 100
@@ -570,113 +572,89 @@ export default class DateFormat {
     return new DateFormat(this, { utc: this._utc })
   }
 
+  private static readonly LOCAL_GETTERS: Record<string, (d: Date) => number> = {
+    year: (d) => d.getFullYear(),
+    month: (d) => d.getMonth() + 1,
+    date: (d) => d.getDate(),
+    day: (d) => d.getDay(),
+    hour: (d) => d.getHours(),
+    minute: (d) => d.getMinutes(),
+    second: (d) => d.getSeconds(),
+    millisecond: (d) => d.getMilliseconds()
+  }
+
+  private static readonly UTC_GETTERS: Record<string, (d: Date) => number> = {
+    year: (d) => d.getUTCFullYear(),
+    month: (d) => d.getUTCMonth() + 1,
+    date: (d) => d.getUTCDate(),
+    day: (d) => d.getUTCDay(),
+    hour: (d) => d.getUTCHours(),
+    minute: (d) => d.getUTCMinutes(),
+    second: (d) => d.getUTCSeconds(),
+    millisecond: (d) => d.getUTCMilliseconds()
+  }
+
   get(u: Unit | 'day'): number {
-    const p = this._utc ? 'getUTC' : 'get'
-    let method = ''
+    const getters = this._utc ? DateFormat.UTC_GETTERS : DateFormat.LOCAL_GETTERS
+    const fn = getters[u]
+    if (!fn) throw new Error(`Unknown unit "${u}"`)
+    return fn(this._d)
+  }
 
-    switch (u) {
-      case 'year':
-        method = `${p}FullYear`
-        break
-      case 'month':
-        method = `${p}Month`
-        break
-      case 'date':
-        method = `${p}Date`
-        break
-      case 'day':
-        method = `${p}Day`
-        break
-      case 'hour':
-        method = `${p}Hours`
-        break
-      case 'minute':
-        method = `${p}Minutes`
-        break
-      case 'second':
-        method = `${p}Seconds`
-        break
-      case 'millisecond':
-        method = `${p}Milliseconds`
-        break
-      default:
-        throw new Error(`Unknown unit "${u}"`)
+  private static readonly LOCAL_SETTERS: Record<string, (d: Date, v: number) => void> = {
+    year: (d, v) => {
+      d.setFullYear(v)
+    },
+    month: (d, v) => {
+      d.setMonth(v - 1)
+    },
+    date: (d, v) => {
+      d.setDate(v)
+    },
+    hour: (d, v) => {
+      d.setHours(v)
+    },
+    minute: (d, v) => {
+      d.setMinutes(v)
+    },
+    second: (d, v) => {
+      d.setSeconds(v)
+    },
+    millisecond: (d, v) => {
+      d.setMilliseconds(v)
     }
+  }
 
-    type DateGetter = keyof Pick<
-      Date,
-      | 'getFullYear'
-      | 'getMonth'
-      | 'getDate'
-      | 'getDay'
-      | 'getHours'
-      | 'getMinutes'
-      | 'getSeconds'
-      | 'getMilliseconds'
-      | 'getUTCFullYear'
-      | 'getUTCMonth'
-      | 'getUTCDate'
-      | 'getUTCDay'
-      | 'getUTCHours'
-      | 'getUTCMinutes'
-      | 'getUTCSeconds'
-      | 'getUTCMilliseconds'
-    >
-    const fn = this._d[method as DateGetter]
-    const val = fn.call(this._d)
-    return u === 'month' ? val + 1 : val
+  private static readonly UTC_SETTERS: Record<string, (d: Date, v: number) => void> = {
+    year: (d, v) => {
+      d.setUTCFullYear(v)
+    },
+    month: (d, v) => {
+      d.setUTCMonth(v - 1)
+    },
+    date: (d, v) => {
+      d.setUTCDate(v)
+    },
+    hour: (d, v) => {
+      d.setUTCHours(v)
+    },
+    minute: (d, v) => {
+      d.setUTCMinutes(v)
+    },
+    second: (d, v) => {
+      d.setUTCSeconds(v)
+    },
+    millisecond: (d, v) => {
+      d.setUTCMilliseconds(v)
+    }
   }
 
   set(u: Unit, val: number): DateFormat {
     const inst = this.clone()
-    const p = inst._utc ? 'setUTC' : 'set'
-    let method = ''
-
-    switch (u) {
-      case 'year':
-        method = `${p}FullYear`
-        break
-      case 'month':
-        method = `${p}Month`
-        break
-      case 'date':
-        method = `${p}Date`
-        break
-      case 'hour':
-        method = `${p}Hours`
-        break
-      case 'minute':
-        method = `${p}Minutes`
-        break
-      case 'second':
-        method = `${p}Seconds`
-        break
-      case 'millisecond':
-        method = `${p}Milliseconds`
-        break
-      default:
-        throw new Error(`Unknown unit "${u}"`)
-    }
-
-    type DateSetter = keyof Pick<
-      Date,
-      | 'setFullYear'
-      | 'setMonth'
-      | 'setDate'
-      | 'setHours'
-      | 'setMinutes'
-      | 'setSeconds'
-      | 'setMilliseconds'
-      | 'setUTCFullYear'
-      | 'setUTCMonth'
-      | 'setUTCDate'
-      | 'setUTCHours'
-      | 'setUTCMinutes'
-      | 'setUTCSeconds'
-      | 'setUTCMilliseconds'
-    >
-    const fn = inst._d[method as DateSetter]
-    fn.call(inst._d, u === 'month' ? val - 1 : val)
+    const setters = inst._utc ? DateFormat.UTC_SETTERS : DateFormat.LOCAL_SETTERS
+    const fn = setters[u]
+    if (!fn) throw new Error(`Unknown unit "${u}"`)
+    fn(inst._d, val)
     return inst
   }
 
@@ -757,7 +735,61 @@ export default class DateFormat {
     return this.get('day')
   }
 
-  format(fmt = 'YYYY-MM-DD hh:mm A'): string {
+  private _locale() {
+    const L = DateFormat._locales[DateFormat._currentLocale || 'en'] || {}
+    return {
+      months: L.months ?? [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+      ],
+      monthsShort: L.monthsShort ?? [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ],
+      weekdays: L.weekdays ?? [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday'
+      ],
+      weekdaysShort: L.weekdaysShort,
+      weekdaysMin: L.weekdaysMin
+    }
+  }
+
+  private static _ordinal(n: number): string {
+    const k = n % 100,
+      j = n % 10
+    if (j === 1 && k !== 11) return `${n}st`
+    if (j === 2 && k !== 12) return `${n}nd`
+    if (j === 3 && k !== 13) return `${n}rd`
+    return `${n}th`
+  }
+
+  format(fmt = 'YYYY-MM-DD HH:mm:ss'): string {
     if (!this.isValid()) {
       return 'Invalid Date'
     }
@@ -782,55 +814,12 @@ export default class DateFormat {
     const Z = `${sign}${offH}:${offM}`
     const ZZ = Z.replace(':', '')
 
-    const L = DateFormat._locales[DateFormat._currentLocale || 'en'] || {}
-    const months = L.months || [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ]
-    const monthsShort = L.monthsShort || [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ]
-    const weekdays = L.weekdays || [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday'
-    ]
-    const weekdaysShort = L.weekdaysShort || weekdays.map((w) => w.slice(0, 3))
-    const weekdaysMin = L.weekdaysMin || weekdays.map((w) => w.slice(0, 2))
+    const loc = this._locale()
+    const { months, monthsShort, weekdays } = loc
+    const weekdaysShort = loc.weekdaysShort ?? weekdays.map((w) => w.slice(0, 3))
+    const weekdaysMin = loc.weekdaysMin ?? weekdays.map((w) => w.slice(0, 2))
 
-    const ord = (n: number) => {
-      const k = n % 100
-      const j = n % 10
-      if (j === 1 && k !== 11) return `${n}st`
-      if (j === 2 && k !== 12) return `${n}nd`
-      if (j === 3 && k !== 13) return `${n}rd`
-      return `${n}th`
-    }
+    const ord = DateFormat._ordinal
 
     const tokenMap: Record<string, string> = {
       YYYY: Y,
@@ -943,20 +932,7 @@ export default class DateFormat {
     // Adjust to Thursday of the current week (ISO week starts Monday)
     d.setDate(d.getDate() + 3 - (d.getDay() || 7))
     const yearStart = new Date(d.getFullYear(), 0, 1)
-    const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-
-    // Handle edge cases for week 1 and 53
-    if (week < 1) {
-      return new DateFormat(new Date(d.getFullYear() - 1, 11, 31)).isoWeek()
-    }
-    if (week > 52) {
-      const nextYearStart = new Date(d.getFullYear() + 1, 0, 1)
-      if (d.getTime() >= nextYearStart.getTime()) {
-        return 1
-      }
-    }
-
-    return week
+    return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
   }
 
   isoWeekYear(): number {
@@ -1018,6 +994,7 @@ export default class DateFormat {
       .add(1, u as Unit)
       .subtract(1, 'millisecond')
   }
+
   quarter(): number {
     return Math.ceil(this.get('month') / 3)
   }
@@ -1042,8 +1019,309 @@ export default class DateFormat {
     }
   }
 
+  // ── Day-of-week helpers ──────────────────────────────────────────────────────
+
+  isWeekday(): boolean {
+    const d = this.get('day')
+    return d !== 0 && d !== 6
+  }
+
+  isWeekend(): boolean {
+    return !this.isWeekday()
+  }
+
+  // ── Serialization ────────────────────────────────────────────────────────────
+
+  toMillis(): number {
+    return this.valueOf()
+  }
+
+  toRFC2822(): string {
+    // "Tue, 17 Mar 2026 09:00:00 +0530"
+    const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const MONTHS_SHORT = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ]
+    const d = this._d
+    const offset = -d.getTimezoneOffset()
+    const sign = offset >= 0 ? '+' : '-'
+    const abs = Math.abs(offset)
+    const offH = String(Math.floor(abs / 60)).padStart(2, '0')
+    const offM = String(abs % 60).padStart(2, '0')
+    return (
+      `${DAYS_SHORT[d.getDay()]}, ` +
+      `${String(d.getDate()).padStart(2, '0')} ` +
+      `${MONTHS_SHORT[d.getMonth()]} ` +
+      `${d.getFullYear()} ` +
+      `${String(d.getHours()).padStart(2, '0')}:` +
+      `${String(d.getMinutes()).padStart(2, '0')}:` +
+      `${String(d.getSeconds()).padStart(2, '0')} ` +
+      `${sign}${offH}${offM}`
+    )
+  }
+
+  toRFC3339(): string {
+    // "2026-03-17T09:00:00+05:30" or "...Z"
+    const d = this._d
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    const offset = -d.getTimezoneOffset()
+    if (offset === 0) return `${date}T${time}Z`
+    const sign = offset >= 0 ? '+' : '-'
+    const abs = Math.abs(offset)
+    const offStr = `${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`
+    return `${date}T${time}${sign}${offStr}`
+  }
+
+  toSQL(): string {
+    return this.format('YYYY-MM-DD HH:mm:ss')
+  }
+
+  toSQLDate(): string {
+    return this.format('YYYY-MM-DD')
+  }
+
+  toSQLTime(): string {
+    return this.format('HH:mm:ss')
+  }
+
+  /**
+   * Excel serial date number.
+   * Days since Dec 30, 1899 (accounts for Excel's 1900 leap year bug).
+   */
+  toExcel(): number {
+    const EXCEL_EPOCH = new Date(1899, 11, 30).getTime()
+    return (this.valueOf() - EXCEL_EPOCH) / 864e5
+  }
+
+  // ── Precise diff & age ───────────────────────────────────────────────────────
+
+  preciseDiff(other: DateFormat | Date | string | number): PreciseDiffResult {
+    const otherDf =
+      other instanceof DateFormat ? other : new DateFormat(other as string | number | Date)
+    const isAfter = this.valueOf() >= otherDf.valueOf()
+    const a = isAfter ? otherDf : this
+    const b = isAfter ? this : otherDf
+
+    let years = b.get('year') - a.get('year')
+    let months = b.get('month') - a.get('month')
+    let days = b.get('date') - a.get('date')
+    let hours = b.get('hour') - a.get('hour')
+    let minutes = b.get('minute') - a.get('minute')
+    let seconds = b.get('second') - a.get('second')
+    let milliseconds = b.get('millisecond') - a.get('millisecond')
+
+    if (milliseconds < 0) {
+      milliseconds += 1000
+      seconds--
+    }
+    if (seconds < 0) {
+      seconds += 60
+      minutes--
+    }
+    if (minutes < 0) {
+      minutes += 60
+      hours--
+    }
+    if (hours < 0) {
+      hours += 24
+      days--
+    }
+    if (days < 0) {
+      const prevMonth = new DateFormat(new Date(b.get('year'), b.get('month') - 2, 1))
+      days += prevMonth.daysInMonth()
+      months--
+    }
+    if (months < 0) {
+      months += 12
+      years--
+    }
+
+    return {
+      years,
+      months,
+      days,
+      hours,
+      minutes,
+      seconds,
+      milliseconds,
+      humanize(): string {
+        const parts: string[] = []
+        if (years > 0) parts.push(`${years} year${years !== 1 ? 's' : ''}`)
+        if (months > 0) parts.push(`${months} month${months !== 1 ? 's' : ''}`)
+        if (days > 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`)
+        if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`)
+        if (minutes > 0) parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`)
+        if (seconds > 0) parts.push(`${seconds} second${seconds !== 1 ? 's' : ''}`)
+        return parts.slice(0, 3).join(', ') || 'just now'
+      }
+    }
+  }
+
+  /** Human-readable precise diff string, e.g. "2 years, 3 months, 5 days" */
+  preciseFrom(other: DateFormat | Date | string | number): string {
+    return this.preciseDiff(other).humanize()
+  }
+
+  /** Calendar age from this date to now */
+  age(): AgeResult {
+    const diff = new DateFormat().preciseDiff(this)
+    return {
+      years: diff.years,
+      months: diff.months,
+      days: diff.days,
+      toString(): string {
+        const parts: string[] = []
+        if (this.years > 0) parts.push(`${this.years}y`)
+        if (this.months > 0) parts.push(`${this.months}mo`)
+        if (this.days > 0) parts.push(`${this.days}d`)
+        return parts.join(' ') || '0d'
+      }
+    }
+  }
+
+  // ── Countdown ────────────────────────────────────────────────────────────────
+
+  countdown(): CountdownResult {
+    const total = this.valueOf() - Date.now()
+    const isPast = total < 0
+    const abs = Math.abs(total)
+
+    const days = Math.floor(abs / 864e5)
+    const hours = Math.floor((abs % 864e5) / 36e5)
+    const minutes = Math.floor((abs % 36e5) / 6e4)
+    const seconds = Math.floor((abs % 6e4) / 1e3)
+    const milliseconds = Math.floor(abs % 1e3)
+
+    return {
+      days,
+      hours,
+      minutes,
+      seconds,
+      milliseconds,
+      total,
+      isPast,
+      format(tpl: string): string {
+        const pad = (n: number, len: number) => String(n).padStart(len, '0')
+        return tpl
+          .replace(/DD/g, pad(days, 2))
+          .replace(/D/g, String(days))
+          .replace(/HH/g, pad(hours, 2))
+          .replace(/H/g, String(hours))
+          .replace(/mm/g, pad(minutes, 2))
+          .replace(/m/g, String(minutes))
+          .replace(/ss/g, pad(seconds, 2))
+          .replace(/s/g, String(seconds))
+      },
+      humanize(): string {
+        if (isPast) return 'already passed'
+        const parts: string[] = []
+        if (days > 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`)
+        if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`)
+        if (minutes > 0) parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`)
+        if (seconds > 0) parts.push(`${seconds} second${seconds !== 1 ? 's' : ''}`)
+        return parts.slice(0, 2).join(', ') || 'now'
+      }
+    }
+  }
+
+  // ── Calendar grid ────────────────────────────────────────────────────────────
+
+  /**
+   * Generate a 6×7 calendar grid for the month this date belongs to.
+   * Cells outside the current month are still included (padded from prev/next months).
+   */
+  calendarGrid(opts: CalendarGridOptions = {}): CalendarCell<DateFormat>[][] {
+    const weekStartOffset = opts.weekStart === 'monday' ? 1 : 0
+    const year = this.get('year')
+    const month = this.get('month')
+
+    const firstDay = new DateFormat(new Date(year, month - 1, 1))
+    const daysInMonth = this.daysInMonth()
+    const today = new DateFormat().startOf('day')
+
+    // How many days to pad from the previous month
+    const startPad = (firstDay.get('day') - weekStartOffset + 7) % 7
+
+    const cells: CalendarCell<DateFormat>[] = []
+
+    // Previous-month padding
+    for (let i = startPad - 1; i >= 0; i--) {
+      const d = firstDay.subtract(i + 1, 'day').startOf('day')
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
+    }
+
+    // Current month days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = new DateFormat(new Date(year, month - 1, day))
+      cells.push({
+        date: d,
+        isCurrentMonth: true,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
+    }
+
+    // Next-month fill to reach exactly 42 cells (6 rows × 7 cols)
+    let nextDay = 1
+    while (cells.length < 42) {
+      const d = new DateFormat(new Date(year, month, nextDay++))
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
+    }
+
+    // Split into weeks
+    const grid: CalendarCell<DateFormat>[][] = []
+    for (let i = 0; i < 42; i += 7) grid.push(cells.slice(i, i + 7))
+    return grid
+  }
+
+  // ── Fiscal year ──────────────────────────────────────────────────────────────
+
+  /**
+   * Fiscal year number for this date.
+   * @param config - Fiscal year start month (default: January = 1)
+   * @example dateFormat('2026-05-01').fiscalYear({ startMonth: 4 }) // 2027 (Apr–Mar)
+   */
+  fiscalYear(config: FiscalConfig = { startMonth: 1 }): number {
+    const { startMonth } = config
+    if (startMonth === 1) return this.get('year')
+    return this.get('month') >= startMonth ? this.get('year') + 1 : this.get('year')
+  }
+
+  /**
+   * Fiscal quarter (1–4) for this date.
+   * @param config - Fiscal year start month (default: January = 1)
+   */
+  fiscalQuarter(config: FiscalConfig = { startMonth: 1 }): number {
+    const { startMonth } = config
+    const adjustedMonth = ((this.get('month') - startMonth + 12) % 12) + 1
+    return Math.ceil(adjustedMonth / 3)
+  }
+
   private _now(): DateFormat {
-    // produce “now” in the same zone (UTC or local) as this instance
+    // produce "now" in the same zone (UTC or local) as this instance
     return this._utc ? new DateFormat(Date.now(), { utc: true }) : new DateFormat()
   }
 }
