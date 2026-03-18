@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@anilkumarthakur/d8"><img src="https://img.shields.io/npm/v/@anilkumarthakur/d8?color=0066ff&label=npm" alt="npm version" /></a>
   <a href="https://www.npmjs.com/package/@anilkumarthakur/d8"><img src="https://img.shields.io/npm/dm/@anilkumarthakur/d8?color=22c55e" alt="downloads" /></a>
-  <a href="https://github.com/AnilKumarThakur/snaptime/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@anilkumarthakur/d8?color=blue" alt="license" /></a>
+  <a href="https://github.com/anilkumarthakur60/snaptime/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@anilkumarthakur/d8?color=blue" alt="license" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript&logoColor=white" alt="TypeScript" /></a>
   <img src="https://img.shields.io/badge/dependencies-0-success" alt="zero dependencies" />
 </p>

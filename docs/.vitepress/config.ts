@@ -4,6 +4,7 @@ export default defineConfig({
     title: 'D8',
     description: 'A modern, zero-dependency TypeScript date/time library — formatting, parsing, timezones, business days, cron, and natural language.',
     lang: 'en-US',
+    base: '/snaptime/',
 
     head: [
         ['meta', { name: 'theme-color', content: '#667eea' }],
@@ -29,8 +30,8 @@ export default defineConfig({
                 text: 'Links',
                 items: [
                     { text: 'npm', link: 'https://www.npmjs.com/package/@anilkumarthakur/d8' },
-                    { text: 'GitHub', link: 'https://github.com/AnilKumarThakur/snaptime' },
-                    { text: 'Changelog', link: 'https://github.com/AnilKumarThakur/snaptime/releases' }
+                    { text: 'GitHub', link: 'https://github.com/anilkumarthakur60/snaptime' },
+                    { text: 'Changelog', link: 'https://github.com/anilkumarthakur60/snaptime/releases' }
                 ]
             }
         ],
@@ -115,7 +116,7 @@ export default defineConfig({
         },
 
         socialLinks: [
-            { icon: 'github', link: 'https://github.com/AnilKumarThakur/snaptime' },
+            { icon: 'github', link: 'https://github.com/anilkumarthakur60/snaptime' },
             { icon: 'npm', link: 'https://www.npmjs.com/package/@anilkumarthakur/d8' }
         ],
 
@@ -129,7 +130,7 @@ export default defineConfig({
         },
 
         editLink: {
-            pattern: 'https://github.com/AnilKumarThakur/snaptime/edit/main/docs/:path',
+            pattern: 'https://github.com/anilkumarthakur60/snaptime/edit/main/docs/:path',
             text: 'Edit this page on GitHub'
         },
 

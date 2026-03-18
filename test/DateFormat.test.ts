@@ -247,7 +247,8 @@ describe('Static helpers', () => {
 
   test('duration() with absent unit → Duration(0) via ?? 0 fallback', () => {
     // 'microsecond' is not in UNIT_MS → undefined → ?? 0 fires
-    const dur = DateFormat.duration(5, 'microsecond' as any)
+    // @ts-expect-error testing invalid unit
+    const dur = DateFormat.duration(5, 'microsecond')
     expect(dur.valueOf()).toBe(0)
   })
 
@@ -1151,7 +1152,8 @@ describe('formatIntl()', () => {
     DateFormat.locale('en-US')
     const result = d.formatIntl({ year: 'numeric' })
     expect(result).toContain('2026')
-    DateFormat.locale(null as any)
+    // @ts-expect-error testing invalid locale
+    DateFormat.locale(null)
   })
 
   test('formatIntl() on non-UTC instance (_utc=false → undefined timezone)', () => {
