@@ -6,11 +6,16 @@ export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, "src/package/index.ts"),
-      name: "@anilkumarthakur/d8",
+      name: "D8",
+      formats: ["es", "umd"],
       fileName: (format) => `index.${format}.js`,
+    },
+    rollupOptions: {
+      output: {
+        exports: "named",
+      },
     },
     sourcemap: false,
     emptyOutDir: true,
-    cssCodeSplit: true,
   },
 });

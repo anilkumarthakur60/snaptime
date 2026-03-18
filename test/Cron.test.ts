@@ -63,6 +63,16 @@ describe('Cron.matches', () => {
     expect(cron.matches(local(2026, 1, 15, 9, 14))).toBe(false)
   })
 
+  test('step from single value "5/15 * * * *" → 5, 20, 35, 50', () => {
+    const cron = new Cron('5/15 * * * *')
+    expect(cron.matches(local(2026, 1, 15, 9, 5))).toBe(true)
+    expect(cron.matches(local(2026, 1, 15, 9, 20))).toBe(true)
+    expect(cron.matches(local(2026, 1, 15, 9, 35))).toBe(true)
+    expect(cron.matches(local(2026, 1, 15, 9, 50))).toBe(true)
+    expect(cron.matches(local(2026, 1, 15, 9, 0))).toBe(false)
+    expect(cron.matches(local(2026, 1, 15, 9, 6))).toBe(false)
+  })
+
   test('list "0,30 * * * *" matches 0 and 30', () => {
     const cron = new Cron('0,30 * * * *')
     expect(cron.matches(local(2026, 1, 15, 9, 0))).toBe(true)
@@ -153,6 +163,15 @@ describe('Cron.matches', () => {
 // next
 // ---------------------------------------------------------------------------
 describe('Cron.next', () => {
+  test('next() without args uses current time', () => {
+    // Every-minute cron → next call always finds a match quickly
+    const cron = new Cron('* * * * *')
+    const next = cron.next()
+    expect(next.isValid()).toBe(true)
+    // Result should be in the future (at least now + 1 min)
+    expect(next.valueOf()).toBeGreaterThan(Date.now())
+  })
+
   test('"*/5 * * * *" from a known time → 5 minutes later', () => {
     const cron = new Cron('*/5 * * * *')
     // local(2026, 1, 15, 9, 0): minute=0, which is matched by */5
@@ -192,6 +211,13 @@ describe('Cron.next', () => {
 // prev
 // ---------------------------------------------------------------------------
 describe('Cron.prev', () => {
+  test('prev() without args uses current time', () => {
+    const cron = new Cron('* * * * *')
+    const prev = cron.prev()
+    expect(prev.isValid()).toBe(true)
+    expect(prev.valueOf()).toBeLessThan(Date.now())
+  })
+
   test('"*/5 * * * *" from a known time → 5 minutes earlier', () => {
     const cron = new Cron('*/5 * * * *')
     // From 9:05 → prev() subtracts 1 min → 9:04, iterates back to 9:00
@@ -303,6 +329,12 @@ describe('Cron.humanize', () => {
     expect(result).toContain('09:00')
     expect(result).toContain('17:00')
   })
+
+  test('"0-59 * 15 * *" — all-minute-values fieldDescription returns "every minute"', () => {
+    // 0-59 on minute with wildcard hour + dom constraint → fieldDescription(minute) hits all-values path
+    const result = new Cron('0-59 * 15 * *').humanize()
+    expect(result).toContain('every minute')
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -342,6 +374,49 @@ describe('Cron.humanize additional branches', () => {
     const result = new Cron('* * * * 1,3').humanize()
     expect(result).toContain('Monday')
     expect(result).toContain('Wednesday')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Non-DOW inverted range (lo > hi, isDow=false) – false branch of else if (isDow)
+// ---------------------------------------------------------------------------
+describe('Cron non-DOW inverted range', () => {
+  test('"59-0 * * * *" inverted minute range → empty set, matches nothing', () => {
+    // lo=59, hi=0, isDow=false → false branch of else if (isDow) → empty values set
+    const cron = new Cron('59-0 * * * *')
+    expect(cron.matches(local(2026, 1, 15, 9, 59))).toBe(false)
+    expect(cron.matches(local(2026, 1, 15, 9, 0))).toBe(false)
+    expect(cron.matches(local(2026, 1, 15, 9, 30))).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// humanize – multi-value fields to invoke sort comparators
+// ---------------------------------------------------------------------------
+describe('Cron.humanize multi-value sort coverage', () => {
+  test('"30,45 * * * *" → early-return minute path with sort comparator', () => {
+    const result = new Cron('30,45 * * * *').humanize()
+    expect(result).toContain('30')
+    expect(result).toContain('45')
+  })
+
+  test('"0,15 9 * * *" → both-specific path, mins sort comparator called', () => {
+    const result = new Cron('0,15 9 * * *').humanize()
+    expect(result).toContain('09:00')
+    expect(result).toContain('09:15')
+  })
+
+  test('"0 9 1,15 * *" → dom sort comparator called', () => {
+    const result = new Cron('0 9 1,15 * *').humanize()
+    expect(result).toContain('day')
+    expect(result).toContain('1')
+    expect(result).toContain('15')
+  })
+
+  test('"0 9 * 3,6 *" → month sort comparator called', () => {
+    const result = new Cron('0 9 * 3,6 *').humanize()
+    expect(result).toContain('March')
+    expect(result).toContain('June')
   })
 })
 

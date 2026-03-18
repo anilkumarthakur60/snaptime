@@ -96,6 +96,19 @@ describe('Constructor', () => {
 
 // ─── Static: parse() ─────────────────────────────────────────────────────────
 describe('DateFormat.parse()', () => {
+  test('no args → returns empty/invalid DateFormat', () => {
+    const d = DateFormat.parse()
+    // str='' with no fmt → new DateFormat('') → invalid
+    expect(d.isValid()).toBe(false)
+  })
+
+  test('fmt with no recognized tokens → toks=[] fallback', () => {
+    // 'DT' has no recognized tokens; if str matches the raw pattern it proceeds with empty toks
+    const d = DateFormat.parse('DT', 'DT')
+    // Parts are empty → defaults to 1970-01-01
+    expect(d.isValid()).toBe(true)
+  })
+
   test('no fmt → falls back to constructor', () => {
     const d = DateFormat.parse('2026-01-15')
     expect(d.isValid()).toBe(true)
@@ -139,6 +152,38 @@ describe('DateFormat.parse()', () => {
   test('strict=true, invalid month (13) → !isValid()', () => {
     const d = DateFormat.parse('2026-13-01', 'YYYY-MM-DD', true)
     expect(d.isValid()).toBe(false)
+  })
+
+  test('strict=true, invalid month (0) → !isValid()', () => {
+    const d = DateFormat.parse('2026-00-01', 'YYYY-MM-DD', true)
+    expect(d.isValid()).toBe(false)
+  })
+
+  test('strict=true, invalid day > daysInMonth → !isValid()', () => {
+    const d = DateFormat.parse('2026-01-32', 'YYYY-MM-DD', true)
+    expect(d.isValid()).toBe(false)
+  })
+
+  test('strict=true, no MM token → mm is null (skip month check)', () => {
+    const d = DateFormat.parse('2026', 'YYYY', true)
+    expect(d.isValid()).toBe(true)
+  })
+
+  test('strict=true, no DD token → dd is null (skip day check)', () => {
+    const d = DateFormat.parse('2026-05', 'YYYY-MM', true)
+    expect(d.isValid()).toBe(true)
+  })
+
+  test('strict=true, DD present but MM absent → mm=null uses mm??1 fallback', () => {
+    // Format YYYY-DD has day but no month; mm=null → mm??1=1 used for dim calculation
+    const d = DateFormat.parse('2026-05', 'YYYY-DD', true)
+    expect(d.isValid()).toBe(true)
+  })
+
+  test('strict=true, DD only (no YYYY) → parts.YYYY||1970 fallback used', () => {
+    // Format DD: no YYYY → parts.YYYY is null → parts.YYYY||1970 = 1970 for dim calc
+    const d = DateFormat.parse('05', 'DD', true)
+    expect(d.isValid()).toBe(true)
   })
 
   test('strict=true, invalid day (0) → !isValid()', () => {
@@ -198,6 +243,13 @@ describe('Static helpers', () => {
     const dur = DateFormat.duration(2, 'hour')
     expect(dur).toBeInstanceOf(Duration)
     expect(dur.valueOf()).toBe(2 * 3_600_000)
+  })
+
+  test('duration() with absent unit → Duration(0) via ?? 0 fallback', () => {
+    // 'microsecond' is not in UNIT_MS → undefined → ?? 0 fires
+    // @ts-expect-error testing invalid unit
+    const dur = DateFormat.duration(5, 'microsecond')
+    expect(dur.valueOf()).toBe(0)
   })
 
   test('locale() registers and switches locale', () => {
@@ -557,6 +609,11 @@ describe('diff / comparison / isBetween', () => {
     expect(result).toBeCloseTo(0.25, 2)
   })
 
+  test('diff with string other (non-DateFormat) and default unit', () => {
+    const result = b.diff('2026-01-15T12:00:00Z')
+    expect(result).toBe(86_400_000)
+  })
+
   test('diff with unknown unit falls back to 1 (no throw)', () => {
     // unknown has NaN per UNIT_MS, but the || 1 fallback prevents throw
     // Actually UNIT_MS.unknown = NaN, per = NaN || 1 = 1
@@ -811,6 +868,10 @@ describe('weekday / quarter / isoWeek / isoWeekYear', () => {
     const d = new DateFormat('2026-01-15')
     expect(d.weeksInYear()).toBe(53)
   })
+
+  test('weeksInYear() for 2018 = 52 (Dec 31 2018 is in ISO week 1 of 2019)', () => {
+    expect(new DateFormat('2018-01-01').weeksInYear()).toBe(52)
+  })
 })
 
 // ─── startOf() / endOf() ──────────────────────────────────────────────────────
@@ -921,6 +982,17 @@ describe('format()', () => {
   test('Z → timezone offset with colon', () => expect(d.format('Z')).toMatch(/^[+-]\d{2}:\d{2}$/))
   test('ZZ → timezone offset without colon', () => expect(d.format('ZZ')).toMatch(/^[+-]\d{4}$/))
 
+  test('Z → negative offset (UTC-5) shows "-05:00"', () => {
+    jest.useRealTimers()
+    const spy = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(300)
+    const local = new DateFormat('2026-01-15T12:00:00.000Z')
+    expect(local.format('Z')).toBe('-05:00')
+    expect(local.format('ZZ')).toBe('-0500')
+    spy.mockRestore()
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date(FAKE_NOW))
+  })
+
   test('dddd → full weekday name (Thursday)', () => expect(d.format('dddd')).toBe('Thursday'))
   test('ddd → short weekday', () => expect(d.format('ddd')).toBe('Thu'))
   test('dd → min weekday', () => expect(d.format('dd')).toBe('Th'))
@@ -995,6 +1067,20 @@ describe('format()', () => {
     expect(new DateFormat('2026-11-01T00:00:00Z').format('Mo')).toBe('11th')
   })
 
+  test('locale months fallback: month index beyond array → String(M)', () => {
+    // Set a locale with only 3 months defined
+    DateFormat.locale('partial-test', {
+      months: ['Jan', 'Feb', 'Mar'],
+      monthsShort: ['J', 'F', 'M']
+    })
+    DateFormat.locale('partial-test')
+    // Month 5 (May) → months[4] is undefined → fallback to '5'
+    const may = new DateFormat('2026-05-01T00:00:00Z')
+    expect(may.format('MMMM')).toBe('5')
+    expect(may.format('MMM')).toBe('5')
+    DateFormat.locale('en')
+  })
+
   test('custom locale months', () => {
     DateFormat.locale('fr-test', {
       months: [
@@ -1025,6 +1111,12 @@ describe('format()', () => {
 describe('formatIntl()', () => {
   const d = new DateFormat('2026-01-15T12:00:00.000Z')
 
+  test('non-UTC instance uses local timezone (undefined)', () => {
+    const local = new DateFormat('2026-01-15')
+    const result = local.formatIntl({ year: 'numeric' })
+    expect(result).toContain('2026')
+  })
+
   test('basic formatting with year/month/day', () => {
     const result = d.formatIntl({ year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
     expect(result).toContain('2026')
@@ -1049,6 +1141,25 @@ describe('formatIntl()', () => {
     const result = d.formatIntl({ weekday: 'long', month: 'long', day: 'numeric' })
     expect(result).toBe('Thursday, January 15')
     spy.mockRestore()
+  })
+
+  test('formatIntl() with no args uses default empty opts', () => {
+    const result = d.formatIntl()
+    expect(typeof result).toBe('string')
+  })
+
+  test('formatIntl() with truthy _currentLocale (|| undefined truthy branch)', () => {
+    DateFormat.locale('en-US')
+    const result = d.formatIntl({ year: 'numeric' })
+    expect(result).toContain('2026')
+    // @ts-expect-error testing invalid locale
+    DateFormat.locale(null)
+  })
+
+  test('formatIntl() on non-UTC instance (_utc=false → undefined timezone)', () => {
+    const local = new DateFormat(FAKE_MS)
+    const result = local.formatIntl({ year: 'numeric' })
+    expect(result).toContain('2026')
   })
 })
 
@@ -1163,9 +1274,60 @@ describe('Serialization', () => {
     expect(result).toMatch(/^\w{3}, \d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} [+-]\d{4}$/)
   })
 
+  test('toRFC2822() with non-zero negative offset → sign "-"', () => {
+    jest.useRealTimers()
+    const spy = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(300) // UTC-5
+    const result = new DateFormat('2026-01-15T12:00:00.000Z').toRFC2822()
+    expect(result).toContain('-0500')
+    spy.mockRestore()
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date(FAKE_NOW))
+  })
+
+  test('toRFC2822() with non-zero positive offset → sign "+"', () => {
+    jest.useRealTimers()
+    const spy = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-330) // UTC+5:30
+    const result = new DateFormat('2026-01-15T12:00:00.000Z').toRFC2822()
+    expect(result).toContain('+0530')
+    spy.mockRestore()
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date(FAKE_NOW))
+  })
+
   test('toRFC3339() → valid datetime string', () => {
     const result = d.toRFC3339()
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+  })
+
+  test('toRFC3339() with non-zero offset → offset appended instead of Z', () => {
+    jest.useRealTimers()
+    const spy = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-330) // UTC+5:30
+    const result = new DateFormat('2026-01-15T12:00:00.000Z').toRFC3339()
+    expect(result).toContain('+05:30')
+    expect(result).not.toMatch(/Z$/)
+    spy.mockRestore()
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date(FAKE_NOW))
+  })
+
+  test('toRFC3339() with zero offset (UTC) → appends Z', () => {
+    jest.useRealTimers()
+    const spy = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(0)
+    const result = new DateFormat('2026-01-15T12:00:00.000Z').toRFC3339()
+    expect(result).toMatch(/Z$/)
+    spy.mockRestore()
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date(FAKE_NOW))
+  })
+
+  test('toRFC3339() with negative offset (UTC-5) → appends -05:00', () => {
+    jest.useRealTimers()
+    const spy = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(300) // UTC-5
+    const result = new DateFormat('2026-01-15T12:00:00.000Z').toRFC3339()
+    expect(result).toContain('-05:00')
+    spy.mockRestore()
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date(FAKE_NOW))
   })
 
   test('toSQL() → YYYY-MM-DD HH:mm:ss', () => {
@@ -1289,6 +1451,80 @@ describe('preciseDiff() / preciseFrom() / age()', () => {
     expect(text).not.toContain('1 years')
   })
 
+  test('humanize() singular month, day, hour, minute, second', () => {
+    // 1 month apart
+    expect(
+      new DateFormat('2026-02-15T00:00:00Z')
+        .preciseDiff(new DateFormat('2026-01-15T00:00:00Z'))
+        .humanize()
+    ).toContain('1 month')
+    // 1 day apart
+    expect(
+      new DateFormat('2026-01-16T00:00:00Z')
+        .preciseDiff(new DateFormat('2026-01-15T00:00:00Z'))
+        .humanize()
+    ).toContain('1 day')
+    // 1 hour apart
+    expect(
+      new DateFormat('2026-01-15T13:00:00Z')
+        .preciseDiff(new DateFormat('2026-01-15T12:00:00Z'))
+        .humanize()
+    ).toContain('1 hour')
+    // 1 minute apart
+    expect(
+      new DateFormat('2026-01-15T12:01:00Z')
+        .preciseDiff(new DateFormat('2026-01-15T12:00:00Z'))
+        .humanize()
+    ).toContain('1 minute')
+    // 1 second apart
+    expect(
+      new DateFormat('2026-01-15T12:00:01Z')
+        .preciseDiff(new DateFormat('2026-01-15T12:00:00Z'))
+        .humanize()
+    ).toContain('1 second')
+  })
+
+  test('preciseDiff() with string argument (non-DateFormat input)', () => {
+    const d = new DateFormat('2026-01-15T12:00:00Z')
+    const result = d.preciseDiff('2024-01-15T00:00:00Z')
+    expect(result.years).toBe(2)
+  })
+
+  test('preciseDiff() where this < other (isAfter=false branch)', () => {
+    const smaller = new DateFormat('2024-01-01T00:00:00Z')
+    const larger = new DateFormat('2026-06-15T00:00:00Z')
+    const result = smaller.preciseDiff(larger)
+    expect(result.years).toBeGreaterThanOrEqual(2)
+  })
+
+  test('humanize() years plural (2+ years)', () => {
+    const a = new DateFormat('2022-01-15T00:00:00Z')
+    const b = new DateFormat('2026-01-15T00:00:00Z')
+    const text = b.preciseDiff(a).humanize()
+    expect(text).toContain('4 years')
+  })
+
+  test('humanize() hours plural (2+ hours)', () => {
+    const a = new DateFormat('2026-01-15T09:00:00Z')
+    const b = new DateFormat('2026-01-15T12:00:00Z')
+    const text = b.preciseDiff(a).humanize()
+    expect(text).toContain('3 hours')
+  })
+
+  test('humanize() minutes plural (2+ minutes)', () => {
+    const a = new DateFormat('2026-01-15T12:00:00Z')
+    const b = new DateFormat('2026-01-15T12:05:00Z')
+    const text = b.preciseDiff(a).humanize()
+    expect(text).toContain('5 minutes')
+  })
+
+  test('humanize() seconds plural (2+ seconds)', () => {
+    const a = new DateFormat('2026-01-15T12:00:00Z')
+    const b = new DateFormat('2026-01-15T12:00:05Z')
+    const text = b.preciseDiff(a).humanize()
+    expect(text).toContain('5 seconds')
+  })
+
   test('preciseFrom() → same as preciseDiff().humanize()', () => {
     const a = new DateFormat('2024-01-01T00:00:00Z')
     const b = new DateFormat('2025-06-15T00:00:00Z')
@@ -1313,6 +1549,15 @@ describe('preciseDiff() / preciseFrom() / age()', () => {
     const today = new DateFormat(FAKE_MS)
     const a = today.age()
     expect(a.toString()).toBe('0d')
+  })
+
+  test('age() with months and days component', () => {
+    // Fake now = 2026-01-15. Born 2025-10-10 → ~3 months, 5 days
+    const birthdate = new DateFormat('2025-10-10T00:00:00Z')
+    const a = birthdate.age()
+    expect(a.months).toBeGreaterThan(0)
+    expect(a.toString()).toContain('mo')
+    expect(a.toString()).toContain('d')
   })
 })
 
@@ -1381,12 +1626,38 @@ describe('countdown()', () => {
     const text = future.countdown().humanize()
     expect(text).toContain('1 hour')
   })
+
+  test('humanize() with minutes only → "N minutes"', () => {
+    const future = new DateFormat(FAKE_MS + 5 * 60_000)
+    const text = future.countdown().humanize()
+    expect(text).toContain('5 minutes')
+  })
+
+  test('humanize() singular 1 minute', () => {
+    const future = new DateFormat(FAKE_MS + 60_000)
+    const text = future.countdown().humanize()
+    expect(text).toContain('1 minute')
+    expect(text).not.toContain('1 minutes')
+  })
+
+  test('humanize() singular 1 second', () => {
+    const future = new DateFormat(FAKE_MS + 1_000)
+    const text = future.countdown().humanize()
+    expect(text).toContain('1 second')
+    expect(text).not.toContain('1 seconds')
+  })
 })
 
 // ─── calendarGrid() ───────────────────────────────────────────────────────────
 describe('calendarGrid()', () => {
   // January 2026: starts on Thursday (day=4)
   const jan2026 = new DateFormat('2026-01-15')
+
+  test('calendarGrid() with no args uses default opts (weekStart=sunday)', () => {
+    const grid = jan2026.calendarGrid()
+    expect(grid.length).toBe(6)
+    grid.forEach((row) => expect(row.length).toBe(7))
+  })
 
   test('returns 6 rows × 7 columns with weekStart=sunday', () => {
     const grid = jan2026.calendarGrid({ weekStart: 'sunday' })
@@ -1518,5 +1789,13 @@ describe('fiscalYear() / fiscalQuarter()', () => {
 
   test('fiscalQuarter with startMonth=4: January=Q4', () => {
     expect(new DateFormat('2026-01-01').fiscalQuarter({ startMonth: 4 })).toBe(4)
+  })
+
+  test('fiscalYear() with no args → uses default startMonth=1 → calendar year', () => {
+    expect(new DateFormat('2026-06-15').fiscalYear()).toBe(2026)
+  })
+
+  test('fiscalQuarter() with no args → uses default startMonth=1 → Jan=Q1', () => {
+    expect(new DateFormat('2026-01-15').fiscalQuarter()).toBe(1)
   })
 })

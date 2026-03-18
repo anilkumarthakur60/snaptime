@@ -2,10 +2,19 @@
   "name": "@anilkumarthakur/d8",
   "private": false,
   "version": "0.0.0",
+  "description": "A modern, zero-dependency TypeScript date/time library — formatting, parsing, timezones, business days, cron, and natural language.",
   "type": "module",
   "main": "dist/index.umd.js",
-  "module": "dist/index.esm.js",
+  "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anilkumarthakur60/snaptime.git"
+  },
+  "homepage": "https://anilkumarthakur60.github.io/snaptime/",
+  "bugs": {
+    "url": "https://github.com/anilkumarthakur60/snaptime/issues"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -14,7 +23,17 @@
   ],
   "keywords": [
     "date",
-    "date-fns"
+    "time",
+    "datetime",
+    "typescript",
+    "timezone",
+    "cron",
+    "duration",
+    "business-days",
+    "date-formatting",
+    "date-parsing",
+    "natural-language",
+    "zero-dependency"
   ],
   "exports": {
     ".": {
@@ -33,7 +52,11 @@
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/",
     "test": "jest --watch",
-    "jest": "jest"
+    "jest": "jest",
+    "test:coverage": "jest --coverage --coverageReporters=text --coverageReporters=lcov",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
@@ -50,6 +73,7 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.1",
     "vite": "^8.0.0",
-    "vite-plugin-dts": "^4.5.4"
+    "vite-plugin-dts": "^4.5.4",
+    "vitepress": "^1.6.4"
   }
 }

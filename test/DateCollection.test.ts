@@ -47,6 +47,13 @@ describe('DateCollection constructor', () => {
 // sort
 // ---------------------------------------------------------------------------
 describe('DateCollection.sort', () => {
+  test('no args → defaults to ascending', () => {
+    const c = new DateCollection(['2026-06-01', '2026-01-01', '2026-03-15'])
+    const sorted = c.sort()
+    const arr = sorted.toArray().map((x) => x.format('YYYY-MM-DD'))
+    expect(arr).toEqual(['2026-01-01', '2026-03-15', '2026-06-01'])
+  })
+
   test('ascending (default)', () => {
     const c = new DateCollection(['2026-06-01', '2026-01-01', '2026-03-15'])
     const sorted = c.sort('asc')

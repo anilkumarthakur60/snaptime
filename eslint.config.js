@@ -13,5 +13,11 @@ export default defineConfig([
     files: ["**/*.{js,mjs,cjs,ts}"],
     languageOptions: { globals: globals.browser },
   },
+  {
+    ignores: [
+      "docs/.vitepress/dist/**",
+      "docs/.vitepress/cache/**"
+    ]
+  },
   tseslint.configs.recommended,
 ]);
