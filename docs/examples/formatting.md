@@ -1,183 +1,121 @@
-# Date Formatting Examples
+# Formatting Examples
 
-Learn various ways to format dates using D8.
-
-## Basic Formatting
+## Basic Tokens
 
 ```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
+import d8 from '@anilkumarthakur/d8'
 
-const date = new DateFormat('2024-01-15T14:30:45.123Z')
+const d = d8('2026-01-15T14:30:45.123Z')
 
-// ISO format
-console.log(date.format('YYYY-MM-DD')) // 2024-01-15
-
-// US format
-console.log(date.format('MM/DD/YYYY')) // 01/15/2024
-
-// European format
-console.log(date.format('DD/MM/YYYY')) // 15/01/2024
-
-// Medical format
-console.log(date.format('YYYY-MM-DD HH:mm:ss')) // 2024-01-15 14:30:45
-
-// Time only
-console.log(date.format('HH:mm:ss')) // 14:30:45
-console.log(date.format('h:mm A')) // 2:30 PM
-console.log(date.format('hh:mm a')) // 02:30 pm
-
-// Complete time
-console.log(date.format('HH:mm:ss.SSS')) // 14:30:45.123
+d.format('YYYY-MM-DD')         // → "2026-01-15"
+d.format('YY-MM-DD')           // → "26-01-15"
+d.format('MMMM Do, YYYY')      // → "January 15th, 2026"
+d.format('MMM D, YYYY')        // → "Jan 15, 2026"
+d.format('dddd, MMMM D YYYY')  // → "Thursday, January 15 2026"
+d.format('ddd')                 // → "Thu"
+d.format('dd')                  // → "Th"
+d.format('d')                   // → "4"
 ```
 
-## Day and Month Names
+## Time Formatting
 
 ```typescript
-const date = new DateFormat('2024-01-15')
+const d = d8('2026-01-15T14:30:45Z')
 
-// Full names
-console.log(date.format('dddd, MMMM D, YYYY'))
-// "Monday, January 15, 2024"
+d.format('HH:mm:ss')    // → "14:30:45"
+d.format('hh:mm:ss A')  // → "02:30:45 PM"
+d.format('h:mm a')       // → "2:30 pm"
 
-// Short names
-console.log(date.format('ddd, MMM D, YY'))
-// "Mon, Jan 15, 24"
-
-// Just day name
-console.log(date.format('dddd')) // "Monday"
-
-// Just month name
-console.log(date.format('MMMM')) // "January"
+// Edge cases:
+d8('2026-01-15T00:00:00Z').format('hh:mm A')  // → "12:00 AM" (midnight)
+d8('2026-01-15T12:00:00Z').format('hh:mm A')  // → "12:00 PM" (noon)
+d8('2026-01-15T01:00:00Z').format('h:mm A')   // → "1:00 AM"
 ```
 
-## Ordinal Dates
+## Ordinals
 
 ```typescript
-const dates = [
-  new DateFormat('2024-01-01'),
-  new DateFormat('2024-01-02'),
-  new DateFormat('2024-01-03'),
-  new DateFormat('2024-01-21'),
-  new DateFormat('2024-01-22'),
-  new DateFormat('2024-01-23')
-]
+d8('2026-01-01T00:00:00Z').format('Do')  // → "1st"
+d8('2026-01-02T00:00:00Z').format('Do')  // → "2nd"
+d8('2026-01-03T00:00:00Z').format('Do')  // → "3rd"
+d8('2026-01-04T00:00:00Z').format('Do')  // → "4th"
+d8('2026-01-11T00:00:00Z').format('Do')  // → "11th" (not 11st!)
+d8('2026-01-12T00:00:00Z').format('Do')  // → "12th" (not 12nd!)
+d8('2026-01-13T00:00:00Z').format('Do')  // → "13th" (not 13rd!)
+d8('2026-01-21T00:00:00Z').format('Do')  // → "21st"
 
-// Create ordinal format (note: D uses ordinal suffix)
-for (const d of dates) {
-  console.log(d.format('MMMM D, YYYY'))
-}
-// Output:
-// "January 1st, 2024"
-// "January 2nd, 2024"
-// "January 3rd, 2024"
-// "January 21st, 2024"
-// "January 22nd, 2024"
-// "January 23rd, 2024"
+d8('2026-01-01T00:00:00Z').format('Mo')  // → "1st"
+d8('2026-02-01T00:00:00Z').format('Mo')  // → "2nd"
+d8('2026-03-01T00:00:00Z').format('Mo')  // → "3rd"
+d8('2026-11-01T00:00:00Z').format('Mo')  // → "11th"
 ```
 
-## Local vs UTC Formatting
+## ISO Week / Day of Year
 
 ```typescript
-// UTC date
-const utcDate = new DateFormat('2024-01-15T20:30:00Z')
-console.log(utcDate.isUtc()) // true
-console.log(utcDate.format('HH:mm')) // 20:30
-
-// Local date (interpretation depends on system timezone)
-const localDate = new DateFormat(new Date(2024, 0, 15, 20, 30, 0))
-console.log(localDate.isLocal()) // true
-console.log(localDate.format('HH:mm')) // 20:30 (local time)
+d8('2026-01-15T12:00:00Z').format('WW')   // → "02"
+d8('2026-01-15T12:00:00Z').format('W')    // → "2"
+d8('2026-01-15T12:00:00Z').format('DDD')  // → "15"
+d8('2026-01-15T12:00:00Z').format('DDDD') // → "015"
+d8('2026-01-15T12:00:00Z').format('gg')   // → "2026"
+d8('2026-01-15T12:00:00Z').format('Q')    // → "1"
 ```
 
-## Timezone-Aware Formatting
+## Unix Timestamps
 
 ```typescript
-import { Timezone } from '@anilkumarthakur/d8'
+const d = d8('2026-01-15T12:00:00Z')
 
-const date = new DateFormat('2024-01-15T12:00:00Z') // Noon UTC
-
-// Format in different timezones
-const newYork = new Timezone('America/New_York')
-console.log(newYork.format(date, 'HH:mm'))
-// "07:00" (UTC-5)
-
-const tokyo = new Timezone('Asia/Tokyo')
-console.log(tokyo.format(date, 'HH:mm'))
-// "21:00" (UTC+9)
-
-// With timezone offset
-console.log(date.tz('America/New_York').format('HH:mm Z'))
-// "07:00 -05:00"
+d.format('X')  // → Unix seconds (e.g. "1768483200")
+d.format('x')  // → Unix milliseconds (e.g. "1768483200000")
 ```
 
-## Dynamic Formatting
+## Intl Formatting
 
 ```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
+const d = d8('2026-01-15T12:00:00Z')
 
-// Format based on how recent
-function formatDate(date) {
-  const now = new DateFormat()
-  const diff = now.diff(date, 'day')
-
-  if (diff === 0) {
-    return date.format('h:mm A') // "2:30 PM"
-  } else if (diff === 1) {
-    return "Yesterday"
-  } else if (diff < 7) {
-    return date.format('dddd') // "Monday"
-  } else if (diff < 30) {
-    return date.format('MMM D') // "Jan 15"
-  } else {
-    return date.format('MMM D, YYYY') // "Jan 15, 2024"
-  }
-}
-
-console.log(formatDate(new DateFormat())) // Today's time
-console.log(formatDate(new DateFormat().subtract(1, 'day'))) // "Yesterday"
-console.log(formatDate(new DateFormat().subtract(3, 'day'))) // Day name
-console.log(formatDate(new DateFormat().subtract(1, 'month'))) // "Dec 15"
-```
-
-## Parsing Custom Formats
-
-```typescript
-// Parse various formats
-const formats = [
-  { input: '15/01/2024', format: 'DD/MM/YYYY' },
-  { input: '01-15-24', format: 'MM-DD-YY' },
-  { input: 'January 15, 2024', format: 'MMMM D, YYYY' },
-  { input: '15 Jan 2024 2:30 PM', format: 'D MMM YYYY h:mm A' }
-]
-
-for (const { input, format } of formats) {
-  const date = DateFormat.parse(input, format)
-  if (date.isValid()) {
-    console.log(`✓ ${input} → ${date.format('YYYY-MM-DD HH:mm')}`)
-  }
-}
-```
-
-## Display Formats
-
-```typescript
-const date = new DateFormat('2024-01-15T14:30:00Z')
-
-// Log-friendly
-console.log(`[${date.format('YYYY-MM-DD HH:mm:ss')}]`, 'Event occurred')
-
-// API response
-console.log({
-  timestamp: date.toISOString(),
-  formatted: date.format('YYYY-MM-DD HH:mm:ss Z')
+d.formatIntl({
+  weekday: 'long', year: 'numeric', month: 'long',
+  day: 'numeric', timeZone: 'UTC'
 })
+// → "Thursday, January 15, 2026"
 
-// Report
-console.log(`Report for ${date.format('MMMM YYYY')}`)
+d.formatIntl({ dateStyle: 'full', timeZone: 'UTC' })
+// → "Thursday, January 15, 2026" (locale-dependent)
+```
 
-// Email
-console.log(`Date: ${date.format('dddd, MMMM D, YYYY at h:mm A')}`)
+## Serialization Formats
 
-// Filename
-console.log(`backup_${date.format('YYYY-MM-DD_HH-mm-ss')}.zip`)
+```typescript
+const d = d8('2026-01-15T12:00:00.000Z')
+
+d.toISOString() // → "2026-01-15T12:00:00.000Z"
+d.toSQL()       // → "2026-01-15 12:00:00"
+d.toSQLDate()   // → "2026-01-15"
+d.toSQLTime()   // → "12:00:00"
+d.toRFC2822()   // → "Thu, 15 Jan 2026 12:00:00 +0000"
+d.toRFC3339()   // → "2026-01-15T12:00:00Z"
+d.toExcel()     // → ~46031
+d.toJSON()      // → "2026-01-15T12:00:00.000Z"
+d.toMillis()    // → 1768483200000
+d.toObject()    // → { year: 2026, month: 1, date: 15, hour: 12, minute: 0, second: 0, millisecond: 0 }
+```
+
+## Custom Locale
+
+```typescript
+import { DateFormat } from '@anilkumarthakur/d8'
+
+DateFormat.locale('fr', {
+  months: ['Janvier','Février','Mars','Avril','Mai','Juin',
+           'Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+  weekdays: ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi']
+})
+DateFormat.locale('fr')
+
+d8('2026-01-15T12:00:00Z').format('MMMM') // → "Janvier"
+d8('2026-01-15T12:00:00Z').format('dddd') // → "Jeudi"
+
+DateFormat.locale('en') // reset
 ```

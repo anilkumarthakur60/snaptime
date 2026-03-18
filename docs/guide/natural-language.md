@@ -1,174 +1,184 @@
 # Natural Language
 
-D8 can parse dates from English phrases. The `parseNatural` function (also available as `d8.natural()`) converts human-readable strings into `DateFormat` instances.
+Parse dates from English phrases — relative dates, weekday references, month boundaries, and ordinal patterns.
 
 ## Basic Usage
 
 ```typescript
-import d8, { parseNatural } from '@anilkumarthakur/d8'
+import { parseNatural } from '@anilkumarthakur/d8'
+// or: import d8 from '@anilkumarthakur/d8'; d8.natural(...)
 
-// Via factory (recommended)
-d8.natural('tomorrow').format('YYYY-MM-DD')
+// With a reference date (Jan 15, 2026, Thursday):
+const ref = d8('2026-01-15T12:00:00')
 
-// Direct function
-parseNatural('tomorrow').format('YYYY-MM-DD')
+parseNatural('now', ref).valueOf() === ref.valueOf()   // → true
+parseNatural('today', ref).valueOf() === ref.valueOf()  // → true
+parseNatural('tomorrow', ref).format('YYYY-MM-DD')      // → "2026-01-16"
+parseNatural('yesterday', ref).format('YYYY-MM-DD')     // → "2026-01-14"
+
+// Case-insensitive:
+parseNatural('NOW', ref).isValid()       // → true
+parseNatural('Today', ref).isValid()     // → true
+parseNatural('TOMORROW', ref).isValid()  // → true
 ```
 
-## Supported Patterns
-
-### Simple Keywords
+## Next / Last Weekday
 
 ```typescript
-d8.natural('now')         // current date/time
-d8.natural('today')       // current date/time
-d8.natural('tomorrow')    // +1 day
-d8.natural('yesterday')   // -1 day
+// ref = Thursday Jan 15, 2026
+parseNatural('next monday', ref)    // → Jan 19 (Mon)
+parseNatural('next friday', ref)    // → Jan 16 (Fri, +1 day)
+parseNatural('next thursday', ref)  // → Jan 22 (same weekday → +7)
+parseNatural('next sunday', ref)    // → Jan 18 (Sun, +3 days)
+parseNatural('next saturday', ref)  // → Jan 17 (Sat, +2 days)
+parseNatural('next tuesday', ref)   // → Jan 20 (Tue, +5 days)
+parseNatural('next wednesday', ref) // → Jan 21 (Wed, +6 days)
+
+parseNatural('last monday', ref)    // → Jan 12 (Mon, -3 days)
+parseNatural('last sunday', ref)    // → Jan 11 (Sun, -4 days)
+parseNatural('last thursday', ref)  // → Jan 8  (same weekday → -7)
 ```
 
-### Next / Last Weekday
+## Next / Last Period
 
 ```typescript
-d8.natural('next monday')
-d8.natural('next friday')
-d8.natural('last wednesday')
-d8.natural('next saturday')
-d8.natural('last sunday')
+parseNatural('next week', ref)  // → ref + 1 week
+parseNatural('next month', ref) // → ref + 1 month
+parseNatural('next year', ref)  // → ref + 1 year
+
+parseNatural('last week', ref)  // → ref - 1 week
+parseNatural('last month', ref) // → ref - 1 month
+parseNatural('last year', ref)  // → ref - 1 year
 ```
 
-### Next / Last Period
+## N Units Ago
 
 ```typescript
-d8.natural('next week')
-d8.natural('last month')
-d8.natural('next year')
-d8.natural('last week')
+parseNatural('3 days ago', ref).format('YYYY-MM-DD')  // → "2026-01-12"
+parseNatural('1 day ago', ref).format('YYYY-MM-DD')   // → "2026-01-14"
+parseNatural('2 weeks ago', ref)   // → ref - 2 weeks
+parseNatural('1 month ago', ref)   // → ref - 1 month
+parseNatural('5 years ago', ref)   // → ref - 5 years
+parseNatural('2 months ago', ref)  // → ref - 2 months
 ```
 
-### Relative with Numbers
+## In N Units / N Units From Now
 
 ```typescript
-// "N units ago"
-d8.natural('3 days ago')
-d8.natural('2 weeks ago')
-d8.natural('6 months ago')
-d8.natural('1 year ago')
+parseNatural('in 3 days', ref).format('YYYY-MM-DD')  // → "2026-01-18"
+parseNatural('in 1 week', ref)    // → ref + 1 week
+parseNatural('in 2 months', ref)  // → ref + 2 months
+parseNatural('in 1 year', ref)    // → ref + 1 year
 
-// "in N units"
-d8.natural('in 3 days')
-d8.natural('in 2 weeks')
-d8.natural('in 6 months')
-d8.natural('in 1 year')
-
-// "N units from now"
-d8.natural('5 days from now')
-d8.natural('3 weeks from now')
-d8.natural('2 months from now')
+parseNatural('3 days from now', ref).format('YYYY-MM-DD') // → "2026-01-18"
+parseNatural('1 week from now', ref)   // → ref + 1 week
+parseNatural('2 months from now', ref) // → ref + 2 months
 ```
 
-### Beginning / End of Period
+## Beginning / End of Period
 
 ```typescript
-d8.natural('beginning of day')     // midnight today
-d8.natural('beginning of week')    // start of current week
-d8.natural('beginning of month')   // 1st of current month
-d8.natural('beginning of year')    // Jan 1
+parseNatural('beginning of day', ref)   // → ref.startOf('day')
+parseNatural('beginning of week', ref)  // → ref.startOf('week')
+parseNatural('beginning of month', ref) // → ref.startOf('month')
+parseNatural('beginning of year', ref)  // → ref.startOf('year')
 
-d8.natural('end of day')           // 23:59:59.999 today
-d8.natural('end of week')          // end of current week
-d8.natural('end of month')         // last moment of current month
-d8.natural('end of year')          // Dec 31, 23:59:59.999
+parseNatural('end of day', ref)   // → ref.endOf('day')
+parseNatural('end of week', ref)  // → ref.endOf('week')
+parseNatural('end of month', ref) // → ref.endOf('month')
+parseNatural('end of year', ref)  // → ref.endOf('year')
 ```
 
-### First / Last Day of Month
+## First / Last Day of Month
 
 ```typescript
-d8.natural('first day of March')
-d8.natural('last day of March')
-d8.natural('first day of December 2027')
-d8.natural('last day of February 2028')  // handles leap years
+parseNatural('first day of january', ref)
+// → Jan 1, 2026
+
+parseNatural('first day of march 2027', ref)
+// → Mar 1, 2027
+
+parseNatural('last day of january', ref)
+// → Jan 31, 2026
+
+parseNatural('last day of february 2024', ref)
+// → Feb 29, 2024 (leap year!)
+
+parseNatural('last day of february 2025', ref)
+// → Feb 28, 2025 (non-leap)
+
+parseNatural('last day of december', ref)
+// → Dec 31, 2026
 ```
 
-### Nth Weekday of Month
+## Nth Weekday of Month
 
 ```typescript
-d8.natural('1st Monday of January')
-d8.natural('3rd Friday of March')
-d8.natural('2nd Tuesday of November 2027')
-d8.natural('4th Thursday of November')  // Thanksgiving!
-```
+// Jan 2026: Jan 1 = Thursday
+parseNatural('1st monday of january', ref)
+// → Jan 5, 2026
 
-## Custom Reference Date
+parseNatural('2nd monday of january', ref)
+// → Jan 12, 2026
 
-By default, relative dates are calculated from "now". You can pass a custom reference:
+parseNatural('3rd monday of january 2026', ref)
+// → Jan 19, 2026
 
-```typescript
-const ref = d8('2026-06-15')
+parseNatural('3rd friday of january 2026', ref)
+// → Jan 16, 2026
 
-d8.natural('tomorrow', ref).format('YYYY-MM-DD')
-// "2026-06-16"
+parseNatural('1st sunday of january 2026', ref)
+// → Jan 4, 2026
 
-d8.natural('3 days ago', ref).format('YYYY-MM-DD')
-// "2026-06-12"
+parseNatural('2nd tuesday of march 2026', ref)
+// → Mar 10, 2026
 
-d8.natural('next friday', ref).format('YYYY-MM-DD')
-// "2026-06-19"
+parseNatural('2nd wednesday of february 2026', ref)
+// → Feb 11, 2026
+
+// 5th Friday of January 2026 (still valid):
+parseNatural('5th friday of january 2026', ref)
+// → Jan 30, 2026
+
+// 6th Friday → goes past month end → invalid:
+parseNatural('6th friday of january 2026', ref).isValid()
+// → false
 ```
 
 ## Invalid Input
 
-Unrecognized patterns return an invalid `DateFormat`:
-
 ```typescript
-const result = d8.natural('the day after tomorrow')
-result.isValid()  // false
-
-const result2 = d8.natural('gibberish')
-result2.isValid() // false
+parseNatural('some gibberish', ref).isValid()  // → false
+parseNatural('next blahday', ref).isValid()    // → false
+parseNatural('', ref).isValid()                // → false
+parseNatural('foo bar baz', ref).isValid()     // → false
 ```
 
-::: tip Always Validate
-When accepting user input, always check `.isValid()` before using the result:
+## Without Reference Date
+
 ```typescript
-const parsed = d8.natural(userInput)
-if (parsed.isValid()) {
-  console.log(parsed.format('YYYY-MM-DD'))
-} else {
-  console.log('Could not understand that date')
-}
+// Defaults to Date.now():
+parseNatural('today').isValid()     // → true
+parseNatural('now').isValid()       // → true
+parseNatural('tomorrow').isValid()  // → true
 ```
-:::
 
-## Supported Units
+## Complete Pattern Reference
 
-| Input | Unit |
-|:------|:-----|
-| `day` / `days` | day |
-| `week` / `weeks` | week |
-| `month` / `months` | month |
-| `year` / `years` | year |
-
-## Complete Reference Table
-
-| Pattern | Example Output |
-|:--------|:---------------|
-| `now` | Current moment |
-| `today` | Current moment |
-| `tomorrow` | +1 day |
-| `yesterday` | -1 day |
-| `next {weekday}` | Next occurrence |
-| `last {weekday}` | Previous occurrence |
-| `next week/month/year` | +1 period |
-| `last week/month/year` | -1 period |
-| `N days/weeks/months/years ago` | -N periods |
-| `in N days/weeks/months/years` | +N periods |
-| `N days/weeks/months/years from now` | +N periods |
-| `beginning of day/week/month/year` | Start of period |
-| `end of day/week/month/year` | End of period |
-| `first day of {month} [year]` | 1st of month |
-| `last day of {month} [year]` | Last day of month |
-| `{N}th {weekday} of {month} [year]` | Specific occurrence |
-
-## Next Steps
-
-- [Plugin System](./plugins) — Extend D8 with custom methods
-- [API Reference](../api/natural-language) — Complete method signatures
+| Pattern | Example | Result |
+|:--------|:--------|:-------|
+| `now` / `today` | `"today"` | Current date |
+| `tomorrow` | `"tomorrow"` | +1 day |
+| `yesterday` | `"yesterday"` | -1 day |
+| `next {weekday}` | `"next friday"` | Next occurrence |
+| `last {weekday}` | `"last monday"` | Previous occurrence |
+| `next {period}` | `"next month"` | +1 period |
+| `last {period}` | `"last year"` | -1 period |
+| `{N} {unit} ago` | `"3 days ago"` | -N units |
+| `in {N} {unit}` | `"in 2 weeks"` | +N units |
+| `{N} {unit} from now` | `"5 days from now"` | +N units |
+| `beginning of {period}` | `"beginning of month"` | Start of period |
+| `end of {period}` | `"end of year"` | End of period |
+| `first day of {month} [year]` | `"first day of March 2027"` | 1st of month |
+| `last day of {month} [year]` | `"last day of February"` | Last of month |
+| `{N}th {weekday} of {month} [year]` | `"3rd Friday of January"` | Nth weekday |

@@ -1,157 +1,230 @@
 # Business Days
 
-D8 includes functions for working with business days — skip weekends and public holidays, add/subtract business days, and count working days between dates.
+Functions for business day calculations — skip weekends and holidays, count business days, find next/previous, and get holiday lists for 7 countries.
 
-## Checking Business Days
-
-```typescript
-import d8, { isBusinessDay } from '@anilkumarthakur/d8'
-
-const monday = d8('2026-03-16')    // Monday
-const saturday = d8('2026-03-21')  // Saturday
-
-isBusinessDay(monday)    // true
-isBusinessDay(saturday)  // false
-
-// Or via the factory
-d8.business.isBusinessDay(monday)    // true
-d8.business.isBusinessDay(saturday)  // false
-```
-
-### With Holidays
+## isBusinessDay
 
 ```typescript
-const christmas = d8('2026-12-25')  // Friday
-const holidays = ['2026-12-25']
-
-isBusinessDay(christmas)             // true  (it's a Friday)
-isBusinessDay(christmas, holidays)   // false (it's a holiday)
-```
-
-## Adding/Subtracting Business Days
-
-### `addBusinessDays(date, n, holidays?)`
-
-Skip weekends (and optionally holidays) when adding days:
-
-```typescript
+import { isBusinessDay, getHolidays } from '@anilkumarthakur/d8'
 import d8 from '@anilkumarthakur/d8'
 
-const friday = d8('2026-03-20')  // Friday
+// Weekdays → true:
+isBusinessDay(d8('2026-01-12')) // → true  (Monday)
+isBusinessDay(d8('2026-01-14')) // → true  (Wednesday)
+isBusinessDay(d8('2026-01-16')) // → true  (Friday)
 
-d8.business.addBusinessDays(friday, 1)
-// Monday 2026-03-23 (skips Sat & Sun)
+// Weekends → false:
+isBusinessDay(d8('2026-01-17')) // → false (Saturday)
+isBusinessDay(d8('2026-01-18')) // → false (Sunday)
 
-d8.business.addBusinessDays(friday, 5)
-// Friday 2026-03-27
+// With holidays — weekday on a holiday returns false:
+const usHolidays = getHolidays('US', 2026)
+isBusinessDay(d8('2026-01-01'), usHolidays) // → false (New Year's Day, Thursday)
+isBusinessDay(d8('2026-01-15'), usHolidays) // → true  (not a US holiday)
 
-// Negative values go backwards
-d8.business.addBusinessDays(friday, -1)
-// Thursday 2026-03-19
+// Without holidays, weekday holidays return true:
+isBusinessDay(d8('2026-01-01'))             // → true (Thursday, no holiday check)
 ```
 
-### `subtractBusinessDays(date, n, holidays?)`
+---
+
+## addBusinessDays
 
 ```typescript
-const monday = d8('2026-03-23')
-d8.business.subtractBusinessDays(monday, 1)
-// Friday 2026-03-20
+import { addBusinessDays } from '@anilkumarthakur/d8'
+
+// n=0 → same date:
+addBusinessDays(d8('2026-01-15'), 0).format('YYYY-MM-DD')
+// → "2026-01-15"
+
+// Simple forward:
+addBusinessDays(d8('2026-01-12'), 1).format('YYYY-MM-DD')
+// → "2026-01-13" (Mon → Tue)
+
+// Skips weekends:
+addBusinessDays(d8('2026-01-12'), 5).format('YYYY-MM-DD')
+// → "2026-01-19" (Mon + 5 biz days → next Mon)
+
+addBusinessDays(d8('2026-01-15'), 2).format('YYYY-MM-DD')
+// → "2026-01-19" (Thu + 2 → Fri → skip weekend → Mon)
+
+addBusinessDays(d8('2026-01-16'), 1).format('YYYY-MM-DD')
+// → "2026-01-19" (Fri + 1 → Mon)
+
+// Negative → go backwards:
+addBusinessDays(d8('2026-01-12'), -1).format('YYYY-MM-DD')
+// → "2026-01-09" (Mon → prev Fri)
+
+addBusinessDays(d8('2026-01-12'), -5).format('YYYY-MM-DD')
+// → "2026-01-05" (Mon − 5 biz days → prev Mon)
+
+// Skips over holidays:
+addBusinessDays(d8('2026-01-16'), 1, ['2026-01-19']).format('YYYY-MM-DD')
+// → "2026-01-20" (Fri + 1, Mon is holiday → Tue)
 ```
 
-## Next / Previous Business Day
+---
+
+## subtractBusinessDays
 
 ```typescript
-const friday = d8('2026-03-20')
+import { subtractBusinessDays } from '@anilkumarthakur/d8'
 
-d8.business.nextBusinessDay(friday)   // Monday 2026-03-23
-d8.business.prevBusinessDay(friday)   // Thursday 2026-03-19
+subtractBusinessDays(d8('2026-01-12'), 1).format('YYYY-MM-DD')
+// → "2026-01-09" (same as addBusinessDays(date, -1))
 
-const saturday = d8('2026-03-21')
-d8.business.nextBusinessDay(saturday) // Monday 2026-03-23
-d8.business.prevBusinessDay(saturday) // Friday 2026-03-20
+subtractBusinessDays(d8('2026-01-14'), 3).format('YYYY-MM-DD')
+// → "2026-01-09" (Wed − 3 → Fri)
 ```
 
-## Counting Business Days
+---
 
-### `businessDaysBetween(start, end, holidays?)`
-
-Count business days between two dates (exclusive of both endpoints):
+## nextBusinessDay / prevBusinessDay
 
 ```typescript
-const start = d8('2026-03-01')
-const end = d8('2026-03-31')
+import { nextBusinessDay, prevBusinessDay } from '@anilkumarthakur/d8'
 
-d8.business.businessDaysBetween(start, end)
-// 21 (approximately, depends on weekday distribution)
+// Next from weekday:
+nextBusinessDay(d8('2026-01-16')).format('YYYY-MM-DD')
+// → "2026-01-19" (Fri → Mon)
 
-// With holidays
-const usHolidays = d8.business.getHolidays('US', 2026)
-d8.business.businessDaysBetween(start, end, usHolidays)
+// Next from weekend:
+nextBusinessDay(d8('2026-01-17')).format('YYYY-MM-DD')
+// → "2026-01-19" (Sat → Mon)
+
+nextBusinessDay(d8('2026-01-18')).format('YYYY-MM-DD')
+// → "2026-01-19" (Sun → Mon)
+
+// With holiday:
+nextBusinessDay(d8('2026-01-18'), ['2026-01-19']).format('YYYY-MM-DD')
+// → "2026-01-20" (Sun, Mon is holiday → Tue)
+
+// Previous:
+prevBusinessDay(d8('2026-01-12')).format('YYYY-MM-DD')
+// → "2026-01-09" (Mon → prev Fri)
+
+prevBusinessDay(d8('2026-01-17')).format('YYYY-MM-DD')
+// → "2026-01-16" (Sat → Fri)
+
+prevBusinessDay(d8('2026-01-18')).format('YYYY-MM-DD')
+// → "2026-01-16" (Sun → Fri)
 ```
 
-## Holiday Calendars
+---
 
-### `getHolidays(country, year)`
-
-Get an array of ISO date strings for public holidays:
+## businessDaysBetween
 
 ```typescript
-const holidays = d8.business.getHolidays('US', 2026)
-// [
-//   "2026-01-01",  // New Year's Day
-//   "2026-01-19",  // MLK Day
-//   "2026-02-16",  // Presidents' Day
-//   "2026-05-25",  // Memorial Day
-//   "2026-06-19",  // Juneteenth
-//   "2026-07-04",  // Independence Day
-//   "2026-09-07",  // Labor Day
-//   "2026-10-12",  // Columbus Day
-//   "2026-11-11",  // Veterans Day
-//   "2026-11-26",  // Thanksgiving
-//   "2026-12-25"   // Christmas
-// ]
+import { businessDaysBetween } from '@anilkumarthakur/d8'
+
+// Same date → 0:
+businessDaysBetween(d8('2026-01-15'), d8('2026-01-15'))
+// → 0
+
+// Mon to Fri (exclusive of endpoints):
+businessDaysBetween(d8('2026-01-12'), d8('2026-01-16'))
+// → 3 (Tue, Wed, Thu)
+
+// Mon to Mon next week:
+businessDaysBetween(d8('2026-01-12'), d8('2026-01-19'))
+// → 4 (Tue, Wed, Thu, Fri — skips weekend)
+
+// End < start → negative:
+businessDaysBetween(d8('2026-01-16'), d8('2026-01-12'))
+// → -3
+
+// With holidays:
+businessDaysBetween(d8('2026-01-12'), d8('2026-01-16'), ['2026-01-14'])
+// → 2 (Wed is holiday, only Tue and Thu)
+```
+
+---
+
+## getHolidays
+
+```typescript
+import { getHolidays } from '@anilkumarthakur/d8'
+
+const usHolidays = getHolidays('US', 2026)
+// → array of "YYYY-MM-DD" strings
+
+// US holidays include:
+usHolidays.includes('2026-01-01') // → true  (New Year's Day)
+usHolidays.includes('2026-07-04') // → true  (Independence Day)
+usHolidays.includes('2026-12-25') // → true  (Christmas Day)
+usHolidays.includes('2026-01-19') // → true  (MLK Day, 3rd Mon Jan)
+usHolidays.includes('2026-11-26') // → true  (Thanksgiving, 4th Thu Nov)
+
+// UK:
+const ukHolidays = getHolidays('UK', 2026)
+ukHolidays.includes('2026-04-03') // → true  (Good Friday)
+ukHolidays.includes('2026-04-06') // → true  (Easter Monday)
+ukHolidays.includes('2026-12-26') // → true  (Boxing Day)
+
+// India:
+getHolidays('IN', 2026).includes('2026-01-26') // → true (Republic Day)
+
+// Germany:
+const deHolidays = getHolidays('DE', 2026)
+deHolidays.includes('2026-10-03') // → true  (German Unity Day)
+deHolidays.includes('2026-04-03') // → true  (Good Friday)
+deHolidays.includes('2026-04-05') // → true  (Easter Sunday)
+deHolidays.includes('2026-04-06') // → true  (Easter Monday)
+
+// France:
+getHolidays('FR', 2026).includes('2026-07-14') // → true (Bastille Day)
+
+// Canada:
+getHolidays('CA', 2026).includes('2026-07-01') // → true (Canada Day)
+
+// Australia:
+const auHolidays = getHolidays('AU', 2026)
+auHolidays.includes('2026-01-26') // → true  (Australia Day)
+auHolidays.includes('2026-04-03') // → true  (Good Friday)
+auHolidays.includes('2026-04-04') // → true  (Easter Saturday)
+auHolidays.includes('2026-04-06') // → true  (Easter Monday)
+
+// Unknown country → empty:
+getHolidays('ZZ', 2026) // → []
+
+// Case-insensitive:
+getHolidays('us', 2026).includes('2026-01-01') // → true
 ```
 
 ### Supported Countries
 
-| Code | Country     | Holidays Include |
-|:-----|:------------|:-----------------|
-| `US` | 🇺🇸 United States | New Year, MLK, Presidents Day, Memorial Day, Juneteenth, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas |
-| `UK` | 🇬🇧 United Kingdom | New Year, Good Friday, Easter Monday, Early May, Spring Bank, Summer Bank, Christmas, Boxing Day |
-| `IN` | 🇮🇳 India | New Year, Republic Day, Holi, Good Friday, May Day, Independence Day, Gandhi Jayanti, Dussehra, Diwali, Children's Day, Christmas |
-| `DE` | 🇩🇪 Germany | Neujahr, Heilige Drei Könige, Karfreitag, Easter, Tag der Arbeit, Christi Himmelfahrt, Pfingsten, Fronleichnam, Tag der Deutschen Einheit, Allerheiligen, Christmas |
-| `FR` | 🇫🇷 France | Jour de l'an, Easter Monday, Fête du Travail, Victoire 1945, Ascension, Pentecôte, Bastille Day, Assomption, Toussaint, Armistice, Noël |
-| `CA` | 🇨🇦 Canada | New Year, Family Day, Good Friday, Victoria Day, Canada Day, Labour Day, Truth & Reconciliation, Thanksgiving, Remembrance Day, Christmas, Boxing Day |
-| `AU` | 🇦🇺 Australia | New Year, Australia Day, Good Friday, Easter Saturday–Monday, ANZAC Day, Queen's Birthday, Christmas, Boxing Day |
+| Code | Country | Holiday Count |
+|:-----|:--------|:-------------|
+| `US` | United States | 10 |
+| `UK` | United Kingdom | 8 |
+| `IN` | India | 3 |
+| `DE` | Germany | 9 |
+| `FR` | France | 11 |
+| `CA` | Canada | 5 |
+| `AU` | Australia | 8 |
 
-::: tip Easter-Based Holidays
-Good Friday, Easter Monday, and other Easter-dependent holidays are computed dynamically using the Anonymous Gregorian algorithm — accurate for any year.
-:::
+Easter-based holidays are computed dynamically using the Anonymous Gregorian algorithm — dates are correct for any year.
+
+---
 
 ## Real-World Example: Delivery Estimate
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import d8, { addBusinessDays, getHolidays } from '@anilkumarthakur/d8'
 
-function estimateDelivery(orderDate: string, country: string = 'US') {
+function estimateDelivery(orderDate: string, country = 'US', processingDays = 3) {
   const order = d8(orderDate)
-  const holidays = d8.business.getHolidays(country, order.get('year'))
-  
-  const processing = d8.business.addBusinessDays(order, 2, holidays)     // 2 biz days processing
-  const shipping = d8.business.addBusinessDays(processing, 5, holidays)  // 5 biz days shipping
-  
+  const holidays = getHolidays(country, order.get('year'))
+  const delivery = addBusinessDays(order, processingDays, holidays)
+
   return {
-    ordered: order.format('MMM D, YYYY'),
-    processed: processing.format('MMM D, YYYY'),
-    delivered: shipping.format('MMM D, YYYY'),
+    ordered: order.format('ddd, MMM D'),
+    estimated: delivery.format('ddd, MMM D'),
+    processingDays,
   }
 }
 
-console.log(estimateDelivery('2026-12-23'))
-// { ordered: "Dec 23, 2026", processed: "Dec 28, 2026", delivered: "Jan 5, 2027" }
+estimateDelivery('2026-01-16')
+// → { ordered: "Fri, Jan 16", estimated: "Wed, Jan 21", processingDays: 3 }
+// (Fri → Mon → Tue → Wed, Mon Jan 19 is MLK Day so skipped)
 ```
-
-## Next Steps
-
-- [Cron Expressions](./cron) — Schedule recurring events
-- [API Reference](../api/businessday) — Complete method signatures

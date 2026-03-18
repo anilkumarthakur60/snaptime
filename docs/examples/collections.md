@@ -1,116 +1,117 @@
-# Collections & Ranges
+# Collections & Ranges Examples
 
-## Sort and Display Events
+## Sorting a Collection
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import { DateCollection, DateFormat } from '@anilkumarthakur/d8'
 
-const events = d8.collection([
-  '2026-12-25',
-  '2026-01-01',
-  '2026-07-04',
-  '2026-03-17',
-])
+const c = new DateCollection(['2026-06-01', '2026-01-01', '2026-03-15'])
 
-const timeline = events
-  .sort('asc')
-  .map(d => `${d.format('MMM D')} (${d.format('dddd')})`)
+c.sort('asc').toArray().map(x => x.format('YYYY-MM-DD'))
+// → ["2026-01-01", "2026-03-15", "2026-06-01"]
 
-// ["Jan 1 (Thursday)", "Mar 17 (Tuesday)", "Jul 4 (Saturday)", "Dec 25 (Friday)"]
+c.sort('desc').toArray().map(x => x.format('YYYY-MM-DD'))
+// → ["2026-06-01", "2026-03-15", "2026-01-01"]
 ```
 
-## Group Transactions by Month
+## Finding Min, Max, Closest, Farthest
 
 ```typescript
-const transactions = d8.collection([
-  '2026-01-05', '2026-01-20', '2026-02-14',
-  '2026-03-01', '2026-03-18', '2026-03-25',
-])
+const c = new DateCollection(['2026-06-01', '2026-01-01', '2026-12-31'])
 
-const monthly = transactions.groupBy('month')
-for (const [key, dates] of monthly) {
-  console.log(`${key}: ${dates.length} transactions`)
-}
-// "2026-01": 2 transactions
-// "2026-02": 1 transactions
-// "2026-03": 3 transactions
+c.min().format('YYYY-MM-DD') // → "2026-01-01"
+c.max().format('YYYY-MM-DD') // → "2026-12-31"
+
+const target = new DateFormat('2026-01-10')
+c.closest(target).format('YYYY-MM-DD')  // → "2026-01-01"
+c.farthest(target).format('YYYY-MM-DD') // → "2026-12-31"
 ```
 
-## Find Nearest Event
+## Grouping
 
 ```typescript
-const holidays = d8.collection([
-  '2026-01-01', '2026-04-03', '2026-07-04',
-  '2026-11-26', '2026-12-25',
-])
+const c = new DateCollection(['2025-06-01', '2026-01-01', '2026-06-01'])
 
-const today = d8('2026-05-15')
-const nearest = holidays.closest(today)
-console.log(`Nearest holiday: ${nearest.format('MMM D')}`)
-// "Nearest holiday: Apr 3"
+const byYear = c.groupBy('year')
+byYear.get('2025').length // → 1
+byYear.get('2026').length // → 2
+
+const c2 = new DateCollection(['2026-01-01', '2026-04-01', '2026-07-01'])
+const byQ = c2.groupBy('quarter')
+byQ.get('2026-Q1').length // → 1
+byQ.get('2026-Q2').length // → 1
+byQ.get('2026-Q3').length // → 1
+```
+
+## Filtering & Dedup
+
+```typescript
+// Weekdays only:
+const c = new DateCollection(['2026-01-12', '2026-01-17', '2026-01-18', '2026-01-19'])
+c.filter(x => x.isWeekday()).count() // → 2 (Mon, Mon)
+
+// Unique by month:
+new DateCollection(['2026-01-01', '2026-01-15', '2026-02-01'])
+  .unique('month').count() // → 2
+
+// Compact (remove invalid):
+const inv = new DateFormat(NaN)
+new DateCollection([new DateFormat('2026-01-01'), inv]).compact().count() // → 1
+```
+
+## Between
+
+```typescript
+const c = new DateCollection(['2026-01-01', '2026-03-01', '2026-06-01', '2026-12-31'])
+const result = c.between(new DateFormat('2026-02-01'), new DateFormat('2026-07-01'))
+result.count() // → 2 (Mar 1, Jun 1)
+
+// Includes boundaries:
+c.between(new DateFormat('2026-01-01'), new DateFormat('2026-06-01')).count()
+// → 2 (Jan 1, Jun 1 included)
+```
+
+## DateRange Basics
+
+```typescript
+import { DateRange } from '@anilkumarthakur/d8'
+
+const range = new DateRange('2026-01-01', '2026-01-31')
+
+range.contains('2026-01-15')           // → true
+range.contains('2026-01-01', false)    // → false (exclusive)
+range.duration().toDays()               // → 30
+range.toString()                        // → "2026-01-01 / 2026-01-31"
 ```
 
 ## Range Overlap Detection
 
 ```typescript
-const meetings = [
-  d8.range('2026-03-18T09:00:00', '2026-03-18T10:00:00'),
-  d8.range('2026-03-18T10:30:00', '2026-03-18T11:30:00'),
-  d8.range('2026-03-18T11:00:00', '2026-03-18T12:00:00'),
-]
+const jan = new DateRange('2026-01-01', '2026-01-31')
+const partial = new DateRange('2026-01-15', '2026-02-28')
 
-// Check for conflicts
-for (let i = 0; i < meetings.length; i++) {
-  for (let j = i + 1; j < meetings.length; j++) {
-    if (meetings[i].overlaps(meetings[j])) {
-      console.log(
-        `Conflict: ${meetings[i].humanize()} ↔ ${meetings[j].humanize()}`
-      )
-    }
-  }
-}
+jan.overlaps(partial) // → true
+
+const intersection = jan.intersect(partial)
+intersection.start.format('YYYY-MM-DD') // → "2026-01-15"
+intersection.end.format('YYYY-MM-DD')   // → "2026-01-31"
+
+const union = jan.merge(partial)
+union.start.format('YYYY-MM-DD') // → "2026-01-01"
+union.end.format('YYYY-MM-DD')   // → "2026-02-28"
 ```
 
-## Generate Month Calendar
+## Splitting & Iterating Ranges
 
 ```typescript
-const range = d8.range('2026-01-01', '2026-12-31')
-const months = range.toArray('month')
+const range = new DateRange('2026-01-01', '2026-01-03')
 
-for (const month of months) {
-  const days = month.daysInMonth()
-  console.log(`${month.format('MMMM YYYY')}: ${days} days`)
-}
-```
+range.split(1, 'day').length
+// → 2 (Jan1→Jan2, Jan2→Jan3)
 
-## Split Year into Quarters
+[...range.iterate('day')].length
+// → 3 (Jan1, Jan2, Jan3)
 
-```typescript
-const year = d8.range('2026-01-01', '2026-12-31')
-const quarters = year.split(3, 'month')
-
-for (const q of quarters) {
-  console.log(`${q.humanize()} (${q.duration().toDays().toFixed(0)} days)`)
-}
-// "Jan 1 – Mar 31, 2026 (89 days)"
-// "Apr 1 – Jun 30, 2026 (91 days)"
-// ...
-```
-
-## Deduplicate Dates
-
-```typescript
-const logs = d8.collection([
-  '2026-03-18T10:00:00', '2026-03-18T10:00:30',
-  '2026-03-18T10:01:00', '2026-03-18T11:00:00',
-])
-
-// Exact dedup
-logs.unique().count()          // 4
-
-// Dedup by minute
-logs.unique('minute').count()  // 3
-
-// Dedup by hour
-logs.unique('hour').count()    // 2
+range.toArray('day').map(d => d.format('MM-DD'))
+// → ["01-01", "01-02", "01-03"]
 ```

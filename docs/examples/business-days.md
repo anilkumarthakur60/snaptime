@@ -1,305 +1,83 @@
-# Business Days Examples
+# Business Day Examples
 
-Calculate with business calendars, skip weekends and holidays.
-
-## Basic Business Day Operations
+## Basic Checks
 
 ```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
+import d8 from '@anilkumarthakur/d8'
+import { isBusinessDay, addBusinessDays, nextBusinessDay, prevBusinessDay,
+         businessDaysBetween, getHolidays } from '@anilkumarthakur/d8'
 
-const bd = new BusinessDay()
-
-// Create dates
-const friday = new DateFormat('2024-01-12')
-const monday = new DateFormat('2024-01-15')
-const saturday = new DateFormat('2024-01-20')
-
-// Check if business day
-console.log(bd.isBusinessDay(friday))  // true
-console.log(bd.isBusinessDay(monday))  // true
-console.log(bd.isBusinessDay(saturday)) // false
-
-// Get next business day
-console.log(bd.nextBusinessDay(friday).format('ddd DD')) // Mon 15
-
-// Get previous business day
-console.log(bd.previousBusinessDay(monday).format('ddd DD')) // Fri 12
+isBusinessDay(d8('2026-01-12'))  // → true  (Monday)
+isBusinessDay(d8('2026-01-17'))  // → false (Saturday)
+isBusinessDay(d8('2026-01-18'))  // → false (Sunday)
 ```
 
-## Count Business Days
+## Navigating Business Days
 
 ```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
+addBusinessDays(d8('2026-01-12'), 1).format('YYYY-MM-DD')
+// → "2026-01-13" (Mon → Tue)
 
-const bd = new BusinessDay()
+addBusinessDays(d8('2026-01-16'), 1).format('YYYY-MM-DD')
+// → "2026-01-19" (Fri → Mon, skips weekend)
 
-// Full work week
-const start = new DateFormat('2024-01-15') // Monday
-const end = new DateFormat('2024-01-19')   // Friday
+addBusinessDays(d8('2026-01-12'), 5).format('YYYY-MM-DD')
+// → "2026-01-19" (Mon + 5 biz days → next Mon)
 
-console.log(bd.countBusinessDays(start, end)) // 5
+nextBusinessDay(d8('2026-01-16')).format('YYYY-MM-DD')
+// → "2026-01-19" (Fri → Mon)
 
-// Across weekend
-const start2 = new DateFormat('2024-01-12') // Friday
-const end2 = new DateFormat('2024-01-15')   // Monday
+nextBusinessDay(d8('2026-01-17')).format('YYYY-MM-DD')
+// → "2026-01-19" (Sat → Mon)
 
-console.log(bd.countBusinessDays(start2, end2)) // 2 (Fri, Mon)
+prevBusinessDay(d8('2026-01-12')).format('YYYY-MM-DD')
+// → "2026-01-09" (Mon → prev Fri)
+
+prevBusinessDay(d8('2026-01-18')).format('YYYY-MM-DD')
+// → "2026-01-16" (Sun → Fri)
 ```
 
-## Add Business Days
+## Counting Between
 
 ```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
+businessDaysBetween(d8('2026-01-12'), d8('2026-01-16'))
+// → 3 (Tue, Wed, Thu — exclusive of endpoints)
 
-const bd = new BusinessDay()
+businessDaysBetween(d8('2026-01-12'), d8('2026-01-19'))
+// → 4 (skips weekend)
 
-// Friday
-const friday = new DateFormat('2024-01-12')
-
-// Add business days (skips weekend)
-console.log(bd.add(friday, 1).format('dddd DD')) // Monday 15
-console.log(bd.add(friday, 5).format('dddd DD')) // Friday 19
-console.log(bd.add(friday, 10).format('dddd DD')) // Friday 02 (next week)
-
-// From Monday
-const monday = new DateFormat('2024-01-15')
-console.log(bd.add(monday, 5).format('dddd DD')) // Friday 19
-
-// Subtract
-console.log(bd.subtract(monday, 3).format('dddd DD')) // Wednesday 10
+businessDaysBetween(d8('2026-01-16'), d8('2026-01-12'))
+// → -3 (negative when end < start)
 ```
 
-## Holidays
+## With Holidays
 
 ```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
+const usHolidays = getHolidays('US', 2026)
 
-const holidays = [
-  new DateFormat('2024-01-01'),  // New Year
-  new DateFormat('2024-07-04'),  // Independence Day
-  new DateFormat('2024-12-25')   // Christmas
-]
+isBusinessDay(d8('2026-01-01'), usHolidays)
+// → false (New Year's Day is a Thursday)
 
-const bd = new BusinessDay({ holidays })
+addBusinessDays(d8('2026-01-16'), 1, ['2026-01-19']).format('YYYY-MM-DD')
+// → "2026-01-20" (Fri + 1, Mon is holiday → Tue)
 
-// Check if holiday
-console.log(bd.isHoliday(new DateFormat('2024-01-01'))) // true
-console.log(bd.isHoliday(new DateFormat('2024-01-15'))) // false
-
-// Add with holiday adjustment
-const date = new DateFormat('2024-12-24') // Dec 24 (Tue before Xmas)
-console.log(bd.add(date, 3).format('YYYY-MM-DD')) // Skips Xmas
+businessDaysBetween(d8('2026-01-12'), d8('2026-01-16'), ['2026-01-14'])
+// → 2 (Wed excluded as holiday)
 ```
 
-## Regional Business Days
-
-### US Holidays
+## Holiday Lists
 
 ```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
-
-const usHolidays2024 = [
-  new DateFormat('2024-01-01'),  // New Year's Day
-  new DateFormat('2024-01-15'),  // MLK Day
-  new DateFormat('2024-02-19'),  // Presidents' Day
-  new DateFormat('2024-03-29'),  // Good Friday
-  new DateFormat('2024-05-27'),  // Memorial Day
-  new DateFormat('2024-06-19'),  // Juneteenth
-  new DateFormat('2024-07-04'),  // Independence Day
-  new DateFormat('2024-09-02'),  // Labor Day
-  new DateFormat('2024-11-28'),  // Thanksgiving
-  new DateFormat('2024-12-25')   // Christmas
-]
-
-const usBd = new BusinessDay({
-  workingDays: [1, 2, 3, 4, 5],
-  holidays: usHolidays2024
-})
-
-const date = new DateFormat('2024-01-01') // New Year (holiday)
-const nextBiz = usBd.nextBusinessDay(date)
-console.log(nextBiz.format('YYYY-MM-DD')) // 2024-01-02
-```
-
-### India Holidays
-
-```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
-
-const indiaHolidays2024 = [
-  new DateFormat('2024-01-26'),  // Republic Day
-  new DateFormat('2024-03-25'),  // Holi
-  new DateFormat('2024-04-17'),  // Ram Navami
-  new DateFormat('2024-08-15'),  // Independence Day
-  new DateFormat('2024-10-12'),  // Dussehra
-  new DateFormat('2024-11-01'),  // Diwali
-  new DateFormat('2024-12-25')   // Christmas
-]
-
-const indiaBd = new BusinessDay({
-  workingDays: [1, 2, 3, 4, 5],
-  holidays: indiaHolidays2024
-})
-```
-
-## Real-World Use Cases
-
-### Delivery Estimate
-
-```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
-
-const bd = new BusinessDay()
-
-function calculateDeliveryDate(orderDate, businessDays) {
-  let current = orderDate
-  let count = 0
-
-  while (count < businessDays) {
-    current = current.add(1, 'day')
-    if (bd.isBusinessDay(current)) {
-      count++
-    }
-  }
-
-  return current
-}
-
-const order = new DateFormat('2024-01-12') // Friday
-const delivery = calculateDeliveryDate(order, 3)
-
-console.log(`Order: ${order.format('dddd DD')}`)
-console.log(`Delivery: ${delivery.format('dddd DD')}`) // Wednesday 17 (3 business days)
-```
-
-### Invoice SLA
-
-```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
-
-function calculatePaymentDeadline(invoiceDate, daysDue = 2) {
-  const bd = new BusinessDay()
-  const dueDate = bd.add(invoiceDate, daysDue)
-
-  return {
-    invoiceDate: invoiceDate.format('YYYY-MM-DD'),
-    dueDate: dueDate.format('YYYY-MM-DD'),
-    daysUntilDue: dueDate.diff(new DateFormat(), 'day'),
-    businessDaysUntilDue: bd.countBusinessDays(new DateFormat(), dueDate)
-  }
-}
-
-const invoice = new DateFormat('2024-01-15')
-const terms = calculatePaymentDeadline(invoice, 5)
-
-console.log(terms)
-```
-
-### Working Hours
-
-```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
-
-function isWithinWorkingHours(date, startHour = 9, endHour = 17) {
-  const hour = date.get('hour')
-  const day = date.get('day')
-
-  // Check day is Mon-Fri
-  if (day === 0 || day === 6) return false
-
-  // Check hour is within range
-  return hour >= startHour && hour < endHour
-}
-
-const workTime = new DateFormat('2024-01-15T14:00:00') // Monday 2 PM
-const afterHours = new DateFormat('2024-01-15T18:00:00') // Monday 6 PM
-const weekend = new DateFormat('2024-01-20T14:00:00') // Saturday 2 PM
-
-console.log(isWithinWorkingHours(workTime)) // true
-console.log(isWithinWorkingHours(afterHours)) // false
-console.log(isWithinWorkingHours(weekend)) // false
-```
-
-### Support SLA
-
-```typescript
-import { BusinessDay, DateFormat } from '@anilkumarthakur/d8'
-
-class SupportTicket {
-  constructor(createdAt, severity = 'medium') {
-    this.createdAt = createdAt
-    this.severity = severity
-    this.bd = new BusinessDay()
-  }
-
-  getSLA() {
-    const slaHours = {
-      critical: 1,
-      high: 4,
-      medium: 8,
-      low: 24
-    }
-
-    return slaHours[this.severity]
-  }
-
-  getDeadline() {
-    const slaHours = this.getSLA()
-    const deadline = this.createdAt.add(slaHours, 'hour')
-
-    // Adjust if falls outside working hours
-    const hour = deadline.get('hour')
-    const day = deadline.get('day')
-
-    if (hour >= 17) {
-      // After 5 PM, move to next business day 9 AM
-      return deadline
-        .add(1, 'day')
-        .startOf('day')
-        .set('hour', 9)
-    }
-
-    return deadline
-  }
-
-  isOverdue() {
-    return new DateFormat().isAfter(this.getDeadline())
-  }
-}
-
-const ticket = new SupportTicket(
-  new DateFormat('2024-01-15T14:00:00'),
-  'high'
-)
-
-console.log(`SLA: ${ticket.getSLA()} hours`)
-console.log(`Deadline: ${ticket.getDeadline().format('YYYY-MM-DD HH:mm')}`)
-console.log(`Overdue: ${ticket.isOverdue()}`)
-```
-
-### Report Generation
-
-```typescript
-import { BusinessDay, DateCollection, DateFormat } from '@anilkumarthakur/d8'
-
-function weeklyReport(startDate) {
-  const bd = new BusinessDay()
-  const dates = new DateCollection([])
-
-  let current = startDate
-
-  // Get 5 business days
-  for (let i = 0; i < 5; i++) {
-    if (bd.isBusinessDay(current)) {
-      // dates.push(current)
-    }
-    current = current.add(1, 'day')
-  }
-
-  return {
-    week: `${startDate.format('YYYY-MM-DD')} to ${current.format('YYYY-MM-DD')}`,
-    businessDays: bd.countBusinessDays(startDate, current),
-    weekends: 2
-  }
-}
+getHolidays('US', 2026).includes('2026-01-01')  // → true (New Year's)
+getHolidays('US', 2026).includes('2026-07-04')  // → true (Independence Day)
+getHolidays('US', 2026).includes('2026-12-25')  // → true (Christmas)
+getHolidays('UK', 2026).includes('2026-04-03')  // → true (Good Friday)
+getHolidays('UK', 2026).includes('2026-04-06')  // → true (Easter Monday)
+getHolidays('IN', 2026).includes('2026-01-26')  // → true (Republic Day)
+getHolidays('DE', 2026).includes('2026-10-03')  // → true (German Unity Day)
+getHolidays('FR', 2026).includes('2026-07-14')  // → true (Bastille Day)
+getHolidays('CA', 2026).includes('2026-07-01')  // → true (Canada Day)
+getHolidays('AU', 2026).includes('2026-01-26')  // → true (Australia Day)
+getHolidays('ZZ', 2026)                          // → [] (unknown country)
+getHolidays('us', 2026).includes('2026-01-01')  // → true (case-insensitive)
 ```

@@ -1,228 +1,198 @@
 # Real-World Recipes
 
-Practical patterns for common date/time challenges.
+Practical patterns combining D8 features.
 
 ## Age Calculator
 
 ```typescript
 import d8 from '@anilkumarthakur/d8'
 
-function calculateAge(birthday: string) {
-  const dob = d8(birthday)
-  const age = dob.age()
-  
+function calculateAge(birthdate: string) {
+  const bd = d8(birthdate)
+  const a = bd.age()
   return {
-    display: age.toString(),              // "35y 9mo 3d"
-    years: age.years,
-    nextBirthday: (() => {
-      const thisYear = d8().get('year')
-      let next = dob.set('year', thisYear)
-      if (next.isBefore(d8())) {
-        next = next.add(1, 'year')
-      }
-      return next.countdown().humanize()
-    })(),
+    years: a.years,
+    months: a.months,
+    days: a.days,
+    display: a.toString(),
+    birthday: bd.format('MMMM Do'),
   }
 }
 
-calculateAge('1990-06-15')
-// { display: "35y 9mo 3d", years: 35, nextBirthday: "89 days" }
+calculateAge('1995-06-15')
+// → { years: 30, months: 7, days: 0, display: "30y 7mo", birthday: "June 15th" }
 ```
 
-## Event Countdown Widget
+## Countdown Timer
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+function getCountdown(targetDate: string) {
+  const target = d8(targetDate)
+  const cd = target.countdown()
 
-function countdownDisplay(eventDate: string, eventName: string) {
-  const event = d8(eventDate)
-  const cd = event.countdown()
-  
-  if (cd.isPast) {
-    return `${eventName} has passed!`
-  }
-  
-  return `${eventName}: ${cd.format('DD days, HH:mm:ss')}`
-}
+  if (cd.isPast) return { status: 'passed', text: 'already passed' }
 
-countdownDisplay('2026-12-25', '🎄 Christmas')
-// "🎄 Christmas: 282 days, 15:30:00"
-
-countdownDisplay('2027-01-01', '🎆 New Year')
-// "🎆 New Year: 289 days, 15:30:00"
-```
-
-## Calendar Grid Component
-
-```typescript
-import d8 from '@anilkumarthakur/d8'
-
-function renderCalendar(monthStr: string) {
-  const date = d8(monthStr)
-  const grid = date.calendarGrid({ weekStart: 'monday' })
-  
-  console.log(date.format('MMMM YYYY'))
-  console.log('Mo Tu We Th Fr Sa Su')
-  
-  for (const week of grid) {
-    const row = week.map(cell => {
-      const day = cell.date.format('DD')
-      if (!cell.isCurrentMonth) return '  '
-      if (cell.isToday) return `[${day}]`
-      return ` ${day}`
-    }).join(' ')
-    console.log(row)
+  return {
+    status: 'active',
+    text: cd.humanize(),
+    formatted: cd.format('DD:HH:mm:ss'),
+    days: cd.days,
   }
 }
 
-renderCalendar('2026-03-01')
+getCountdown('2026-12-25')
+// → { status: "active", text: "344 days, ...", formatted: "344:...", days: 344 }
+
+getCountdown('2020-01-01')
+// → { status: "passed", text: "already passed" }
 ```
 
-## Fiscal Year Report Periods
+## Payroll Period
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import { DateRange } from '@anilkumarthakur/d8'
 
-function fiscalPeriods(year: number, startMonth = 4) {
-  const config = { startMonth }
-  const quarters = []
-  
-  for (let q = 0; q < 4; q++) {
-    const monthOffset = q * 3
-    const startDate = d8(new Date(year, startMonth - 1 + monthOffset, 1))
-    const endDate = startDate.add(3, 'month').subtract(1, 'day')
-    
-    quarters.push({
-      label: `FY${startDate.fiscalYear(config)} Q${q + 1}`,
-      start: startDate.format('MMM D, YYYY'),
-      end: endDate.format('MMM D, YYYY'),
-    })
+function getPayrollPeriod(date: string) {
+  const d = d8(date)
+  const day = d.get('date')
+
+  const start = day <= 15
+    ? d.startOf('month')
+    : d.set('date', 16)
+
+  const end = day <= 15
+    ? d.set('date', 15).endOf('day')
+    : d.endOf('month')
+
+  const range = new DateRange(start, end)
+
+  return {
+    period: range.humanize(),
+    workdays: range.duration().toDays(),
   }
-  
-  return quarters
 }
 
-fiscalPeriods(2026)
-// [
-//   { label: "FY2027 Q1", start: "Apr 1, 2026", end: "Jun 30, 2026" },
-//   { label: "FY2027 Q2", start: "Jul 1, 2026", end: "Sep 30, 2026" },
-//   { label: "FY2027 Q3", start: "Oct 1, 2026", end: "Dec 31, 2026" },
-//   { label: "FY2027 Q4", start: "Jan 1, 2027", end: "Mar 31, 2027" },
-// ]
+getPayrollPeriod('2026-01-10')
+// → { period: "Jan 1 – Jan 15, 2026", workdays: 14 }
 ```
 
-## Payroll Date Calculator
+## Multi-Timezone Clock
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
-
-function payrollDates(year: number, country = 'US') {
-  const holidays = d8.business.getHolidays(country, year)
-  const dates = []
-  
-  for (let month = 1; month <= 12; month++) {
-    // Payroll on 15th and last day of month
-    const mid = d8(`${year}-${String(month).padStart(2, '0')}-15`)
-    const last = d8.natural(`last day of ${mid.format('MMMM')} ${year}`)
-    
-    // If it falls on weekend/holiday, use previous business day
-    const adjustedMid = d8.business.isBusinessDay(mid, holidays)
-      ? mid
-      : d8.business.prevBusinessDay(mid, holidays)
-    
-    const adjustedLast = d8.business.isBusinessDay(last, holidays)
-      ? last
-      : d8.business.prevBusinessDay(last, holidays)
-    
-    dates.push({
-      month: mid.format('MMMM'),
-      midMonth: adjustedMid.format('MMM D (ddd)'),
-      endMonth: adjustedLast.format('MMM D (ddd)'),
-    })
-  }
-  
-  return dates
-}
-```
-
-## World Clock Dashboard
-
-```typescript
-import d8, { Timezone } from '@anilkumarthakur/d8'
+import { Timezone } from '@anilkumarthakur/d8'
 
 function worldClock() {
   const now = d8()
-  
-  const cities = [
-    { name: '🇺🇸 New York',     tz: new Timezone('America/New_York') },
-    { name: '🇬🇧 London',       tz: new Timezone('Europe/London') },
-    { name: '🇩🇪 Berlin',       tz: new Timezone('Europe/Berlin') },
-    { name: '🇮🇳 Mumbai',       tz: new Timezone('Asia/Kolkata') },
-    { name: '🇯🇵 Tokyo',        tz: new Timezone('Asia/Tokyo') },
-    { name: '🇦🇺 Sydney',       tz: new Timezone('Australia/Sydney') },
+  const zones = [
+    { city: 'New York',  tz: new Timezone('America/New_York') },
+    { city: 'London',    tz: new Timezone('Europe/London') },
+    { city: 'Mumbai',    tz: new Timezone('Asia/Kolkata') },
+    { city: 'Tokyo',     tz: new Timezone('Asia/Tokyo') },
   ]
-  
-  return cities.map(city => ({
-    city: city.name,
-    time: city.tz.format(now, 'hh:mm A'),
-    date: city.tz.format(now, 'MMM D'),
-    offset: city.tz.offsetString(now),
-    dst: city.tz.isDST(now) ? '☀️ DST' : '',
+
+  return zones.map(z => ({
+    city: z.city,
+    time: z.tz.format(now, 'hh:mm A'),
+    offset: z.tz.offsetString(now),
+    isDST: z.tz.isDST(now),
   }))
 }
+
+// worldClock()
+// → [{ city: "New York", time: "07:00 AM", offset: "-05:00", isDST: false }, ...]
 ```
 
 ## SLA Timer
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import { addBusinessDays, isBusinessDay, getHolidays } from '@anilkumarthakur/d8'
 
-function slaStatus(createdAt: string, slaDays: number, country = 'US') {
-  const created = d8(createdAt)
-  const holidays = d8.business.getHolidays(country, created.get('year'))
-  const deadline = d8.business.addBusinessDays(created, slaDays, holidays)
-  
-  const now = d8()
-  const remaining = d8.business.businessDaysBetween(now, deadline, holidays)
-  
+function calculateSLA(ticket: string, hours: number, country = 'US') {
+  const created = d8(ticket)
+  const year = created.get('year')
+  const holidays = getHolidays(country, year)
+
+  // Convert hours to business days
+  const bizDays = Math.ceil(hours / 8)
+  const deadline = addBusinessDays(created, bizDays, holidays)
+
   return {
-    created: created.format('MMM D, YYYY'),
-    deadline: deadline.format('MMM D, YYYY'),
-    remainingDays: remaining,
-    status: remaining > 2 ? '🟢 On track' :
-            remaining > 0 ? '🟡 At risk' :
-            remaining === 0 ? '🟠 Due today' : '🔴 Overdue',
-    humanized: deadline.countdown().humanize(),
+    created: created.format('ddd, MMM D'),
+    deadline: deadline.format('ddd, MMM D'),
+    hours,
+    businessDays: bizDays,
   }
 }
 
-slaStatus('2026-03-16', 5)
-// { created: "Mar 16, 2026", deadline: "Mar 23, 2026",
-//   remainingDays: 3, status: "🟡 At risk", humanized: "5 days" }
+calculateSLA('2026-01-15', 24)
+// → { created: "Thu, Jan 15", deadline: "Tue, Jan 20", hours: 24, businessDays: 3 }
 ```
 
-## ISO Week Report
+## Date Sequence Generator
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import { DateRange, DateCollection } from '@anilkumarthakur/d8'
 
-function weekReport(dateStr: string) {
-  const date = d8(dateStr)
-  
+function generateMeetingDates(start: string, end: string, dayOfWeek: number) {
+  const range = new DateRange(start, end)
+  const allDates = range.toArray('day')
+  const c = new DateCollection(allDates)
+
+  const meetings = c.filter(d => d.get('day') === dayOfWeek)
+
   return {
-    isoWeek: date.isoWeek(),
-    isoYear: date.isoWeekYear(),
-    label: date.format('YYYY-[W]WW'),
-    weekStart: date.startOf('week').format('MMM D'),
-    weekEnd: date.endOf('week').format('MMM D'),
-    dayOfYear: date.dayOfYear(),
-    weeksInYear: date.weeksInYear(),
-    quarter: date.quarter(),
+    count: meetings.count(),
+    dates: meetings.toArray().map(d => d.format('YYYY-MM-DD')),
+    first: meetings.first().format('ddd, MMM D'),
+    last: meetings.last().format('ddd, MMM D'),
   }
 }
 
-weekReport('2026-03-18')
-// { isoWeek: 12, isoYear: 2026, label: "2026-W12",
-//   weekStart: "Mar 15", weekEnd: "Mar 21",
-//   dayOfYear: 77, weeksInYear: 53, quarter: 1 }
+// All Mondays in January 2026:
+generateMeetingDates('2026-01-01', '2026-01-31', 1)
+// → { count: 4, dates: ["2026-01-05","2026-01-12","2026-01-19","2026-01-26"],
+//     first: "Mon, Jan 5", last: "Mon, Jan 26" }
+```
+
+## Invoice Due Date
+
+```typescript
+function invoiceDueDate(invoiceDate: string, terms: number, country = 'US') {
+  const invoice = d8(invoiceDate)
+  const holidays = getHolidays(country, invoice.get('year'))
+  const due = addBusinessDays(invoice, terms, holidays)
+
+  return {
+    invoice: invoice.format('YYYY-MM-DD'),
+    due: due.format('YYYY-MM-DD'),
+    terms: `Net ${terms}`,
+    isWeekend: due.isWeekend(),
+  }
+}
+
+invoiceDueDate('2026-01-12', 30)
+// → { invoice: "2026-01-12", due: "2026-02-23", terms: "Net 30", isWeekend: false }
+```
+
+## Fiscal Quarter Report
+
+```typescript
+function quarterSummary(date: string, startMonth = 1) {
+  const d = d8(date)
+  return {
+    date: d.format('YYYY-MM-DD'),
+    quarter: d.fiscalQuarter({ startMonth }),
+    fiscalYear: d.fiscalYear({ startMonth }),
+    calendarQuarter: d.quarter(),
+    dayOfYear: d.dayOfYear(),
+    isoWeek: d.isoWeek(),
+    isLeapYear: d.isLeapYear(),
+    daysInMonth: d.daysInMonth(),
+  }
+}
+
+quarterSummary('2026-04-15', 4)
+// → { date: "2026-04-15", quarter: 1, fiscalYear: 2027,
+//     calendarQuarter: 2, dayOfYear: 105, isoWeek: 15,
+//     isLeapYear: false, daysInMonth: 30 }
 ```
