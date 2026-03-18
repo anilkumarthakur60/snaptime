@@ -1,231 +1,174 @@
 # Natural Language
 
-`NaturalLanguage` converts dates to human-readable, natural language descriptions.
+D8 can parse dates from English phrases. The `parseNatural` function (also available as `d8.natural()`) converts human-readable strings into `DateFormat` instances.
 
-## Constructor and Conversion
+## Basic Usage
 
 ```typescript
-import { NaturalLanguage, DateFormat } from '@anilkumarthakur/d8'
+import d8, { parseNatural } from '@anilkumarthakur/d8'
 
-const date = new DateFormat('2024-01-15T14:30:00Z')
-const nl = new NaturalLanguage(date)
+// Via factory (recommended)
+d8.natural('tomorrow').format('YYYY-MM-DD')
 
-// Convert to natural language
-console.log(nl.format()) // "January 15, 2024 at 14:30"
+// Direct function
+parseNatural('tomorrow').format('YYYY-MM-DD')
 ```
 
-## Relative Dates
+## Supported Patterns
+
+### Simple Keywords
 
 ```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
-
-const pastDate = new DateFormat().subtract(5, 'day')
-const futureDate = new DateFormat().add(3, 'day')
-
-// Relative to now
-console.log(pastDate.fromNow())   // "5 days ago"
-console.log(futureDate.toNow())   // "in 3 days"
-
-// Relative to specific date
-const from = new DateFormat().subtract(2, 'day')
-console.log(pastDate.from(from))  // "3 days ago"
+d8.natural('now')         // current date/time
+d8.natural('today')       // current date/time
+d8.natural('tomorrow')    // +1 day
+d8.natural('yesterday')   // -1 day
 ```
 
-## Format Styles
+### Next / Last Weekday
 
 ```typescript
-const date = new DateFormat('2024-01-15T14:30:00Z')
-
-// Long format
-console.log(date.humanize())
-// "Monday, January 15, 2024 at 2:30 PM"
-
-// Short format
-console.log(date.format('MMM D, YY h:mm A'))
-// "Jan 15, 24 2:30 PM"
+d8.natural('next monday')
+d8.natural('next friday')
+d8.natural('last wednesday')
+d8.natural('next saturday')
+d8.natural('last sunday')
 ```
 
-## Time Descriptions
+### Next / Last Period
 
 ```typescript
-// Exact time
-const date1 = new DateFormat('2024-01-15T14:30:00Z')
-console.log(date1.humanize()) // "Monday, January 15, 2024 at 2:30 PM"
-
-// Approximate time
-const date2 = new DateFormat('2024-01-15T14:23:00Z')
-console.log(date2.humanize()) // "Monday, January 15, 2024 at 2:23 PM"
+d8.natural('next week')
+d8.natural('last month')
+d8.natural('next year')
+d8.natural('last week')
 ```
 
-## Relative Time Descriptions
+### Relative with Numbers
 
 ```typescript
-const now = new DateFormat()
+// "N units ago"
+d8.natural('3 days ago')
+d8.natural('2 weeks ago')
+d8.natural('6 months ago')
+d8.natural('1 year ago')
 
-// Very recent
-const just = now.subtract(30, 'second')
-console.log(just.fromNow()) // "just now"
+// "in N units"
+d8.natural('in 3 days')
+d8.natural('in 2 weeks')
+d8.natural('in 6 months')
+d8.natural('in 1 year')
 
-// Minutes ago
-const minAgo = now.subtract(5, 'minute')
-console.log(minAgo.fromNow()) // "5 minutes ago"
-
-// Hours ago
-const hrAgo = now.subtract(2, 'hour')
-console.log(hrAgo.fromNow()) // "2 hours ago"
-
-// Yesterday
-const yesterday = now.subtract(1, 'day')
-console.log(yesterday.fromNow()) // "a day ago"
-
-// Days ago
-const daysAgo = now.subtract(5, 'day')
-console.log(daysAgo.fromNow()) // "5 days ago"
-
-// Weeks ago
-const weeksAgo = now.subtract(2, 'week')
-console.log(weeksAgo.fromNow()) // "2 weeks ago"
-
-// Months ago
-const monthsAgo = now.subtract(3, 'month')
-console.log(monthsAgo.fromNow()) // "3 months ago"
-
-// Years ago
-const yearsAgo = now.subtract(1, 'year')
-console.log(yearsAgo.toNow()) // "in a year"
+// "N units from now"
+d8.natural('5 days from now')
+d8.natural('3 weeks from now')
+d8.natural('2 months from now')
 ```
 
-## Future Time
+### Beginning / End of Period
 
 ```typescript
-const now = new DateFormat()
+d8.natural('beginning of day')     // midnight today
+d8.natural('beginning of week')    // start of current week
+d8.natural('beginning of month')   // 1st of current month
+d8.natural('beginning of year')    // Jan 1
 
-// Soon
-const soon = now.add(30, 'second')
-console.log(soon.toNow()) // "in 30 seconds"
-
-// Later today
-const later = now.add(3, 'hour')
-console.log(later.toNow()) // "in 3 hours"
-
-// Tomorrow
-const tomorrow = now.add(1, 'day')
-console.log(tomorrow.toNow()) // "in a day"
-
-// Next week
-const nextWeek = now.add(1, 'week')
-console.log(nextWeek.toNow()) // "in a week"
-
-// Next month
-const nextMonth = now.add(1, 'month')
-console.log(nextMonth.toNow()) // "in a month"
+d8.natural('end of day')           // 23:59:59.999 today
+d8.natural('end of week')          // end of current week
+d8.natural('end of month')         // last moment of current month
+d8.natural('end of year')          // Dec 31, 23:59:59.999
 ```
 
-## Relative Between Dates
+### First / Last Day of Month
 
 ```typescript
-const date1 = new DateFormat('2024-01-10')
-const date2 = new DateFormat('2024-01-15')
-
-// date1 relative to date2
-console.log(date1.from(date2)) // "5 days ago"
-console.log(date1.to(date2))   // "5 days later"
+d8.natural('first day of March')
+d8.natural('last day of March')
+d8.natural('first day of December 2027')
+d8.natural('last day of February 2028')  // handles leap years
 ```
 
-## Common Patterns
+### Nth Weekday of Month
 
 ```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
-
-// Activity timestamp
-const lastUpdate = new DateFormat().subtract(3, 'hour')
-console.log(`Last updated ${lastUpdate.fromNow()}`)
-// Output: "Last updated 3 hours ago"
-
-// Event countdown
-const eventDate = new DateFormat('2024-02-14')
-console.log(`Event in ${eventDate.toNow()}`)
-// Output: "Event in 24 days" (if today is Jan 21)
-
-// Post/article date
-const postDate = new DateFormat('2024-01-15')
-console.log(postDate.humanize())
-// Output: "Monday, January 15, 2024 at 12:00 PM"
-
-// Meeting reminder
-const meeting = new DateFormat('2024-02-15T14:30:00')
-const timeUntil = meeting.toNow()
-console.log(`Meeting ${timeUntil}`)
-// Output: "Meeting in 31 days"
-
-// Age calculation
-const birthdate = new DateFormat('1990-05-15')
-console.log(`Born ${birthdate.fromNow()}`)
-// Output: "Born 34 years ago"
-
-// Expiry warning
-const expiryDate = new DateFormat('2024-02-01')
-const daysLeft = expiryDate.diff(new DateFormat(), 'day')
-console.log(`Expires in ${daysLeft} days`)
+d8.natural('1st Monday of January')
+d8.natural('3rd Friday of March')
+d8.natural('2nd Tuesday of November 2027')
+d8.natural('4th Thursday of November')  // Thanksgiving!
 ```
 
-## Localization
+## Custom Reference Date
 
-D8 supports relative time descriptions in English. For other languages, use custom formatting:
+By default, relative dates are calculated from "now". You can pass a custom reference:
 
 ```typescript
-const date = new DateFormat('2024-01-15')
+const ref = d8('2026-06-15')
 
-// Custom French translation (example)
-const translations = {
-  'daysAgo': 'il y a {number} jours',
-  'inDays': 'dans {number} jours'
-}
+d8.natural('tomorrow', ref).format('YYYY-MM-DD')
+// "2026-06-16"
 
-// Use format() with custom formatting
-const formatted = date.format('D MMMM YYYY')
+d8.natural('3 days ago', ref).format('YYYY-MM-DD')
+// "2026-06-12"
+
+d8.natural('next friday', ref).format('YYYY-MM-DD')
+// "2026-06-19"
 ```
 
-## Advanced Examples
+## Invalid Input
+
+Unrecognized patterns return an invalid `DateFormat`:
 
 ```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
+const result = d8.natural('the day after tomorrow')
+result.isValid()  // false
 
-// Timeline generation
-function generateTimeline(dates: DateFormat[]) {
-  const now = new DateFormat()
-  return dates.map(date => ({
-    date: date.format('YYYY-MM-DD'),
-    relative: date.from(now),
-    human: date.humanize()
-  }))
-}
+const result2 = d8.natural('gibberish')
+result2.isValid() // false
+```
 
-// Expiry checker
-function checkExpiry(expiryDate: DateFormat) {
-  const daysLeft = expiryDate.diff(new DateFormat(), 'day')
-
-  if (daysLeft < 0) {
-    return 'Expired!'
-  } else if (daysLeft === 0) {
-    return 'Expires today'
-  } else if (daysLeft < 7) {
-    return `Expires ${expiryDate.toNow()}`
-  } else {
-    return `Expires ${expiryDate.format('MMM D, YYYY')}`
-  }
-}
-
-// Time since event
-function timeSince(eventDate: DateFormat) {
-  const now = new DateFormat()
-  const diff = now.diff(eventDate, 'second')
-
-  if (diff < 60) return 'just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`
-  if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`
-
-  return eventDate.format('MMM D, YYYY')
+::: tip Always Validate
+When accepting user input, always check `.isValid()` before using the result:
+```typescript
+const parsed = d8.natural(userInput)
+if (parsed.isValid()) {
+  console.log(parsed.format('YYYY-MM-DD'))
+} else {
+  console.log('Could not understand that date')
 }
 ```
+:::
+
+## Supported Units
+
+| Input | Unit |
+|:------|:-----|
+| `day` / `days` | day |
+| `week` / `weeks` | week |
+| `month` / `months` | month |
+| `year` / `years` | year |
+
+## Complete Reference Table
+
+| Pattern | Example Output |
+|:--------|:---------------|
+| `now` | Current moment |
+| `today` | Current moment |
+| `tomorrow` | +1 day |
+| `yesterday` | -1 day |
+| `next {weekday}` | Next occurrence |
+| `last {weekday}` | Previous occurrence |
+| `next week/month/year` | +1 period |
+| `last week/month/year` | -1 period |
+| `N days/weeks/months/years ago` | -N periods |
+| `in N days/weeks/months/years` | +N periods |
+| `N days/weeks/months/years from now` | +N periods |
+| `beginning of day/week/month/year` | Start of period |
+| `end of day/week/month/year` | End of period |
+| `first day of {month} [year]` | 1st of month |
+| `last day of {month} [year]` | Last day of month |
+| `{N}th {weekday} of {month} [year]` | Specific occurrence |
+
+## Next Steps
+
+- [Plugin System](./plugins) — Extend D8 with custom methods
+- [API Reference](../api/natural-language) — Complete method signatures

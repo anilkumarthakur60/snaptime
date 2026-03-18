@@ -1,374 +1,244 @@
 # DateCollection
 
-`DateCollection` manages multiple dates with batch operations, filtering, grouping, and aggregation.
+Batch operations on sets of dates — sort, filter, group, deduplicate, and query.
 
-## Constructor
+## Creating Collections
 
 ```typescript
 import { DateCollection, DateFormat } from '@anilkumarthakur/d8'
 
-// From array of strings
-const collection1 = new DateCollection([
-  '2024-01-15',
-  '2024-01-20',
-  '2024-01-10'
-])
+// From strings:
+new DateCollection(['2026-01-01', '2026-06-01'])        // count → 2
 
-// From array of Date objects
-const collection2 = new DateCollection([
-  new Date('2024-01-15'),
-  new Date('2024-01-20'),
-  new Date('2024-01-10')
-])
+// From Date objects:
+new DateCollection([new Date(2026, 0, 1)])               // count → 1
 
-// From array of DateFormat objects
-const collection3 = new DateCollection([
-  new DateFormat('2024-01-15'),
-  new DateFormat('2024-01-20'),
-  new DateFormat('2024-01-10')
-])
+// From DateFormat instances:
+new DateCollection([new DateFormat('2026-01-01')])        // count → 1
 
-// From array of timestamps
-const collection4 = new DateCollection([
-  1705276800000,
-  1705363200000,
-  1705190400000
-])
+// From timestamps:
+new DateCollection([1735689600000])                      // count → 1
 
-// Mixed types
-const collection5 = new DateCollection([
-  '2024-01-15',
-  new Date('2024-01-20'),
-  new DateFormat('2024-01-10'),
-  1705363200000
+// Mixed input types:
+new DateCollection([
+  '2026-01-01',
+  new Date(2026, 5, 1),
+  new DateFormat('2026-09-01'),
+  new Date('2026-12-01').getTime()
 ])
+// count → 4
+
+// Or via the factory:
+import d8 from '@anilkumarthakur/d8'
+const c = d8.collection(['2026-01-01', '2026-06-01', '2026-03-15'])
 ```
 
-## Sorting
+---
+
+## Sort
 
 ```typescript
-const collection = new DateCollection([
-  '2024-01-20',
-  '2024-01-10',
-  '2024-01-15'
-])
+const c = new DateCollection(['2026-06-01', '2026-01-01', '2026-03-15'])
 
-// Ascending (default)
-const ascending = collection.sort('asc')
-// Result: [2024-01-10, 2024-01-15, 2024-01-20]
+c.sort().toArray().map(x => x.format('YYYY-MM-DD'))
+// → ["2026-01-01", "2026-03-15", "2026-06-01"] (default: ascending)
 
-// Descending
-const descending = collection.sort('desc')
-// Result: [2024-01-20, 2024-01-15, 2024-01-10]
+c.sort('asc').toArray().map(x => x.format('YYYY-MM-DD'))
+// → ["2026-01-01", "2026-03-15", "2026-06-01"]
 
-// Chain operations
-const sorted = collection
-  .sort('asc')
-  .filter(date => date.isAfter(new DateFormat('2024-01-12')))
+c.sort('desc').toArray().map(x => x.format('YYYY-MM-DD'))
+// → ["2026-06-01", "2026-03-15", "2026-01-01"]
 ```
 
-## Filtering
+---
+
+## Closest & Farthest
 
 ```typescript
-const collection = new DateCollection([
-  '2024-01-10',
-  '2024-01-15',
-  '2024-01-20',
-  '2024-01-25'
-])
+const c = new DateCollection(['2026-01-01', '2026-12-31'])
+const target = new DateFormat('2026-01-10')
 
-// Filter by date range
-const filtered = collection.filter(date =>
-  date.isAfter(new DateFormat('2024-01-12')) &&
-  date.isBefore(new DateFormat('2024-01-22'))
-)
-// Result: [2024-01-15, 2024-01-20]
+c.closest(target).format('YYYY-MM-DD')  // → "2026-01-01"
+c.farthest(target).format('YYYY-MM-DD') // → "2026-12-31"
 
-// Filter specific dates
-const weekends = collection.filter(date => {
-  const day = date.get('day')
-  return day === 0 || day === 6
-})
+// Tie → first encountered wins:
+const c2 = new DateCollection(['2026-01-05', '2026-01-15'])
+c2.closest(new DateFormat('2026-01-10')).format('YYYY-MM-DD')
+// → "2026-01-05" (both are 5 days away, first wins)
 
-// Filter by month
-const january = collection.filter(date =>
-  date.get('month') === 1
-)
+// Empty collection → throws:
+new DateCollection([]).closest(target)  // → throws Error
+new DateCollection([]).farthest(target) // → throws Error
 ```
 
-## Mapping
+---
+
+## GroupBy
 
 ```typescript
-const collection = new DateCollection([
-  '2024-01-15',
-  '2024-01-20',
-  '2024-01-10'
-])
+// By year:
+const c = new DateCollection(['2025-06-01', '2026-01-01', '2026-06-01'])
+const byYear = c.groupBy('year')
+byYear.size             // → 2
+byYear.get('2025').length // → 1
+byYear.get('2026').length // → 2
 
-// Format dates
-const formatted = collection.map(date =>
-  date.format('YYYY-MM-DD')
-)
+// By month (key: "YYYY-MM"):
+const c2 = new DateCollection(['2026-01-01', '2026-01-15', '2026-03-01'])
+const byMonth = c2.groupBy('month')
+byMonth.size                // → 2
+byMonth.get('2026-01').length // → 2
+byMonth.get('2026-03').length // → 1
 
-// Extract data
-const data = collection.map(date => ({
-  date: date.format('YYYY-MM-DD'),
-  day: date.get('day'),
-  month: date.get('month')
-}))
+// By week (key: "YYYY-Www"):
+const c3 = new DateCollection(['2026-01-12', '2026-01-14', '2026-01-19'])
+const byWeek = c3.groupBy('week')
+byWeek.get('2026-W02').length // → 2
+byWeek.get('2026-W03').length // → 1
 
-// Get timestamps
-const timestamps = collection.map(date =>
-  date.valueOf()
-)
+// By day (key: "YYYY-MM-DD"):
+const c4 = new DateCollection(['2026-01-15', '2026-01-15', '2026-01-16'])
+c4.groupBy('day').get('2026-01-15').length // → 2
+
+// By quarter (key: "YYYY-Qn"):
+const c5 = new DateCollection(['2026-01-01', '2026-04-01', '2026-07-01'])
+const byQ = c5.groupBy('quarter')
+byQ.get('2026-Q1').length // → 1
+byQ.get('2026-Q2').length // → 1
+byQ.get('2026-Q3').length // → 1
 ```
 
-## Reducing
+---
+
+## Filter
 
 ```typescript
-const collection = new DateCollection([
-  '2024-01-01',
-  '2024-01-05',
-  '2024-01-10'
+// Filter to weekdays only:
+const c = new DateCollection([
+  '2026-01-12', // Monday
+  '2026-01-17', // Saturday
+  '2026-01-18', // Sunday
+  '2026-01-19'  // Monday
 ])
+c.filter(x => x.isWeekday()).count() // → 2
 
-// Count dates
-const count = collection.reduce((sum) => sum + 1, 0)
-
-// Sum days of month
-const sumDays = collection.reduce((sum, date) =>
-  sum + date.get('date'), 0
-)
-
-// Find oldest date
-const oldest = collection.reduce((min, date) =>
-  date.isBefore(min) ? date : min
-)
-
-// Collect formatted
-const formatted = collection.reduce((acc, date) =>
-  acc + date.format('YYYY-MM-DD') + '\n', ''
-)
+// No matches → empty:
+new DateCollection(['2026-01-17', '2026-01-18']) // Sat + Sun
+  .filter(x => x.isWeekday()).isEmpty()          // → true
 ```
 
-## Grouping
+---
+
+## Unique (Deduplicate)
 
 ```typescript
-const collection = new DateCollection([
-  '2024-01-10',
-  '2024-01-15',
-  '2024-01-20',
-  '2024-02-05',
-  '2024-02-15'
+// Exact dedup (by ms):
+const ts = new Date(2026, 0, 15, 9, 0, 0, 0).getTime()
+new DateCollection([ts, ts, ts + 1]).unique().count() // → 2
+
+// By year:
+new DateCollection(['2026-01-01', '2026-06-01', '2025-12-31'])
+  .unique('year').count() // → 2
+
+// By month:
+new DateCollection(['2026-01-01', '2026-01-15', '2026-02-01'])
+  .unique('month').count() // → 2
+
+// By week:
+new DateCollection(['2026-01-12', '2026-01-14', '2026-01-19'])
+  .unique('week').count() // → 2
+
+// By day:
+new DateCollection([
+  new DateFormat(new Date(2026, 0, 15, 9, 0)),
+  new DateFormat(new Date(2026, 0, 15, 17, 0)),
+  new DateFormat(new Date(2026, 0, 16, 9, 0))
+]).unique('day').count() // → 2
+
+// By hour, minute, second also available.
+```
+
+---
+
+## Element Access
+
+```typescript
+const c = new DateCollection(['2026-01-01', '2026-06-01'])
+
+c.first().format('YYYY-MM-DD') // → "2026-01-01"
+c.last().format('YYYY-MM-DD')  // → "2026-06-01"
+c.nth(0).format('YYYY-MM-DD')  // → "2026-01-01"
+c.count()                       // → 2
+c.isEmpty()                     // → false
+
+// Empty collection → throws:
+new DateCollection([]).first() // → throws Error
+new DateCollection([]).last()  // → throws Error
+new DateCollection(['2026-01-01']).nth(5) // → throws Error (out of bounds)
+new DateCollection(['2026-01-01']).nth(-1) // → throws Error (negative index)
+```
+
+---
+
+## Min & Max
+
+```typescript
+const c = new DateCollection(['2026-06-01', '2026-01-01', '2026-12-31'])
+
+c.min().format('YYYY-MM-DD') // → "2026-01-01"
+c.max().format('YYYY-MM-DD') // → "2026-12-31"
+
+// Empty → throws:
+new DateCollection([]).min() // → throws Error
+new DateCollection([]).max() // → throws Error
+```
+
+---
+
+## Between
+
+```typescript
+const c = new DateCollection([
+  '2026-01-01', '2026-03-01', '2026-06-01', '2026-12-31'
 ])
 
-// Group by month
-const byMonth = collection.groupBy(date =>
-  date.format('YYYY-MM')
+const result = c.between(
+  new DateFormat('2026-02-01'),
+  new DateFormat('2026-07-01')
 )
-// Result:
-// '2024-01' => [2024-01-10, 2024-01-15, 2024-01-20]
-// '2024-02' => [2024-02-05, 2024-02-15]
+result.count() // → 2 (Mar 1 and Jun 1)
 
-// Group by day of week
-const byDayOfWeek = collection.groupBy(date =>
-  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.get('day')]
-)
+// Includes boundary dates:
+c.between(
+  new DateFormat('2026-01-01'),
+  new DateFormat('2026-06-01')
+).count() // → 2 (Jan 1 and Jun 1 are included)
 
-// Group by range
-const byRange = collection.groupBy(date => {
-  const d = date.get('date')
-  if (d <= 10) return 'first-third'
-  if (d <= 20) return 'second-third'
-  return 'last-third'
-})
+// No matches → empty:
+c.between(
+  new DateFormat('2026-06-02'),
+  new DateFormat('2026-08-01')
+).isEmpty() // → true
 ```
 
-## Uniqueness
+---
+
+## Compact & Map
 
 ```typescript
-const collection = new DateCollection([
-  '2024-01-15T10:00:00',
-  '2024-01-15T14:00:00',
-  '2024-01-20T10:00:00'
+// Compact removes invalid dates:
+const invalid = new DateFormat(NaN)
+const c = new DateCollection([
+  new DateFormat('2026-01-01'), invalid, new DateFormat('2026-06-01')
 ])
+c.compact().count() // → 2 (invalid removed)
 
-// Unique by day (ignore time)
-const uniqueDays = collection.unique(date =>
-  date.format('YYYY-MM-DD')
-)
-// Result: [2024-01-15, 2024-01-20]
+// Map transforms each date:
+new DateCollection(['2026-01-01', '2026-06-01'])
+  .map(x => x.format('YYYY-MM-DD'))
+// → ["2026-01-01", "2026-06-01"]
 
-// Unique by month
-const uniqueMonths = collection.unique(date =>
-  date.format('YYYY-MM')
-)
-
-// Unique by custom key
-const uniqueByRange = collection.unique(date => {
-  const d = date.get('date')
-  return d <= 15 ? 'first-half' : 'second-half'
-})
+// toArray returns DateFormat array:
+const arr = new DateCollection(['2026-01-01']).toArray()
+arr[0].format('YYYY-MM-DD') // → "2026-01-01"
 ```
-
-## Array Operations
-
-```typescript
-const collection = new DateCollection([
-  '2024-01-10',
-  '2024-01-15',
-  '2024-01-20'
-])
-
-// Get as array
-const array = collection.toArray()
-
-// Get first
-const first = collection.first()
-
-// Get last
-const last = collection.last()
-
-// Length
-const count = collection.length
-
-// Slice
-const sliced = collection.slice(0, 2)
-
-// Include
-const included = collection.includes(new DateFormat('2024-01-15'))
-```
-
-## Aggregation
-
-```typescript
-const collection = new DateCollection([
-  '2024-01-10',
-  '2024-01-15',
-  '2024-01-20',
-  '2024-01-25'
-])
-
-// Statistics
-const stats = {
-  count: collection.length,
-  first: collection.first(),
-  last: collection.last(),
-  earliest: collection.sort('asc').first(),
-  latest: collection.sort('desc').first()
-}
-
-// Range
-const range = {
-  from: collection.sort('asc').first(),
-  to: collection.sort('desc').first()
-}
-
-// Calculate span
-const first = collection.sort('asc').first()
-const last = collection.sort('desc').first()
-const days = last.diff(first, 'day')
-```
-
-## Real-World Examples
-
-```typescript
-import { DateCollection, DateFormat, BusinessDay } from '@anilkumarthakur/d8'
-
-// Remove weekends
-const allDates = new DateCollection([
-  '2024-01-15', // Monday
-  '2024-01-16', // Tuesday
-  '2024-01-20', // Saturday
-  '2024-01-21'  // Sunday
-])
-
-const businessDays = allDates.filter(date => {
-  const day = date.get('day')
-  return day >= 1 && day <= 5
-})
-
-// Count holidays
-const holidays = new DateCollection([
-  '2024-01-01',
-  '2024-07-04',
-  '2024-12-25'
-])
-
-const holidayCount = holidays.length
-
-// Generate report by month
-const dates = new DateCollection([
-  '2024-01-15',
-  '2024-01-20',
-  '2024-02-10',
-  '2024-02-28',
-  '2024-03-15'
-])
-
-const report = {}
-dates.groupBy(d => d.format('YYYY-MM')).forEach((dates, month) => {
-  report[month] = {
-    count: dates.length,
-    first: dates.sort('asc')[0],
-    last: dates.sort('desc')[0]
-  }
-})
-
-// Time series
-const timeSeries = new DateCollection([
-  '2024-01-01T10:00:00',
-  '2024-01-01T11:00:00',
-  '2024-01-01T12:00:00',
-  '2024-01-02T10:00:00'
-])
-
-const byHour = timeSeries.map(d => ({
-  timestamp: d.format('YYYY-MM-DD HH:00:00'),
-  hourOfDay: d.get('hour')
-}))
-
-// Availability check
-const bookedDates = new DateCollection([
-  '2024-02-10',
-  '2024-02-15',
-  '2024-02-20'
-])
-
-const isAvailable = (date: DateFormat) => {
-  return !bookedDates.toArray().some(booked =>
-    booked.format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
-  )
-}
-```
-
-## Chain Operations
-
-```typescript
-const collection = new DateCollection([
-  '2024-01-05',
-  '2024-01-12',
-  '2024-01-20',
-  '2024-01-25'
-])
-
-// Complex chain
-const result = collection
-  .filter(date => date.isAfter(new DateFormat('2024-01-10')))
-  .sort('desc')
-  .map(date => date.format('YYYY-MM-DD'))
-
-// Group and process
-const processed = collection
-  .groupBy(date => date.format('YYYY-MM'))
-  .forEach((dates, month) => {
-    console.log(`${month}: ${dates.length} dates`)
-  })
-```
-
-## Performance Considerations
-
-- Use `.filter()` before `.map()` to reduce data
-- For large collections, use generators where possible
-- Cache frequently accessed results
-- Consider pagination for UI display

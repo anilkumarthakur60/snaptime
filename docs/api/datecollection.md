@@ -1,75 +1,70 @@
 # DateCollection API
 
-Manage and query collections of dates.
+Batch operations on sets of dates.
 
 ## Constructor
 
 ```typescript
-new DateCollection(...dates: (DateFormat | Date | string)[])
+new DateCollection(dates: (string | number | Date | DateFormat)[])
 ```
 
-## Static Methods
-
-### `from(dates: Iterable<DateFormat | Date | string>): DateCollection`
-
-Create from iterable.
+---
 
 ## Instance Methods
 
-### Modification
+### `sort(order?): DateCollection`
 
-#### `add(...dates: (DateFormat | Date | string)[]): DateCollection`
+| Param | Type | Default | Description |
+|:------|:-----|:--------|:------------|
+| `order` | `'asc' \| 'desc'` | `'asc'` | Sort direction |
 
-Add dates (returns new instance).
+### `closest(target): DateFormat`
+Date nearest to `target`. Throws if empty.
 
-#### `remove(predicate: (date: DateFormat) => boolean): DateCollection`
+### `farthest(target): DateFormat`
+Date farthest from `target`. Throws if empty.
 
-Remove matching dates.
+### `groupBy(unit): Map<string, DateFormat[]>`
+Group by `'year'`, `'month'`, `'week'`, `'day'`, `'hour'`, or `'quarter'`.
 
-#### `sort(compareFn?: (a: DateFormat, b: DateFormat) => number): DateCollection`
+### `filter(fn): DateCollection`
+Filter with a predicate `(d: DateFormat) => boolean`.
 
-Sort dates.
+### `unique(unit?): DateCollection`
+Remove duplicates. Optional unit for coarser dedup: `'year'`, `'month'`, `'week'`, `'day'`, `'hour'`, `'minute'`, `'second'`.
 
-### Queries
+### `first(): DateFormat`
+First element. Throws if empty.
 
-#### `filter(predicate: (date: DateFormat) => boolean): DateCollection`
+### `last(): DateFormat`
+Last element. Throws if empty.
 
-Filter collection.
+### `nth(n): DateFormat`
+Element at index `n`. Throws if out of bounds.
 
-#### `find(predicate: (date: DateFormat) => boolean): DateFormat | undefined`
+### `count(): number`
+Number of dates.
 
-Find first matching date.
+### `min(): DateFormat`
+Earliest date. Throws if empty.
 
-#### `map<T>(fn: (date: DateFormat) => T): T[]`
+### `max(): DateFormat`
+Latest date. Throws if empty.
 
-Map over dates.
+### `map<T>(fn): T[]`
+Map each date with `(d: DateFormat) => T`.
 
-#### `contains(date: DateFormat | Date | string): boolean`
+### `toArray(): DateFormat[]`
+Shallow copy as array.
 
-#### `length(): number`
+### `isEmpty(): boolean`
 
-### Analysis
+### `between(start, end): DateCollection`
+Filter to dates in `[start, end]` (inclusive).
 
-#### `earliest(): DateFormat`
+### `compact(): DateCollection`
+Remove invalid dates.
 
-Get earliest date.
+---
 
-#### `latest(): DateFormat`
-
-Get latest date.
-
-#### `range(): DateRange`
-
-Get range spanning all dates.
-
-#### `gaps(): Duration[]`
-
-Get gaps between consecutive dates.
-
-### Iteration
-
-#### `toArray(): DateFormat[]`
-
-Get as array.
-
-See [DateCollection Guide](../guide/datecollection) for extensive examples.
+See the [DateCollection Guide](../guide/datecollection) for examples.

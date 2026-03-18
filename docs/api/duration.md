@@ -1,81 +1,77 @@
 # Duration API
 
-Represents a span of time with various units and calculations.
+Time span representation with conversion, arithmetic, formatting, and humanization.
 
 ## Constructor
 
 ```typescript
-new Duration(value: number, unit?: Unit)
+new Duration(ms?: number)
 ```
+
+| Param | Type | Default | Description |
+|:------|:-----|:--------|:------------|
+| `ms` | `number` | `0` | Duration in milliseconds |
+
+---
 
 ## Static Methods
 
-### `between(start: DateFormat, end: DateFormat, unit?: Unit): Duration`
+### `Duration.parse(input): Duration`
 
-Calculate duration between two dates.
+Parse a duration string.
 
 ```typescript
-const dur = Duration.between(date1, date2, 'day')
+Duration.parse('2h30m15s')   // 2 hours, 30 min, 15 sec
+Duration.parse('1Y6M')       // 1 year, 6 months
+Duration.parse('500ms')      // 500 milliseconds
 ```
 
-### `fromObject(obj: Partial<DurationObject>): Duration`
+**Tokens:** `Y/y` (years), `M` (months), `w` (weeks), `d` (days), `h` (hours), `m` (minutes), `s` (seconds), `ms` (milliseconds).
 
-Create from object with unit values.
+---
 
 ## Instance Methods
 
-### Conversion
+### `as(unit): number`
 
-#### `as(unit: Unit): number`
+Convert this duration to the given unit.
 
-Get duration in specified unit.
+### `add(n, unit): Duration`
 
-#### `toObject(): DurationObject`
+Add time to this duration. Returns a new `Duration`.
 
-Get as object with all units.
+### `subtract(n, unit): Duration`
 
-#### `toMilliseconds(): number`
+Subtract time. Returns a new `Duration`.
 
-#### `toSeconds(): number`
+### `humanize(short?): string`
 
-#### `toMinutes(): number`
+| Param | Type | Default | Description |
+|:------|:-----|:--------|:------------|
+| `short` | `boolean` | `true` | `true`: compact (`"3h"`). `false`: long (`"2 hours, 30 minutes"`) |
 
-#### `toHours(): number`
+### `format(fmt): string`
 
-#### `toDays(): number`
+Format with template tokens: `HH`, `H`, `mm`, `m`, `ss`, `s`, `SSS`.
 
-### Arithmetic
+### `toMilliseconds(): number`
+### `toSeconds(): number`
+### `toMinutes(): number`
+### `toHours(): number`
+### `toDays(): number`
 
-#### `add(value: number, unit: Unit): Duration`
+### `valueOf(): number`
+Raw milliseconds.
 
-Add time.
+### `isZero(): boolean`
+### `isNegative(): boolean`
 
-#### `subtract(value: number, unit: Unit): Duration`
+### `abs(): Duration`
+Absolute value.
 
-Subtract time.
+### `toString(): string`
+Same as `humanize(true)`.
 
-#### `multiply(factor: number): Duration`
+---
 
-Multiply duration.
-
-#### `divide(divisor: number): Duration`
-
-Divide duration.
-
-### Comparisons
-
-#### `isBefore(other: Duration): boolean`
-
-#### `isAfter(other: Duration): boolean`
-
-#### `isSame(other: Duration): boolean`
-
-### Queries
-
-#### `isPositive(): boolean`
-
-#### `isNegative(): boolean`
-
-#### `isZero(): boolean`
-
-See [Duration Guide](../guide/duration) for extensive examples.
+See the [Duration Guide](../guide/duration) for examples.

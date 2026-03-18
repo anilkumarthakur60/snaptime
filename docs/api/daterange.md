@@ -1,69 +1,70 @@
 # DateRange API
 
-Represents a continuous span between two dates.
+Start–end date pair with containment, overlap, intersection, splitting, and iteration.
 
 ## Constructor
 
 ```typescript
-new DateRange(start: DateFormat | Date | string, end: DateFormat | Date | string)
+new DateRange(
+  start: string | number | Date | DateFormat,
+  end: string | number | Date | DateFormat
+)
 ```
+
+## Properties
+
+| Property | Type | Description |
+|:---------|:-----|:------------|
+| `start` | `DateFormat` | Start date (readonly) |
+| `end` | `DateFormat` | End date (readonly) |
+
+---
 
 ## Instance Methods
 
-### Properties
+### `isValid(): boolean`
+Both start and end are valid dates.
 
-#### `start: DateFormat`
+### `isForward(): boolean`
+`start <= end`.
 
-Start date.
+### `duration(): Duration`
+Absolute duration between start and end.
 
-#### `end: DateFormat`
+### `contains(date, inclusive?): boolean`
 
-End date.
+| Param | Type | Default | Description |
+|:------|:-----|:--------|:------------|
+| `date` | `string \| number \| Date \| DateFormat` | — | Date to check |
+| `inclusive` | `boolean` | `true` | Include endpoints |
 
-### Queries
+### `overlaps(other): boolean`
+True if ranges share any time.
 
-#### `duration(unit?: Unit): Duration`
+### `intersect(other): DateRange | null`
+Overlapping portion, or `null`.
 
-Get duration of range.
+### `merge(other): DateRange | null`
+Combined range, or `null` if no overlap.
 
-#### `contains(date: DateFormat | Date | string): boolean`
+### `split(n, unit): DateRange[]`
+Split into chunks of `n` units.
 
-Check if range contains date.
+### `*iterate(unit): Generator<DateFormat>`
+Generator yielding each step.
 
-#### `overlaps(other: DateRange): boolean`
+### `toArray(unit): DateFormat[]`
+Collect all dates from `iterate()`.
 
-Check if overlaps with another range.
+### `humanize(): string`
+e.g. `"Jan 1 – Jun 30, 2026"`.
 
-#### `isBefore(date: DateFormat | Date | string): boolean`
+### `equals(other): boolean`
+Same start and end timestamps.
 
-#### `isAfter(date: DateFormat | Date | string): boolean`
+### `toString(): string`
+`"YYYY-MM-DD / YYYY-MM-DD"`.
 
-#### `gap(other: DateRange): Duration | null`
+---
 
-Get gap between ranges.
-
-### Iteration
-
-#### `eachDay(): DateFormat[]`
-
-Get array of each day.
-
-#### `eachMonth(): DateFormat[]`
-
-Get array of each month.
-
-#### `eachYear(): DateFormat[]`
-
-Get array of each year.
-
-#### `eachMonthStart(): DateFormat[]`
-
-Get start of each month.
-
-### Formatting
-
-#### `format(formatStr: string): string`
-
-Format both dates.
-
-See [DateRange Guide](../guide/daterange) for extensive examples.
+See the [DateRange Guide](../guide/daterange) for examples.

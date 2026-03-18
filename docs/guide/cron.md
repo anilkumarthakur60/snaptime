@@ -1,252 +1,161 @@
 # Cron Expressions
 
-`Cron` parses and evaluates cron expressions for scheduling recurring events.
+The `Cron` class parses standard 5-field cron expressions, matches dates against them, finds next/previous occurrences, lists matches in a range, and generates human-readable descriptions.
 
-## Cron Expression Format
+## Creating Cron Instances
 
-D8 uses the standard 5-field cron format:
+```typescript
+import d8, { Cron } from '@anilkumarthakur/d8'
+
+const job = new Cron('30 9 * * 1-5')       // 9:30 AM, Mon–Fri
+const daily = new Cron('0 0 * * *')         // midnight every day
+const hourly = new Cron('0 * * * *')        // top of every hour
+const everyMin = new Cron('* * * * *')      // every minute
+
+// Via factory
+const cron = d8.cron('0 9 * * 1-5')
+```
+
+## Cron Syntax
 
 ```
-┌───────────── minute (0 - 59)
-│ ┌───────────── hour (0 - 23)
-│ │ ┌───────────── day of month (1 - 31)
-│ │ │ ┌───────────── month (1 - 12)
-│ │ │ │ ┌───────────── day of week (0 - 7) (0 and 7 are Sunday)
-│ │ │ │ │
+┌───────────── minute (0–59)
+│ ┌───────────── hour (0–23)
+│ │ ┌───────────── day of month (1–31)
+│ │ │ ┌───────────── month (1–12)
+│ │ │ │ ┌───────────── day of week (0–6, Sun=0)
 │ │ │ │ │
 * * * * *
 ```
 
-## Constructor
+### Supported Syntax
 
-```typescript
-import { Cron, DateFormat } from '@anilkumarthakur/d8'
+| Pattern  | Meaning              | Example |
+|:---------|:---------------------|:--------|
+| `*`      | Any value            | `* * * * *` (every minute) |
+| `5`      | Specific value       | `5 * * * *` (at minute 5) |
+| `1,3,5`  | List                 | `0 9,12,18 * * *` (9am, noon, 6pm) |
+| `1-5`    | Range                | `* * * * 1-5` (Mon–Fri) |
+| `*/15`   | Step                 | `*/15 * * * *` (every 15 min) |
+| `1-5/2`  | Range + step         | `0 9-17/2 * * *` (9,11,13,15,17) |
+| `MON`    | Day name             | `0 9 * * MON` (Monday at 9am) |
 
-// Valid 5-field expressions
-const cron1 = new Cron('0 9 * * 1-5')      // 9 AM on weekdays
-const cron2 = new Cron('0 0 * * *')        // Midnight every day
-const cron3 = new Cron('*/15 * * * *')     // Every 15 minutes
-const cron4 = new Cron('0 12 * * 0')       // Noon on Sundays
+### Day Names
 
-// Invalid expressions throw errors
-try {
-  new Cron('0 0 * * * *') // 6 fields (invalid)
-} catch (error) {
-  console.log('Invalid cron:', error.message)
-}
-```
-
-## Field Values and Ranges
-
-| Field       | Allowed Values | Aliases           |
-| ----------- | -------------- | ----------------- |
-| Minute      | 0-59           | -                 |
-| Hour        | 0-23           | -                 |
-| Day         | 1-31           | -                 |
-| Month       | 1-12           | JAN-DEC           |
-| Day of Week | 0-7            | SUN-SAT (0,7=Sun) |
-
-## Expression Syntax
-
-### Wildcard (`*`)
-
-Matches any value:
-
-```typescript
-new Cron('* * * * *') // Every minute
-```
-
-### Specific Value
-
-```typescript
-new Cron('0 9 * * *')  // 9 AM every day
-new Cron('0 0 15 * *') // Midnight on 15th of each month
-```
-
-### List (`,`)
-
-```typescript
-new Cron('0 9,17 * * *')        // 9 AM and 5 PM
-new Cron('0 * * * 1,3,5')       // Every hour on Mon, Wed, Fri
-new Cron('0 0 1,15 * *')        // 1st and 15th of month
-```
-
-### Range (`-`)
-
-```typescript
-new Cron('0 9-17 * * *')        // Every hour from 9 AM to 5 PM
-new Cron('0 0 * * 1-5')         // Midnight Monday to Friday
-new Cron('0 0 * 1-3 *')         // Midnight Jan-Mar
-```
-
-### Step (`/`)
-
-```typescript
-new Cron('*/15 * * * *')        // Every 15 minutes
-new Cron('0 */6 * * *')         // Every 6 hours
-new Cron('0 0 */2 * *')         // Every 2 days
-new Cron('0 0 * * */2')         // Every 2 days of week
-```
-
-### Combined
-
-```typescript
-new Cron('15-45/5 * * * *')     // Minutes 15, 20, 25, 30, 35, 40, 45
-new Cron('0 9-17/2 * * 1-5')    // Hours 9, 11, 13, 15, 17 on weekdays
-```
+Day of week supports abbreviations: `SUN`, `MON`, `TUE`, `WED`, `THU`, `FRI`, `SAT`
 
 ## Matching
 
-Check if a date matches a cron expression:
+### `matches(date)`
+
+Check if a date matches the cron expression:
 
 ```typescript
-const cron = new Cron('0 9 * * 1-5')
-const monday9am = new DateFormat('2024-01-15T09:00:00')
-const tuesday3pm = new DateFormat('2024-01-16T15:00:00')
+const job = new Cron('30 9 * * 1-5')
 
-console.log(cron.matches(monday9am)) // true
-console.log(cron.matches(tuesday3pm)) // false
+job.matches(d8('2026-03-18').set('hour', 9).set('minute', 30))   // true (Wed 9:30)
+job.matches(d8('2026-03-18').set('hour', 10).set('minute', 0))   // false
+job.matches(d8('2026-03-21').set('hour', 9).set('minute', 30))   // false (Saturday)
 ```
 
-## Finding Next/Previous Match
+::: info DOM + DOW Logic
+When **both** day-of-month and day-of-week are specified (neither is `*`), a date matches if **either** condition is true (OR logic). When only one is specified, the other must match (AND logic). This follows standard cron behavior.
+:::
+
+## Finding Occurrences
+
+### `next(from?)`
+
+Find the next matching date/time after the given date (or now):
 
 ```typescript
-const cron = new Cron('0 9 * * 1-5')
+const job = new Cron('0 9 * * 1-5')
 
-// Next occurrence
-const nextRun = cron.next()
-console.log(nextRun.format('YYYY-MM-DD HH:mm'))
+const next = job.next()  // next weekday at 9:00
+console.log(next.format('YYYY-MM-DD HH:mm'))
 
-// Next after specific date
-const from = new DateFormat('2024-01-15')
-const nextFromDate = cron.next(from)
-
-// Previous occurrence
-const prevRun = cron.prev()
-const prevFromDate = cron.prev(from)
+// From a specific starting point
+const nextFrom = job.next(d8('2026-03-18'))
 ```
 
-## Finding All Matches in Range
+### `prev(from?)`
+
+Find the most recent past match:
 
 ```typescript
-const cron = new Cron('0 * * * *')
-const start = new DateFormat('2024-01-01')
-const end = new DateFormat('2024-01-02')
-
-// Get all matches between dates
-const matches = cron.between(start, end)
-console.log(matches.length) // 24 (hourly for 2 days)
-
-// Limit results
-const first10 = cron.between(start, end, 10)
-console.log(first10.length) // 10
+const prev = job.prev()
+console.log(prev.format('YYYY-MM-DD HH:mm'))
 ```
 
-## Human-Readable Description
+### `between(start, end, limit?)`
+
+List all matches in a date range:
 
 ```typescript
-const cron = new Cron('0 9 * * 1-5')
-console.log(cron.humanize())
-// Output: "At 09:00 on Monday through Friday"
+const job = new Cron('0 9 * * 1-5')
+const matches = job.between(
+  d8('2026-03-16'),
+  d8('2026-03-20')
+)
+// 5 matches: Mon–Fri at 09:00
 
-const examples = [
-  new Cron('* * * * *').humanize(),         // "Every minute"
-  new Cron('*/5 * * * *').humanize(),       // "Every 5 minutes"
-  new Cron('0 12 * * *').humanize(),        // "At 12:00"
-  new Cron('0 0 1 * *').humanize(),         // "At 00:00 on day 1 of month"
-  new Cron('0 0 * 1 *').humanize(),         // "At 00:00 on January"
-  new Cron('0 * * * 0').humanize()          // "Every hour on Sunday"
-]
+// With a limit
+const first3 = job.between(d8('2026-03-01'), d8('2026-03-31'), 3)
+// Only the first 3 matches
+```
+
+## Humanize
+
+### `humanize()`
+
+Get a human-readable description:
+
+```typescript
+new Cron('* * * * *').humanize()
+// "Every minute"
+
+new Cron('30 9 * * 1-5').humanize()
+// "At 09:30, Monday through Friday"
+
+new Cron('0 0 1 * *').humanize()
+// "At 00:00, on day 1 of every month"
+
+new Cron('0 9,17 * * *').humanize()
+// "At 09:00, 17:00"
+
+new Cron('*/15 * * * *').humanize()
+// "At minute 0, 15, 30, 45 past every hour"
+
+new Cron('0 0 * * 0').humanize()
+// "At 00:00, Sunday"
+
+new Cron('0 0 1 1 *').humanize()
+// "At 00:00, on day 1 of every month, in January"
+```
+
+## `toString()`
+
+```typescript
+const job = new Cron('30 9 * * 1-5')
+job.toString()  // "30 9 * * 1-5"
 ```
 
 ## Common Patterns
 
-```typescript
-import { Cron } from '@anilkumarthakur/d8'
+| Expression | Description |
+|:-----------|:------------|
+| `* * * * *` | Every minute |
+| `0 * * * *` | Every hour |
+| `0 0 * * *` | Daily at midnight |
+| `0 9 * * 1-5` | Weekdays at 9am |
+| `0 0 1 * *` | 1st of every month |
+| `0 0 * * 0` | Every Sunday |
+| `*/5 * * * *` | Every 5 minutes |
+| `0 9-17 * * 1-5` | Hourly, 9am–5pm, weekdays |
+| `30 4 1,15 * *` | 4:30am on 1st and 15th |
+| `0 0 1 1 *` | New Year's Day midnight |
 
-// Every day at 9 AM
-const dailyNine = new Cron('0 9 * * *')
+## Next Steps
 
-// Every weekday at 8:30 AM
-const weekdayMorning = new Cron('30 8 * * 1-5')
-
-// Every Monday at 9 AM
-const mondayMorning = new Cron('0 9 * * 1')
-
-// Every hour
-const hourly = new Cron('0 * * * *')
-
-// Every 30 minutes
-const halfHourly = new Cron('*/30 * * * *')
-
-// Every 2 hours
-const twoHourly = new Cron('0 */2 * * *')
-
-// Midnight every day
-const midnight = new Cron('0 0 * * *')
-
-// Noon every day
-const noon = new Cron('0 12 * * *')
-
-// 9 to 5, every hour
-const businessHours = new Cron('0 9-17 * * 1-5')
-
-// Every 15 minutes during business hours
-const frequentBizHours = new Cron('*/15 9-17 * * 1-5')
-
-// First day of month at midnight
-const monthlyFirstDay = new Cron('0 0 1 * *')
-
-// Last day of month (approximation)
-const monthlyLastDay = new Cron('0 0 28-31 * *')
-
-// Every Sunday at 2 AM
-const weeklySunday = new Cron('0 2 * * 0')
-
-// Quarterly (roughly every 3 months)
-const quarterly = new Cron('0 0 1 1,4,7,10 *')
-
-// Every minute (testing only!)
-const everyMinute = new Cron('* * * * *')
-```
-
-## DOM and DOW Interaction
-
-When both day-of-month (DOM) and day-of-week (DOW) are restricted (not `*`), cron uses OR logic:
-
-```typescript
-const cron = new Cron('0 0 15 * 1')
-// Matches: Every 15th of month OR every Monday at midnight
-
-// Using AND would require at least one to be wildcard
-const mondayOnly = new Cron('0 0 * * 1')
-const fifthOnly = new Cron('0 0 15 * *')
-```
-
-## Error Handling
-
-```typescript
-try {
-  new Cron('invalid expression')
-} catch (error) {
-  console.log('Error:', error.message)
-}
-
-// Validate before creating
-if (isValidCronExpression(expr)) {
-  const cron = new Cron(expr)
-}
-```
-
-## Timezone Awareness
-
-```typescript
-const cron = new Cron('0 9 * * 1-5')
-
-// Cron uses local time by default
-const next = cron.next()
-
-// For UTC control, create DateFormat in UTC
-const utcDate = new DateFormat().utc()
-const nextUTC = cron.next(utcDate)
-```
+- [Natural Language](./natural-language) — Parse dates from English phrases
+- [API Reference](../api/cron) — Complete method signatures

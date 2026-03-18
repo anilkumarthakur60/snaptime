@@ -1,37 +1,50 @@
-# NaturalLanguage API
+# Natural Language API
 
-Parse natural language expressions to dates.
+Parse dates from English phrases.
 
-## Static Methods
-
-### `parse(phrase: string): DateFormat | null`
-
-Parse natural language to date.
+## Function
 
 ```typescript
-const date = NaturalLanguage.parse('tomorrow at 3pm')
-const date2 = NaturalLanguage.parse('next friday')
-const date3 = NaturalLanguage.parse('in 2 weeks')
+parseNatural(input: string, ref?: DateFormat): DateFormat
 ```
 
-### `from(phrase: string, reference?: DateFormat): DateFormat | null`
+Also available as `d8.natural(input, ref?)`.
 
-Parse relative to reference date.
+| Param | Type | Default | Description |
+|:------|:-----|:--------|:------------|
+| `input` | `string` | — | English phrase to parse |
+| `ref` | `DateFormat` | `new DateFormat()` | Reference date for relative calculations |
 
-### Supported Phrases
+**Returns** a `DateFormat`. Returns an invalid `DateFormat` (`.isValid() === false`) if the input cannot be parsed.
 
-- **Relative Days**: `today`, `tomorrow`, `yesterday`
-- **Weekdays**: `next monday`, `last friday`
-- **Durations**: `in 2 days`, `tomorrow at 3pm`, `next week`
-- **Absolute**: `march 15`, `1/15/2024`, `2024-03-15`
-- **Time**: `at 3pm`, `at 14:30`, `at 2:30am`
+---
 
-### Locale Support
+## Supported Patterns
 
-Supports multiple languages:
+| Pattern | Example |
+|:--------|:--------|
+| `now` / `today` | Current moment |
+| `tomorrow` | +1 day |
+| `yesterday` | -1 day |
+| `next {weekday}` | `next friday` |
+| `last {weekday}` | `last wednesday` |
+| `next week/month/year` | `next month` |
+| `last week/month/year` | `last year` |
+| `{N} days/weeks/months/years ago` | `3 days ago` |
+| `in {N} days/weeks/months/years` | `in 2 weeks` |
+| `{N} days/weeks/months/years from now` | `5 days from now` |
+| `beginning of day/week/month/year` | `beginning of month` |
+| `end of day/week/month/year` | `end of year` |
+| `first day of {month} [year]` | `first day of March 2027` |
+| `last day of {month} [year]` | `last day of February` |
+| `{N}th {weekday} of {month} [year]` | `3rd Friday of January` |
 
-- English: `tomorrow`, `yesterday`
-- Spanish: `mañana`, `ayer`
-- And more...
+**Weekdays:** Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday.
 
-See [NaturalLanguage Guide](../guide/natural-language) for extensive examples.
+**Months:** January through December.
+
+**Units:** day(s), week(s), month(s), year(s).
+
+---
+
+See the [Natural Language Guide](../guide/natural-language) for detailed examples.

@@ -1,99 +1,268 @@
 # DateFormat API
 
-Core class for date manipulation, formatting, and queries.
+Complete method reference for the `DateFormat` class.
 
 ## Constructor
 
 ```typescript
-new DateFormat(input?: string | number | Date | DateFormat, opts?: { utc?: boolean })
+new DateFormat(
+  input?: string | number | Date | DateFormat,
+  opts?: { utc?: boolean }
+)
 ```
+
+| Param | Type | Description |
+|:------|:-----|:------------|
+| `input` | `string \| number \| Date \| DateFormat` | Date input. Defaults to `Date.now()` |
+| `opts.utc` | `boolean` | Force UTC mode. ISO strings auto-detect |
+
+---
 
 ## Static Methods
 
-### `parse(input: string, format: string, strict?: boolean): DateFormat`
+### `parse(str, fmt, strict?): DateFormat`
 
-Parse a date string with a custom format.
+Parse a string with a custom format.
 
-```typescript
-const date = DateFormat.parse('15/01/2024', 'DD/MM/YYYY')
-```
+| Param | Type | Default | Description |
+|:------|:-----|:--------|:------------|
+| `str` | `string` | `''` | Input string |
+| `fmt` | `string` | `''` | Format template using tokens: `YYYY`, `MM`, `DD`, `HH`, `hh`, `mm`, `ss`, `X`, `x`, `DDD`, `DDDD`, `Z` |
+| `strict` | `boolean` | `false` | Validate month/day bounds. Date-only formats parse as local midnight |
 
-### `now(): DateFormat`
+### `min(...args): DateFormat`
 
-Get current date/time.
+Return the earliest date from the arguments.
 
-## Instance Methods
+### `max(...args): DateFormat`
 
-### Formatting
+Return the latest date from the arguments.
 
-#### `format(formatStr: string): string`
+### `duration(n, unit): Duration`
 
-Format date using custom format tokens.
+Create a `Duration` of `n * unit` milliseconds.
 
-```typescript
-date.format('YYYY-MM-DD HH:mm:ss')
-```
+### `locale(name, data?): void`
 
-#### `toISOString(): string`
+Register locale data and/or switch the active locale.
 
-Get ISO 8601 formatted string.
+### `use(plugin): typeof DateFormat`
 
-### Getters/Setters
+Register a plugin function. Returns the class for chaining.
 
-#### `get(unit: Unit): number`
+---
 
-Get component value.
+## Instance Methods — Formatting
 
-#### `set(unit: Unit, value: number): DateFormat`
+### `format(fmt?): string`
+Format using tokens. Default: `'YYYY-MM-DD HH:mm:ss'`. Returns `'Invalid Date'` if invalid.
 
-Set component value (returns new instance).
+### `formatIntl(opts?): string`
+Format using `Intl.DateTimeFormat`. Respects UTC mode.
 
-### Date Arithmetic
+### `toISOString(): string`
+ISO 8601 string.
 
-#### `add(amount: number, unit: Unit): DateFormat`
+### `toJSON(): string`
+Same as `toISOString()`. Used by `JSON.stringify()`.
 
-Add time units.
+### `toSQL(): string`
+`'YYYY-MM-DD HH:mm:ss'`
 
-#### `subtract(amount: number, unit: Unit): DateFormat`
+### `toSQLDate(): string`
+`'YYYY-MM-DD'`
 
-Subtract time units.
+### `toSQLTime(): string`
+`'HH:mm:ss'`
 
-### Period Boundaries
+### `toRFC2822(): string`
+e.g. `'Wed, 18 Mar 2026 14:30:45 +0000'`
 
-#### `startOf(unit: Unit): DateFormat`
+### `toRFC3339(): string`
+e.g. `'2026-03-18T14:30:45Z'`
 
-Get start of period.
+### `toExcel(): number`
+Excel serial date number (days since Dec 30, 1899).
 
-#### `endOf(unit: Unit): DateFormat`
+### `toObject(): object`
+Returns `{ year, month, date, hour, minute, second, millisecond }`.
 
-Get end of period.
+### `toDate(): Date`
+Native JavaScript `Date`.
 
-### Comparisons
+### `toMillis(): number`
+Alias for `valueOf()`.
 
-#### `isBefore(other: DateFormat | Date | string): boolean`
+---
 
-#### `isAfter(other: DateFormat | Date | string): boolean`
+## Instance Methods — Get / Set
 
-#### `isSame(other: DateFormat | Date | string): boolean`
+### `get(unit): number`
+Get a component. Units: `year`, `month` (1-12), `date`, `day` (0-6), `hour`, `minute`, `second`, `millisecond`.
 
-#### `isBetween(start: DateFormat | Date, end: DateFormat | Date): boolean`
+### `set(unit, value): DateFormat`
+Set a component. Returns a new instance.
 
-#### `diff(other: DateFormat | Date, unit: Unit): number`
+### `valueOf(): number`
+Milliseconds since epoch.
 
-### Validation
+### `unix(): number`
+Seconds since epoch (floored).
 
-#### `isValid(): boolean`
+---
 
-Check if date is valid.
+## Instance Methods — Arithmetic
 
-#### `isUtc(): boolean`
+### `add(n, unit): DateFormat`
+Add `n` units.
 
-Check if in UTC mode.
+### `subtract(n, unit): DateFormat`
+Subtract `n` units.
 
-### Time Zone
+### `startOf(unit): DateFormat`
+Start of `year`, `month`, `week`, `quarter`, `day`, `hour`, `minute`, `second`.
 
-#### `tz(timezone: string): DateFormat`
+### `endOf(unit): DateFormat`
+End of the given period (23:59:59.999).
 
-Convert to timezone.
+### `clone(): DateFormat`
+Deep copy.
 
-See [DateFormat Guide](../guide/dateformat) for extensive examples.
+---
+
+## Instance Methods — Comparison
+
+### `isBefore(other): boolean`
+### `isAfter(other): boolean`
+### `isSame(other): boolean`
+### `isBetween(a, b): boolean`
+Exclusive: `a < this < b`.
+
+### `diff(other, unit?, floating?): number`
+Difference in the given unit. `floating=true` for decimal precision.
+
+---
+
+## Instance Methods — Validation
+
+### `isValid(): boolean`
+### `isUtc(): boolean`
+### `isLocal(): boolean`
+### `isDST(): boolean`
+Always `false` in UTC mode.
+
+### `isLeapYear(): boolean`
+### `isWeekday(): boolean`
+Mon–Fri.
+
+### `isWeekend(): boolean`
+Sat–Sun.
+
+---
+
+## Instance Methods — Day-of-Week
+
+`isSunday()` · `isMonday()` · `isTuesday()` · `isWednesday()` · `isThursday()` · `isFriday()` · `isSaturday()`
+
+---
+
+## Instance Methods — Period Checks
+
+Each period has four methods following the pattern:
+
+| Method | Description |
+|:-------|:------------|
+| `isSame*(other)` | Same period as another date |
+| `isCurrent*()` | In the current period |
+| `isNext*()` | In the next period |
+| `isLast*()` | In the previous period |
+
+### Supported Periods
+
+| Period | Methods |
+|:-------|:--------|
+| Year | `isSameYear`, `isCurrentYear`, `isNextYear`, `isLastYear` |
+| Month | _(no isSameMonth)_ `isCurrentMonth`, `isNextMonth`, `isLastMonth` |
+| Week | `isSameWeek`, `isCurrentWeek`, `isNextWeek`, `isLastWeek` |
+| Day | `isSameDay`, `isCurrentDay`, `isNextDay`, `isLastDay` |
+| Hour | `isSameHour`, `isCurrentHour`, `isNextHour`, `isLastHour` |
+| Minute | `isSameMinute`, `isCurrentMinute`, `isNextMinute`, `isLastMinute` |
+| Second | `isSameSecond`, `isCurrentSecond`, `isNextSecond`, `isLastSecond` |
+| Millisecond | `isSameMillisecond`, `isCurrentMillisecond`, `isNextMillisecond`, `isLastMillisecond` |
+| Quarter | `isCurrentQuarter`, `isNextQuarter`, `isLastQuarter` |
+| Decade | `isSameDecade`, `isCurrentDecade`, `isNextDecade`, `isLastDecade` |
+| Century | `isSameCentury`, `isCurrentCentury`, `isNextCentury`, `isLastCentury` |
+| Millennium | `isSameMillennium`, `isCurrentMillennium`, `isNextMillennium`, `isLastMillennium` |
+
+Microsecond aliases: `isSameMicro`, `isCurrentMicro`, `isNextMicro`, `isLastMicro`, `isSameMicrosecond`, etc. (aliased to millisecond due to JS Date limitations).
+
+---
+
+## Instance Methods — Relative Time
+
+### `fromNow(): string`
+e.g. `"in 5 days"` or `"3 hours ago"`.
+
+### `calendar(): string`
+`"Today at 2:30 PM"`, `"Yesterday at …"`, `"Tomorrow at …"`, or `YYYY-MM-DD`.
+
+### `preciseDiff(other): PreciseDiffResult`
+Full breakdown: years, months, days, hours, minutes, seconds, milliseconds + `humanize()`.
+
+### `preciseFrom(other): string`
+Shortcut for `preciseDiff(other).humanize()`.
+
+### `age(): AgeResult`
+Calendar age from this date to now. Returns `{ years, months, days, toString() }`.
+
+### `countdown(): CountdownResult`
+Time remaining until this date. Returns `{ days, hours, minutes, seconds, milliseconds, total, isPast, format(), humanize() }`.
+
+---
+
+## Instance Methods — Calendar
+
+### `calendarGrid(opts?): CalendarCell<DateFormat>[][]`
+6×7 month-view grid. Options: `{ weekStart: 'sunday' | 'monday' }`.
+
+### `daysInMonth(): number`
+### `dayOfYear(): number`
+### `weekday(): number`
+Same as `get('day')`.
+
+### `isoWeek(): number`
+ISO 8601 week number.
+
+### `isoWeekYear(): number`
+### `week(): number`
+Alias for `isoWeek()`.
+
+### `weeksInYear(): number`
+52 or 53.
+
+### `quarter(): number`
+1–4.
+
+---
+
+## Instance Methods — Fiscal
+
+### `fiscalYear(config?): number`
+Fiscal year number. Config: `{ startMonth: number }` (1–12, default 1).
+
+### `fiscalQuarter(config?): number`
+Fiscal quarter (1–4).
+
+---
+
+## Instance Methods — Mode
+
+### `utc(): DateFormat`
+Convert to UTC mode.
+
+### `local(): DateFormat`
+Convert to local mode.
+
+---
+
+See the [DateFormat Guide](../guide/dateformat) for usage examples.

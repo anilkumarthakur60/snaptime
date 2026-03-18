@@ -1,87 +1,72 @@
 # API Reference
 
-Complete API documentation for all D8 classes and methods.
+Complete API documentation for the `@anilkumarthakur/d8` library. Every class, function, and type — fully documented.
 
-## Classes
+## Modules
 
-- [DateFormat](./dateformat) - Core date/time class
-- [Duration](./duration) - Time spans and units
-- [DateRange](./daterange) - Date range operations
-- [DateCollection](./datecollection) - Batch date operations
-- [Timezone](./timezone) - Timezone conversions
-- [BusinessDay](./businessday) - Business day calculations
-- [Cron](./cron) - Cron expression parsing
-- [NaturalLanguage](./natural-language) - Human-readable dates
+| Module | Description |
+|:-------|:------------|
+| [Factory](./factory) | The `dateFormat` factory function — the main entry point |
+| [DateFormat](./dateformat) | Core date class — 80+ methods |
+| [Duration](./duration) | Time span representation |
+| [DateRange](./daterange) | Start–end date pair |
+| [DateCollection](./datecollection) | Batch operations on date sets |
+| [Timezone](./timezone) | IANA timezone support |
+| [BusinessDay](./businessday) | Business day calculations |
+| [Cron](./cron) | Cron expression parsing |
+| [Natural Language](./natural-language) | English phrase parsing |
+| [Type Definitions](./types) | All exported TypeScript types |
 
-## Quick Reference
-
-### Creating Dates
-
-```typescript
-// Current date/time
-new DateFormat()
-
-// From string
-new DateFormat('2024-01-15')
-new DateFormat('2024-01-15T14:30:00Z')
-
-// From Date object
-new DateFormat(new Date())
-
-// From timestamp
-new DateFormat(1705276800000)
-```
-
-### Common Operations
+## Quick Import Reference
 
 ```typescript
-// Formatting
-date.format('YYYY-MM-DD')
+// Default export: factory function
+import d8 from '@anilkumarthakur/d8'
 
-// Arithmetic
-date.add(1, 'day')
-date.subtract(1, 'week')
+// Named exports: classes
+import {
+  DateFormat,
+  Duration,
+  DateRange,
+  DateCollection,
+  Timezone,
+  Cron,
+  dateFormat,        // also the factory
+} from '@anilkumarthakur/d8'
 
-// Comparison
-date.isBefore(other)
-date.isAfter(other)
+// Named exports: functions
+import {
+  parseNatural,
+  isBusinessDay,
+  addBusinessDays,
+  subtractBusinessDays,
+  nextBusinessDay,
+  prevBusinessDay,
+  businessDaysBetween,
+  getHolidays,
+} from '@anilkumarthakur/d8'
 
-// Difference
-date.diff(other, 'day')
-
-// Timezone
-new Timezone('America/New_York')
+// Type imports
+import type {
+  Unit,
+  SortOrder,
+  WeekStart,
+  RangeIterateUnit,
+  GroupByUnit,
+  UniqueUnit,
+  HolidayCountry,
+  LocaleData,
+  LocaleRelativeTime,
+  LocaleCalendar,
+  PluginFn,
+  DateFormatPluginMethods,
+  PreciseDiffResult,
+  AgeResult,
+  CountdownResult,
+  CalendarCell,
+  CalendarGridOptions,
+  FiscalConfig,
+  CronField,
+  DateFormatStatic,
+} from '@anilkumarthakur/d8'
 ```
-
-## Type Definitions
-
-```typescript
-type Unit =
-  | 'millisecond'
-  | 'ms'
-  | 'second'
-  | 'sec'
-  | 'minute'
-  | 'min'
-  | 'hour'
-  | 'hr'
-  | 'day'
-  | 'd'
-  | 'week'
-  | 'w'
-  | 'month'
-  | 'mo'
-  | 'year'
-  | 'yr'
-
-type Period = 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year'
-```
-
-## International Support
-
-All classes use English for human-readable output and support UTC/local time operations globally.
-
-## See Also
-
-- [Guide](../guide/) - Tutorials and concepts
-- [Examples](../examples/) - Practical code samples

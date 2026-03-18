@@ -1,65 +1,55 @@
 # BusinessDay API
 
-Handle business day calculations excluding weekends and holidays.
+Functions for business day calculations, skipping weekends and holidays.
 
-## Constructor
+All functions are available as named exports and on the `d8.business` namespace.
 
-```typescript
-new BusinessDay(config?: BusinessDayConfig)
-```
+---
 
-## Static Methods
+## Functions
 
-### `default(): BusinessDay`
+### `isBusinessDay(date, holidays?): boolean`
 
-Get default business day (Mon-Fri).
+| Param | Type | Description |
+|:------|:-----|:------------|
+| `date` | `DateFormat` | Date to check |
+| `holidays` | `string[]` | Optional ISO date strings to exclude |
 
-## Instance Methods
+Returns `true` if the date is Mon–Fri and not in the holidays list.
 
-### Configuration
+### `addBusinessDays(date, n, holidays?): DateFormat`
 
-#### `setWorkDays(days: number[]): BusinessDay`
+Add `n` business days. Supports negative `n` to go backwards.
 
-Set working days (0=Sunday, 6=Saturday).
+### `subtractBusinessDays(date, n, holidays?): DateFormat`
 
-#### `setHolidays(dates: (DateFormat | Date | string)[]): BusinessDay`
+Subtract `n` business days. Equivalent to `addBusinessDays(date, -n, holidays)`.
 
-Set holiday dates.
+### `nextBusinessDay(date, holidays?): DateFormat`
 
-#### `isWorkDay(date: DateFormat | Date | string): boolean`
+Next business day after the given date.
 
-Check if date is a work day.
+### `prevBusinessDay(date, holidays?): DateFormat`
 
-#### `isHoliday(date: DateFormat | Date | string): boolean`
+Previous business day before the given date.
 
-Check if date is a holiday.
+### `businessDaysBetween(start, end, holidays?): number`
 
-### Navigation
+Count business days between two dates (exclusive of endpoints). Positive if `end > start`, negative otherwise.
 
-#### `next(date: DateFormat, skipHolidays?: boolean): DateFormat`
+### `getHolidays(country, year): string[]`
 
-Get next business day.
+| Param | Type | Description |
+|:------|:-----|:------------|
+| `country` | `HolidayCountry \| string` | Country code |
+| `year` | `number` | Calendar year |
 
-#### `prev(date: DateFormat, skipHolidays?: boolean): DateFormat`
+Returns ISO date strings for public holidays.
 
-Get previous business day.
+**Supported countries:** `US`, `UK`, `IN`, `DE`, `FR`, `CA`, `AU`.
 
-#### `add(date: DateFormat, days: number): DateFormat`
+Easter-based holidays are computed dynamically using the Anonymous Gregorian algorithm.
 
-Add business days.
+---
 
-#### `subtract(date: DateFormat, days: number): DateFormat`
-
-Subtract business days.
-
-### Queries
-
-#### `between(start: DateFormat, end: DateFormat): number`
-
-Count business days between dates.
-
-#### `daysUntil(start: DateFormat, end: DateFormat): number`
-
-Days until target date.
-
-See [BusinessDay Guide](../guide/businessday) for extensive examples.
+See the [Business Days Guide](../guide/businessday) for examples and the full holiday list per country.

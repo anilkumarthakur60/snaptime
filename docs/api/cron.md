@@ -1,6 +1,6 @@
 # Cron API
 
-Parse and work with cron expressions.
+Parse and evaluate standard 5-field cron expressions.
 
 ## Constructor
 
@@ -8,67 +8,46 @@ Parse and work with cron expressions.
 new Cron(expression: string)
 ```
 
+Throws an `Error` if the expression does not have exactly 5 fields.
+
+**Supports:** wildcards (`*`), values (`5`), lists (`1,3,5`), ranges (`1-5`), steps (`*/15`, `1-5/2`), and day name abbreviations (`MON`–`SUN`).
+
+---
+
 ## Instance Methods
 
-### Validation
+### `matches(date): boolean`
 
-#### `isValid(): boolean`
+Check if a `DateFormat` matches this cron expression.
 
-Check if cron expression is valid.
+::: info DOM + DOW Logic
+When both day-of-month and day-of-week are specified (neither is `*`), a date matches if **either** condition is true (OR). Otherwise, AND logic applies.
+:::
 
-#### `validate(): string | null`
+### `next(from?): DateFormat`
 
-Get validation error message if invalid.
+Find the next matching date/time after `from` (defaults to now). Searches up to 366 days ahead.
 
-### Field Access
+### `prev(from?): DateFormat`
 
-#### `minute(): string`
+Find the most recent past match before `from` (defaults to now). Searches up to 366 days back.
 
-Get minute field.
+### `between(start, end, limit?): DateFormat[]`
 
-#### `hour(): string`
+| Param | Type | Description |
+|:------|:-----|:------------|
+| `start` | `DateFormat` | Range start |
+| `end` | `DateFormat` | Range end |
+| `limit` | `number` | Max results (optional) |
 
-Get hour field.
+### `humanize(): string`
 
-#### `dayOfMonth(): string`
+Human-readable description of the cron expression.
 
-Get day of month field.
+### `toString(): string`
 
-#### `month(): string`
+Returns the original expression string.
 
-Get month field.
+---
 
-#### `dayOfWeek(): string`
-
-Get day of week field.
-
-### Time Navigation
-
-#### `next(from?: DateFormat): DateFormat | null`
-
-Get next execution time.
-
-```typescript
-const cron = new Cron('0 9 * * MON') // Every Monday at 9 AM
-const nextTime = cron.next() // Next execution
-```
-
-#### `prev(from?: DateFormat): DateFormat | null`
-
-Get previous execution time.
-
-#### `between(start: DateFormat, end: DateFormat): DateFormat[]`
-
-Get all executions between dates.
-
-### Queries
-
-#### `willRun(date: DateFormat): boolean`
-
-Check if task will run at this time.
-
-#### `description(): string`
-
-Get human-readable description.
-
-See [Cron Guide](../guide/cron) for extensive examples.
+See the [Cron Guide](../guide/cron) for syntax reference and examples.

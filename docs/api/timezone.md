@@ -1,67 +1,55 @@
 # Timezone API
 
-Handle timezones and timezone conversions.
+Full IANA timezone support using the built-in `Intl` API.
+
+## Constructor
+
+```typescript
+new Timezone(tz: string)
+```
+
+Throws `RangeError` if the timezone string is not a valid IANA identifier.
+
+---
 
 ## Static Methods
 
-### `get(name: string): Timezone`
+### `Timezone.guess(): string`
+Returns the system's local IANA timezone.
 
-Get timezone by name.
+### `Timezone.isValid(tz): boolean`
+Check if a timezone string is valid.
 
-```typescript
-const tz = Timezone.get('America/New_York')
-```
+---
 
-### `local(): Timezone`
+## Properties
 
-Get local timezone.
+| Property | Type | Description |
+|:---------|:-----|:------------|
+| `tz` | `string` | The IANA timezone string (readonly) |
 
-### `utc(): Timezone`
-
-Get UTC timezone.
-
-### `all(): string[]`
-
-Get all available timezone names.
+---
 
 ## Instance Methods
 
-### Properties
+### `offsetMinutes(date?): number`
+UTC offset in minutes for this timezone at the given instant. Positive = east of UTC.
 
-#### `name: string`
+### `offsetString(date?): string`
+Offset as `"+HH:MM"` or `"-HH:MM"`.
 
-Timezone name.
+### `format(date, fmt): string`
+Format a `DateFormat` as if the local clock were set to this timezone.
 
-#### `abbr(date?: DateFormat): string`
+### `isDST(date?): boolean`
+True if the timezone is observing Daylight Saving Time at the given date.
 
-Timezone abbreviation.
+### `toLocalDate(date): DateFormat`
+Returns a `DateFormat` (in UTC mode) whose numeric components represent the wall-clock time in this timezone.
 
-### Queries
+### `toString(): string`
+Returns the IANA timezone string.
 
-#### `isDST(date: DateFormat): boolean`
+---
 
-Check if DST is active.
-
-#### `offsetMinutes(date: DateFormat): number`
-
-Get offset in minutes.
-
-#### `offsetString(date: DateFormat): string`
-
-Get offset as string (e.g., "+05:45").
-
-### Conversion
-
-#### `convert(date: DateFormat, toTz: string | Timezone): DateFormat`
-
-Convert date to another timezone.
-
-#### `fromUTC(date: DateFormat): DateFormat`
-
-Convert from UTC to this timezone.
-
-#### `toUTC(date: DateFormat): DateFormat`
-
-Convert from this timezone to UTC.
-
-See [Timezone Guide](../guide/timezone) for extensive examples.
+See the [Timezone Guide](../guide/timezone) for examples.

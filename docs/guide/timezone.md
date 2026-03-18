@@ -1,206 +1,179 @@
 # Timezone
 
-`Timezone` provides comprehensive timezone support using IANA timezone identifiers with automatic DST handling.
+IANA timezone support using the built-in `Intl` API — format in any timezone, get offsets, detect DST, and convert wall-clock times.
 
-## Constructor
+## Creating Timezones
 
 ```typescript
 import { Timezone } from '@anilkumarthakur/d8'
 
-// Create with IANA identifier
-const utc = new Timezone('UTC')
-const newyork = new Timezone('America/New_York')
-const tokyo = new Timezone('Asia/Tokyo')
-const kolkata = new Timezone('Asia/Kolkata')
-
-// Validate timezone
-if (Timezone.isValid('America/New_York')) {
-  console.log('Valid timezone')
-} else {
-  console.log('Invalid timezone')
-}
-
-// Get system timezone
-const local = new Timezone(Timezone.guess())
-```
-
-## IANA Database
-
-D8 uses the standard IANA timezone database. Some common timezones:
-
-### Americas
-
-- `America/New_York` (EST/EDT)
-- `America/Chicago` (CST/CDT)
-- `America/Denver` (MST/MDT)
-- `America/Los_Angeles` (PST/PDT)
-- `America/Toronto` (EST/EDT)
-- `America/Mexico_City` (CST/CDT)
-- `America/Sao_Paulo` (BRT)
-- `America/Buenos_Aires` (ART)
-
-### Europe
-
-- `Europe/London` (GMT/BST)
-- `Europe/Paris` (CET/CEST)
-- `Europe/Berlin` (CET/CEST)
-- `Europe/Moscow` (MSK)
-
-### Asia
-
-- `Asia/Tokyo` (JST)
-- `Asia/Shanghai` (CST)
-- `Asia/Hong_Kong` (HKT)
-- `Asia/Singapore` (SGT)
-- `Asia/Kolkata` (IST)
-- `Asia/Dubai` (GST)
-- `Asia/Bangkok` (ICT)
-
-### Oceania
-
-- `Australia/Sydney` (AEDT/AEST)
-- `Australia/Melbourne` (AEDT/AEST)
-- `Pacific/Auckland` (NZDT/NZST)
-
-[Full IANA Timezone Database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
-
-## Offset Information
-
-```typescript
-import { DateFormat, Timezone } from '@anilkumarthakur/d8'
-
-const date = new DateFormat('2024-01-15T12:00:00Z')
-const tz = new Timezone('America/New_York')
-
-// Get offset in minutes
-console.log(tz.offsetMinutes(date)) // -300 (UTC-5, January)
-
-// Get offset as ±HH:MM format
-console.log(tz.offsetString(date)) // "-05:00"
-
-// Check DST
-console.log(tz.isDST(date)) // false (winter)
-
-const julyDate = new DateFormat('2024-07-15T12:00:00Z')
-console.log(tz.offsetMinutes(julyDate)) // -240 (UTC-4, July)
-console.log(tz.isDST(julyDate)) // true (summer)
-```
-
-## Formatting in Timezone
-
-```typescript
-import { DateFormat, Timezone } from '@anilkumarthakur/d8'
-
-const utcDate = new DateFormat('2024-01-15T14:30:00Z')
-
-// Format in different timezones
-const newyork = new Timezone('America/New_York')
-console.log(newyork.format(utcDate, 'YYYY-MM-DD HH:mm'))
-// 2024-01-15 09:30
-
-const tokyo = new Timezone('Asia/Tokyo')
-console.log(tokyo.format(utcDate, 'YYYY-MM-DD HH:mm'))
-// 2024-01-15 23:30
+const ny = new Timezone('America/New_York')
+ny.tz // → "America/New_York"
 
 const kolkata = new Timezone('Asia/Kolkata')
-console.log(kolkata.format(utcDate, 'YYYY-MM-DD HH:mm'))
-// 2024-01-15 20:00
+const utcTz = new Timezone('UTC')
+
+// Invalid → throws RangeError:
+new Timezone('Invalid/Timezone') // → throws RangeError
+new Timezone('')                 // → throws RangeError
 ```
 
-## Local Date Conversion
+---
+
+## Static Methods
 
 ```typescript
-const timezone = new Timezone('America/Los_Angeles')
-const utcDate = new DateFormat('2024-01-15T20:00:00Z')
+// Guess the system's local timezone:
+Timezone.guess()
+// → e.g. "Asia/Kolkata" (depends on system)
 
-// Get the local wall-clock time in UTC mode
-// Useful for storing timezone-aware dates
-const localDate = timezone.toLocalDate(utcDate)
-
-// This represents: 2024-01-15T12:00:00 (PST is UTC-8)
-console.log(localDate.format('YYYY-MM-DD HH:mm:ss'))
-// Output depends on timezone conversion
+// Validate timezone strings:
+Timezone.isValid('UTC')             // → true
+Timezone.isValid('America/New_York') // → true
+Timezone.isValid('Asia/Kolkata')    // → true
+Timezone.isValid('Invalid/Timezone') // → false
+Timezone.isValid('')                // → false
 ```
 
-## Quick Convert Function
+---
+
+## Offset
 
 ```typescript
-const utcDate = new DateFormat('2024-01-15T14:30:00Z')
+import d8 from '@anilkumarthakur/d8'
 
-// Quick timezone conversion using chained methods
-const nyTime = utcDate.tz('America/New_York')
-console.log(nyTime.format('HH:mm')) // 09:30
+const ny = new Timezone('America/New_York')
+const kolkata = new Timezone('Asia/Kolkata')
+const utcTz = new Timezone('UTC')
 
-const tokyoTime = utcDate.tz('Asia/Tokyo')
-console.log(tokyoTime.format('HH:mm')) // 23:30
+const jan = d8('2026-01-15T12:00:00Z') // Winter
+const jul = d8('2026-07-15T12:00:00Z') // Summer
+
+// UTC offset in minutes:
+utcTz.offsetMinutes(jan)  // → 0
+kolkata.offsetMinutes(jan) // → 330 (UTC+5:30)
+ny.offsetMinutes(jan)      // → -300 (UTC-5:00, standard time)
+ny.offsetMinutes(jul)      // → -240 (UTC-4:00, DST)
+
+// UTC offset as string:
+utcTz.offsetString(jan)  // → "+00:00"
+kolkata.offsetString(jan) // → "+05:30"
+ny.offsetString(jan)      // → "-05:00"
+ny.offsetString(jul)      // → "-04:00"
+
+// No argument → uses current time:
+utcTz.offsetMinutes()  // → 0
+utcTz.offsetString()   // → "+00:00"
 ```
 
-## Common Patterns
+---
+
+## Format in Timezone
 
 ```typescript
-import { DateFormat, Timezone } from '@anilkumarthakur/d8'
+const ny = new Timezone('America/New_York')
+const kolkata = new Timezone('Asia/Kolkata')
+const utcTz = new Timezone('UTC')
 
-// Meeting scheduling across timezones
-const meetingUTC = new DateFormat('2024-02-15T15:00:00Z')
+// UTC midnight:
+const midnight = d8('2026-01-01T00:00:00Z')
 
-const timezones = [
-  'America/New_York',
-  'Europe/London',
-  'Asia/Kolkata'
+utcTz.format(midnight, 'YYYY-MM-DD')    // → "2026-01-01"
+kolkata.format(midnight, 'YYYY-MM-DD')   // → "2026-01-01" (05:30 → still Jan 1)
+ny.format(midnight, 'YYYY-MM-DD')        // → "2025-12-31" (UTC-5 → Dec 31!)
+kolkata.format(midnight, 'HH:mm')        // → "05:30"
+
+const noon = d8('2026-01-15T12:00:00Z')
+ny.format(noon, 'HH:mm')                // → "07:00" (12:00 UTC - 5h)
+```
+
+---
+
+## DST Detection
+
+```typescript
+const ny = new Timezone('America/New_York')
+const kolkata = new Timezone('Asia/Kolkata')
+const utcTz = new Timezone('UTC')
+
+const jan = d8('2026-01-15T12:00:00Z')
+const jul = d8('2026-07-15T12:00:00Z')
+
+// UTC → never DST:
+utcTz.isDST(jan) // → false
+utcTz.isDST(jul) // → false
+
+// New York → DST in summer:
+ny.isDST(jan)    // → false (standard time)
+ny.isDST(jul)    // → true  (DST)
+
+// India → no DST:
+kolkata.isDST(jan) // → false
+kolkata.isDST(jul) // → false
+```
+
+---
+
+## Wall-Clock Conversion
+
+```typescript
+const kolkata = new Timezone('Asia/Kolkata')
+const ny = new Timezone('America/New_York')
+const utcTz = new Timezone('UTC')
+
+const midnight = d8('2026-01-01T00:00:00Z')
+
+// toLocalDate returns a DateFormat (UTC mode) with wall-clock values:
+const kolkataLocal = kolkata.toLocalDate(midnight)
+kolkataLocal.get('hour')   // → 5
+kolkataLocal.get('minute') // → 30
+kolkataLocal.isUtc()       // → true (numeric components = wall-clock in this tz)
+
+const nyLocal = ny.toLocalDate(d8('2026-01-15T12:00:00Z'))
+nyLocal.get('hour')   // → 7  (12:00 UTC - 5h)
+nyLocal.get('minute') // → 0
+
+const utcLocal = utcTz.toLocalDate(midnight)
+utcLocal.get('hour')   // → 0
+utcLocal.get('minute') // → 0
+```
+
+---
+
+## toString
+
+```typescript
+new Timezone('UTC').toString()             // → "UTC"
+new Timezone('Asia/Kolkata').toString()    // → "Asia/Kolkata"
+new Timezone('America/New_York').toString() // → "America/New_York"
+```
+
+---
+
+## World Clock Example
+
+```typescript
+import d8, { Timezone } from '@anilkumarthakur/d8'
+
+const now = d8()
+const cities = [
+  { name: 'New York',  tz: new Timezone('America/New_York') },
+  { name: 'London',    tz: new Timezone('Europe/London') },
+  { name: 'Mumbai',    tz: new Timezone('Asia/Kolkata') },
+  { name: 'Tokyo',     tz: new Timezone('Asia/Tokyo') },
+  { name: 'Sydney',    tz: new Timezone('Australia/Sydney') },
 ]
 
-for (const tz of timezones) {
-  const timezone = new Timezone(tz)
-  console.log(
-    `${tz}: ${timezone.format(meetingUTC, 'HH:mm')}`
-  )
+for (const city of cities) {
+  const time = city.tz.format(now, 'hh:mm A')
+  const offset = city.tz.offsetString(now)
+  const dst = city.tz.isDST(now) ? ' (DST)' : ''
+  console.log(`${city.name}: ${time} ${offset}${dst}`)
 }
-
-// Server-side time tracking (always use UTC)
-const eventTime = new DateFormat(new Date()) // Use UTC
-const evenStorageTime = eventTime.isUtc() ? eventTime : eventTime.utc()
-
-// User-local time display
-const timezone = new Timezone(userTimezone)
-const displayTime = timezone.format(utcTime, 'YYYY-MM-DD HH:mm:ss')
-
-// DST awareness
-const tz = new Timezone('America/New_York')
-const wintertTime = new DateFormat('2024-01-15')
-const summerTime = new DateFormat('2024-07-15')
-
-console.log(tz.offsetString(wintertTime)) // -05:00
-console.log(tz.offsetString(summerTime)) // -04:00
-
-// Calculate meeting time in local timezone
-const baseTime = new DateFormat('2024-02-15T09:00:00Z')
-const userTz = new Timezone(getUserTimezone())
-const userTime = userTz.toLocalDate(baseTime)
-console.log(userTime.format('YYYY-MM-DD HH:mm'))
-```
-
-## Best Practices
-
-1. **Store in UTC**: Always store dates in UTC on the server
-2. **Convert on Display**: Convert to user's timezone only when displaying
-3. **Use IANA Identifiers**: Always use official IANA timezone names
-4. **Handle DST**: Remember that offsets change during DST transitions
-5. **Validate Input**: Check timezone validity before creating Timezone objects
-
-## Error Handling
-
-```typescript
-// Invalid timezone throws on construction
-try {
-  const tz = new Timezone('Invalid/Timezone')
-} catch (error) {
-  console.log('Invalid IANA timezone:', error.message)
-}
-
-// Validate before use
-if (Timezone.isValid(userInput)) {
-  const tz = new Timezone(userInput)
-} else {
-  console.log('Please select a valid timezone')
-}
+// → New York: 07:00 AM -05:00
+// → London:   12:00 PM +00:00
+// → Mumbai:   05:30 PM +05:30
+// → Tokyo:    09:00 PM +09:00
+// → Sydney:   11:00 PM +11:00 (DST)
+// (values depend on the actual current time)
 ```

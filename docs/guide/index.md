@@ -1,61 +1,76 @@
 # Introduction
 
-D8 is a modern, fully-typed TypeScript date/time library that provides comprehensive date manipulation, formatting, and timezone support.
+**D8** is a modern, zero-dependency TypeScript date/time library that gives you everything you need for date manipulation, formatting, timezone handling, business calendars, cron scheduling, and natural language parsing — in a single, fully-typed package.
 
 ## Why D8?
 
-- **🎯 Type-Safe**: Full TypeScript support with no `any` types
-- **🌍 Timezone-Aware**: Built-in IANA timezone support
-- **⏱️ Business-Friendly**: Business day calculations and working hours support
-- **⏰ Cron Support**: Parse and evaluate cron expressions
-- **🔄 Chainable API**: Fluent interface for date operations
-- **🎨 Flexible Formatting**: Powerful date/time formatting with custom tokens
-- **📦 Zero Dependencies**: Minimal, focused library with no external dependencies
+Most date libraries ask you to choose: lightweight _or_ feature-rich. D8 gives you both.
 
-## Features
+| | D8 |
+|:--|:--|
+| **Type safety** | 100 % TypeScript — no `any` escape hatches |
+| **Dependencies** | Zero |
+| **Bundle** | ESM + UMD + `.d.ts` — use anywhere |
+| **Methods** | 80+ on `DateFormat` alone |
+| **Timezones** | Full IANA support via built-in `Intl` |
+| **Business logic** | Business days + holidays for 7 countries |
+| **Scheduling** | Cron expression parsing & matching |
+| **Natural language** | `"next friday"`, `"in 3 days"`, `"3rd Monday of January"` |
+| **Extensible** | Plugin system with declaration merging |
 
-### Core Classes
+## Core Modules
 
-- **DateFormat**: Work with dates in local or UTC mode with extensive formatting options
-- **Duration**: Handle time intervals with automatic unit conversion
-- **DateRange**: Manage date ranges with iteration and filtering
-- **Timezone**: Convert between timezones and handle DST automatically
-- **BusinessDay**: Calculate business days, skip weekends and holidays
-- **Cron**: Parse and evaluate cron expressions for scheduling
-- **DateCollection**: Perform batch operations on multiple dates
-- **NaturalLanguage**: Convert dates to human-readable text
+### 🕐 DateFormat
+The heart of D8. Create, format, parse, compare, diff, and query dates with 80+ chainable methods. Supports UTC, local, ordinals, ISO weeks, quarters, fiscal years, calendar grids, countdown timers, and more.
+
+### ⏱️ Duration
+Represent lengths of time. Parse from strings (`"2h30m"`), convert between units, format with templates, and humanize to human-readable strings.
+
+### 📅 DateRange
+Model a start–end pair. Check containment, overlap, intersection, merge, split into chunks, and iterate day-by-day (or any unit).
+
+### 📚 DateCollection
+Work with sets of dates. Sort, filter, group by period, deduplicate, find closest/farthest, and extract min/max.
+
+### 🌍 Timezone
+Full IANA timezone support. Get UTC offsets, detect DST, format dates in any timezone, and guess the system timezone.
+
+### 💼 Business Days
+Add or subtract business days skipping weekends and public holidays. Built-in holiday calendars for US, UK, India, Germany, France, Canada, and Australia.
+
+### ⏰ Cron
+Parse standard 5-field cron expressions. Check if a date matches, find next/previous occurrences, list matches in a range, and get a human-readable description.
+
+### 🗣️ Natural Language
+Parse phrases like `"tomorrow"`, `"in 2 weeks"`, `"last Friday"`, `"end of month"`, `"first day of March 2027"`, and `"3rd Thursday of November"`.
 
 ## Quick Example
 
 ```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
+import d8 from '@anilkumarthakur/d8'
 
-// Create a date
-const date = new DateFormat('2024-01-15')
+// Create & format
+const date = d8('2026-03-18')
+date.format('dddd, MMMM Do YYYY') // "Wednesday, March 18th 2026"
 
-// Format it
-console.log(date.format('YYYY-MM-DD')) // 2024-01-15
-console.log(date.format('dddd, MMMM Do')) // Monday, January 15th
+// Arithmetic
+date.add(1, 'month').format('MMM YYYY') // "Apr 2026"
 
-// Manipulate it
-const nextWeek = date.add(7, 'day')
-const nextMonth = date.add(1, 'month')
+// Query
+date.isWeekday()     // true
+date.isLeapYear()    // false
+date.quarter()       // 1
 
-// Work with timezones
-const nyTime = date.tz('America/New_York')
+// Relative time
+date.fromNow()       // "in 5 days"
+date.age().toString() // "0d"
 
-// Get relative dates
-console.log(date.fromNow()) // e.g., "2 days ago"
-```
-
-## Installation
-
-```bash
-npm install @anilkumarthakur/d8
+// Countdown
+date.countdown().humanize() // "5 days, 8 hours"
 ```
 
 ## Next Steps
 
-- [Installation](./installation) - Get started with D8
-- [Quick Start](./quick-start) - Your first D8 program
-- [Core Concepts](./dateformat) - Learn the main classes
+- [Installation](./installation) — Set up D8 in your project
+- [Quick Start](./quick-start) — Build your first date program
+- [DateFormat](./dateformat) — Deep dive into the core class

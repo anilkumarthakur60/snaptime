@@ -1,184 +1,248 @@
 # Quick Start
 
-Let's learn D8 by building a simple date application.
+Let's explore D8 by building a real-world schedule display.
 
-## Basic Date Creation
-
-```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
-
-// Create from current date/time
-const now = new DateFormat()
-
-// Create from ISO string
-const date1 = new DateFormat('2024-01-15')
-const date2 = new DateFormat('2024-01-15T14:30:00Z')
-
-// Create from Date object
-const date3 = new DateFormat(new Date('2024-01-15'))
-
-// Create from milliseconds
-const date4 = new DateFormat(1705276800000)
-```
-
-## Formatting Dates
+## 1. Create Dates
 
 ```typescript
-const date = new DateFormat('2024-01-15T14:30:00Z')
+import d8, { DateFormat } from '@anilkumarthakur/d8'
 
-// ISO format
-console.log(date.format('YYYY-MM-DD')) // 2024-01-15
-console.log(date.format('YYYY-MM-DD HH:mm:ss')) // 2024-01-15 14:30:00
+// Factory function (shortest)
+const a = d8('2026-03-18')
+const b = d8()                    // now
+const c = d8(1774022400000)       // from timestamp
+const d = d8(new Date())          // from native Date
 
-// Long format
-console.log(date.format('dddd, MMMM Do YYYY')) // Monday, January 15th 2024
+// Class constructor (equivalent)
+const e = new DateFormat('2026-03-18')
+const f = new DateFormat('2026-03-18T09:30:00Z')
 
-// Custom format
-console.log(date.format('MM/DD/YY')) // 01/15/24
-console.log(date.format('h:mm A')) // 2:30 PM
+// UTC mode
+const g = new DateFormat('2026-03-18', { utc: true })
 ```
 
-## Date Arithmetic
+## 2. Format Dates
 
 ```typescript
-const date = new DateFormat('2024-01-15')
+const date = d8('2026-03-18T14:30:45Z')
 
-// Add time
-const nextWeek = date.add(7, 'day')
-const nextMonth = date.add(1, 'month')
-const tomorrow = date.add(1, 'day')
+date.format('YYYY-MM-DD')              // "2026-03-18"
+date.format('dddd, MMMM Do YYYY')      // "Wednesday, March 18th 2026"
+date.format('hh:mm A')                 // "02:30 PM"
+date.format('Do MMM YY')               // "18th Mar 26"
+date.format('YYYY [Q]Q')               // "2026 Q1"
+date.format('YYYY-[W]WW')              // "2026-W12"
 
-// Subtract time
-const lastWeek = date.subtract(7, 'day')
-const lastYear = date.subtract(1, 'year')
+// Intl formatting
+date.formatIntl({ weekday: 'long', month: 'long', day: 'numeric' })
+// "Wednesday, March 18"
 
-// Start/end of period
-const startOfMonth = date.startOf('month')
-const endOfYear = date.endOf('year')
+// Serialization
+date.toISOString()                      // "2026-03-18T14:30:45.000Z"
+date.toSQL()                            // "2026-03-18 14:30:45"
+date.toRFC2822()                        // "Wed, 18 Mar 2026 14:30:45 +0000"
+date.toRFC3339()                        // "2026-03-18T14:30:45Z"
+date.toExcel()                          // 46093.604...
+date.toObject()
+// { year: 2026, month: 3, date: 18, hour: 14, minute: 30, second: 45, millisecond: 0 }
 ```
 
-## Working with Durations
+## 3. Arithmetic
+
+```typescript
+const date = d8('2026-03-18')
+
+// Add
+date.add(7, 'day').format('YYYY-MM-DD')       // "2026-03-25"
+date.add(1, 'month').format('YYYY-MM-DD')      // "2026-04-18"
+date.add(2, 'week').format('YYYY-MM-DD')       // "2026-04-01"
+date.add(1, 'fortnight').format('YYYY-MM-DD')  // "2026-04-01"
+
+// Subtract
+date.subtract(1, 'year').format('YYYY-MM-DD')  // "2025-03-18"
+
+// Chain operations
+date.add(1, 'month').subtract(3, 'day').add(2, 'hour')
+
+// Start / end of period
+date.startOf('month').format('YYYY-MM-DD')     // "2026-03-01"
+date.endOf('year').format('YYYY-MM-DD')        // "2026-12-31"
+date.startOf('week').format('YYYY-MM-DD')      // "2026-03-15" (Sunday)
+date.startOf('quarter').format('YYYY-MM-DD')   // "2026-01-01"
+```
+
+## 4. Compare & Query
+
+```typescript
+const jan = d8('2026-01-15')
+const mar = d8('2026-03-18')
+
+jan.isBefore(mar)                // true
+mar.isAfter(jan)                 // true
+jan.isSame(d8('2026-01-15'))     // true
+jan.isBetween('2026-01-01', '2026-02-01') // true
+
+// Difference
+mar.diff(jan, 'day')             // 62
+mar.diff(jan, 'month')           // 2
+mar.diff(jan, 'day', true)       // 62.0 (floating point)
+
+// Day-of-week checks
+mar.isWeekday()                  // true
+mar.isWeekend()                  // false
+mar.isSunday()                   // false
+mar.isWednesday()                // true
+
+// Period checks
+mar.isCurrentYear()              // true (if year is 2026)
+mar.isCurrentMonth()             // true (if month is March)
+mar.isCurrentWeek()              // depends on current week
+mar.isLeapYear()                 // false
+mar.daysInMonth()                // 31
+
+// Decade / century / millennium
+mar.isCurrentDecade()            // true
+mar.isCurrentCentury()           // true
+```
+
+## 5. Relative Time & Age
+
+```typescript
+const birthday = d8('1990-06-15')
+
+birthday.fromNow()               // "13089 days ago"
+birthday.age()                   // { years: 35, months: 9, days: 3 }
+birthday.age().toString()        // "35y 9mo 3d"
+
+// Precise diff
+const diff = d8('2026-12-25').preciseDiff(d8('2026-03-18'))
+diff.humanize()                  // "9 months, 7 days"
+diff.months                      // 9
+diff.days                        // 7
+
+// Countdown
+d8('2027-01-01').countdown().humanize()
+// "288 days, 15 hours"
+d8('2027-01-01').countdown().format('DD days HH:mm:ss')
+// "288 days 15:30:00"
+```
+
+## 6. Durations
 
 ```typescript
 import { Duration } from '@anilkumarthakur/d8'
 
-// Create a duration
-const duration = new Duration(5000) // 5 seconds in milliseconds
+// Create
+const dur = Duration.parse('2h30m15s')
 
-// Convert to different units
-console.log(duration.as('second')) // 5
-console.log(duration.as('minute')) // 0.0833...
-console.log(duration.as('hour')) // 0.00138...
+dur.toHours()                    // 2.504...
+dur.toMinutes()                  // 150.25
+dur.humanize()                   // "3h"  (short form)
+dur.humanize(false)              // "2 hours, 30 minutes, 15 seconds"
+dur.format('HH:mm:ss')          // "02:30:15"
 
-// Add to dates
-const date = new DateFormat('2024-01-15')
-const later = date.add(duration.as('millisecond'), 'millisecond')
+// Arithmetic
+dur.add(1, 'hour').toHours()     // 3.504...
+dur.subtract(30, 'minute').toMinutes() // 120.25
 ```
 
-## Relative Dates
-
-```typescript
-const date = new DateFormat('2024-01-15')
-
-// Get human-readable relative time
-console.log(date.fromNow()) // e.g., "2 days ago"
-console.log(date.toNow()) // e.g., "in 2 days"
-
-// Compare dates
-const date2 = new DateFormat('2024-01-20')
-console.log(date.isBefore(date2)) // true
-console.log(date.isAfter(date2)) // false
-console.log(date.isSame(date2)) // false
-```
-
-## Timezones
+## 7. Timezones
 
 ```typescript
 import { Timezone } from '@anilkumarthakur/d8'
 
-const date = new DateFormat('2024-01-15T12:00:00Z')
+const date = d8('2026-03-18T12:00:00Z')
+const ny = new Timezone('America/New_York')
+const tokyo = new Timezone('Asia/Tokyo')
 
-// Work with timezones
-const nyTz = new Timezone('America/New_York')
-console.log(nyTz.format(date, 'HH:mm')) // 07:00 (UTC-5)
+ny.format(date, 'HH:mm Z')      // "07:00 -05:00"
+tokyo.format(date, 'HH:mm Z')   // "21:00 +09:00"
 
-// Get offset information
-console.log(nyTz.offsetString(date)) // -05:00
-console.log(nyTz.isDST(date)) // false
+ny.offsetString(date)            // "-05:00"
+ny.isDST(date)                   // true (March = DST)
 
-// Convert between timezones
-const kolkataTz = new Timezone('Asia/Kolkata')
-console.log(kolkataTz.format(date, 'HH:mm')) // 17:30 (UTC+5:30)
+Timezone.guess()                 // e.g. "Asia/Kathmandu"
+Timezone.isValid('Europe/Paris') // true
 ```
 
-## Business Days
-
-```typescript
-import { BusinessDay } from '@anilkumarthakur/d8'
-
-const businessDay = new BusinessDay()
-
-// Skip weekends automatically
-const monday = new DateFormat('2024-01-15') // Monday
-const nextBizDay = businessDay.nextBusinessDay(monday)
-
-// Count business days
-const friday = new DateFormat('2024-01-19')
-console.log(businessDay.countBusinessDays(monday, friday)) // 5
-
-// Add business days
-const date = new DateFormat('2024-01-15')
-const fiveDaysLater = businessDay.add(date, 5)
-```
-
-## Cron Expressions
+## 8. Cron
 
 ```typescript
 import { Cron } from '@anilkumarthakur/d8'
 
-// Create a cron expression
-const cron = new Cron('0 9 * * 1-5') // 9 AM on weekdays
+const job = new Cron('30 9 * * 1-5')
 
-// Check if date matches
-const monday9am = new DateFormat('2024-01-15T09:00:00')
-console.log(cron.matches(monday9am)) // true
+job.humanize()                   // "At 09:30, Monday through Friday"
+job.matches(d8('2026-03-18').set('hour', 9).set('minute', 30))  // true
 
-// Get next match
-const nextRun = cron.next()
-console.log(nextRun.format('YYYY-MM-DD HH:mm'))
+const next = job.next()
+console.log(next.format('YYYY-MM-DD HH:mm'))
 
-// Get human-readable description
-console.log(cron.humanize()) // "At 09:00 on Monday through Friday"
+const matches = job.between(d8('2026-03-18'), d8('2026-03-20'))
+console.log(matches.length)
 ```
 
-## Collections
+## 9. Natural Language
 
 ```typescript
-import { DateCollection } from '@anilkumarthakur/d8'
+import d8 from '@anilkumarthakur/d8'
 
-// Create a collection of dates
-const dates = new DateCollection([
-  '2024-01-15',
-  '2024-01-20',
-  '2024-01-10'
-])
+d8.natural('tomorrow').format('YYYY-MM-DD')
+d8.natural('next friday').format('YYYY-MM-DD')
+d8.natural('in 3 days').format('YYYY-MM-DD')
+d8.natural('2 weeks ago').format('YYYY-MM-DD')
+d8.natural('end of month').format('YYYY-MM-DD')
+d8.natural('beginning of year').format('YYYY-MM-DD')
+d8.natural('last day of March').format('YYYY-MM-DD')
+d8.natural('3rd Monday of January 2027').format('YYYY-MM-DD')
+```
 
-// Sort dates
-const sorted = dates.sort('asc')
+## 10. Business Days
 
-// Filter dates
-const filtered = sorted.filter((date) =>
-  date.isAfter(new DateFormat('2024-01-12'))
+```typescript
+import d8 from '@anilkumarthakur/d8'
+
+const friday = d8('2026-03-20') // Friday
+
+d8.business.isBusinessDay(friday)               // true
+d8.business.nextBusinessDay(friday)             // Monday 2026-03-23
+d8.business.addBusinessDays(friday, 5)          // Friday 2026-03-27
+
+// With holidays
+const usHolidays = d8.business.getHolidays('US', 2026)
+d8.business.addBusinessDays(friday, 5, usHolidays)
+
+// Count business days
+d8.business.businessDaysBetween(
+  d8('2026-03-01'),
+  d8('2026-03-31')
 )
+```
 
-// Map dates
-const formatted = filtered.map((date) =>
-  date.format('YYYY-MM-DD')
-)
+## 11. Collections & Ranges
+
+```typescript
+import d8 from '@anilkumarthakur/d8'
+
+// Collection
+const col = d8.collection(['2026-03-01', '2026-01-15', '2026-06-10', '2026-01-15'])
+col.sort('asc').first().format('YYYY-MM-DD')  // "2026-01-15"
+col.unique().count()                           // 3
+col.groupBy('month')                           // Map<string, DateFormat[]>
+col.closest(d8('2026-02-01')).format('YYYY-MM-DD') // "2026-01-15"
+
+// Range
+const range = d8.range('2026-01-01', '2026-12-31')
+range.contains('2026-06-15')        // true
+range.duration().humanize(false)    // "364 days"
+range.split(3, 'month')            // DateRange[] (4 chunks)
+for (const day of range.iterate('month')) {
+  console.log(day.format('MMM YYYY'))
+}
 ```
 
 ## What's Next?
 
-- Explore the [Core Concepts](./dateformat) to learn about each class in detail
-- Check out [Examples](../examples/) for real-world use cases
-- Read the [API Reference](../api/dateformat) for complete documentation
+- [DateFormat](./dateformat) — Complete guide to the core class
+- [API Reference](../api/) — Every method, typed & documented
+- [Examples](../examples/) — Real-world recipes and patterns
