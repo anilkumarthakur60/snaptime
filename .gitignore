@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 coverage
+
+# VitePress documentation
+docs/.vitepress/dist
+docs/.vitepress/cache
+
