@@ -73,7 +73,7 @@ function parseField(token: string, min: number, max: number, isDow = false): Cro
     const s = step ?? 1
     if (lo <= hi) {
       for (let i = lo; i <= hi; i += s) {
-        values.add(isDow && i === 7 ? 0 : i)
+        values.add(i)
       }
     } else if (isDow) {
       for (let i = lo; i <= 6; i += s) {
@@ -232,7 +232,7 @@ export default class Cron {
       parts.push(dowStr)
     }
 
-    return parts.join(', ') || 'Every minute'
+    return parts.join(', ')
   }
 
   toString(): string {
