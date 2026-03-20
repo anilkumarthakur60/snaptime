@@ -7,6 +7,7 @@ export default defineConfig({
     base: '/snaptime/',
 
     head: [
+        ['link', { rel: 'icon', type: 'image/png', href: '/snaptime/icon-transparent.png' }],
         ['meta', { name: 'theme-color', content: '#667eea' }],
         ['meta', { name: 'og:type', content: 'website' }],
         ['meta', { name: 'og:locale', content: 'en' }],
@@ -19,7 +20,7 @@ export default defineConfig({
     ],
 
     themeConfig: {
-        logo: '🗓️',
+        logo: '/icon-transparent.png',
         siteTitle: 'D8',
 
         nav: [
