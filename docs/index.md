@@ -6,7 +6,7 @@ hero:
   text: "Modern Date/Time for TypeScript"
   tagline: "Zero-dependency, fully typed date library — formatting, parsing, timezones, business days, cron, and natural language."
   image:
-    src: /logo.png
+    src: /logo-transparent.png
     alt: D8 Logo
   actions:
     - theme: brand
