@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals'
-import DateFormat from '../src/core/DateFormat'
+import DateFormat from '../src/core/DateTime'
 import {
   isBusinessDay,
   addBusinessDays,

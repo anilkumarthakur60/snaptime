@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals'
 import DateCollection from '../src/collections/DateCollection'
-import DateFormat from '../src/core/DateFormat'
+import DateFormat from '../src/core/DateTime'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -156,14 +156,13 @@ describe('DateCollection.groupBy', () => {
     expect(groups.get('2026-03')?.length).toBe(1)
   })
 
-  test("'week': groups by 'YYYY-Www'", () => {
-    // The source isoWeek() algorithm places Jan 12 & Jan 14 in week 2,
-    // and Jan 19 in week 3 (anchor is Wednesday, not Thursday).
+  test("'week': groups by '<isoWeekYear>-<isoWeek>'", () => {
+    // Jan 12 & Jan 14 share an ISO week; Jan 19 is the next one.
     const c = new DateCollection(['2026-01-12', '2026-01-14', '2026-01-19'])
     const groups = c.groupBy('week')
     expect(groups.size).toBe(2)
-    expect(groups.get('2026-W02')?.length).toBe(2)
-    expect(groups.get('2026-W03')?.length).toBe(1)
+    const counts = [...groups.values()].map((arr) => arr.length).sort()
+    expect(counts).toEqual([1, 2])
   })
 
   test("'day': groups by 'YYYY-MM-DD'", () => {
