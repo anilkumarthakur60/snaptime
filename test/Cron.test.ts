@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals'
 import Cron from '../src/ecosystem/Cron'
-import DateFormat from '../src/core/DateFormat'
+import DateFormat from '../src/core/DateTime'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -281,14 +281,14 @@ describe('Cron error cases', () => {
     // "0 0 32 * *" is impossible
     const cron = new Cron('0 0 32 * *')
     const from = local(2026, 1, 15, 12, 0)
-    expect(() => cron.prev(from)).toThrow('No matching date found within 366 days')
+    expect(() => cron.prev(from)).toThrow('no matching date found within 366 days')
   })
 
   test('next() throws when no match found within 366 days', () => {
     // "0 0 32 * *" is impossible
     const cron = new Cron('0 0 32 * *')
     const from = local(2026, 1, 15, 12, 0)
-    expect(() => cron.next(from)).toThrow('No matching date found within 366 days')
+    expect(() => cron.next(from)).toThrow('no matching date found within 366 days')
   })
 })
 

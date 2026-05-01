@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals'
 import DateRange from '../src/collections/DateRange'
-import DateFormat from '../src/core/DateFormat'
+import DateFormat from '../src/core/DateTime'
 import Duration from '../src/core/Duration'
 
 // Use UTC timestamps to keep tests machine-independent
@@ -404,8 +404,8 @@ describe('DateRange', () => {
         new DateFormat(JAN_31, { utc: true })
       )
       const s = range.toString()
-      expect(s).toContain(' / ')
-      expect(s).toMatch(/^\d{4}-\d{2}-\d{2} \/ \d{4}-\d{2}-\d{2}$/)
+      expect(s).toContain('/')
+      expect(s).toMatch(/^\d{4}-\d{2}-\d{2}\/\d{4}-\d{2}-\d{2}$/)
     })
 
     test('contains correct year and month info', () => {
@@ -413,7 +413,7 @@ describe('DateRange', () => {
         new DateFormat(JAN_1, { utc: true }),
         new DateFormat(JAN_31, { utc: true })
       )
-      expect(range.toString()).toBe('2026-01-01 / 2026-01-31')
+      expect(range.toString()).toBe('2026-01-01/2026-01-31')
     })
   })
 })

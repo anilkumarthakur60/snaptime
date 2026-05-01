@@ -115,12 +115,8 @@ describe('Duration.as()', () => {
     expect(new Duration(fortnight).as('fortnight')).toBeCloseTo(1, 5)
   })
 
-  test('unknown → NaN', () => {
-    expect(new Duration(1000).as('unknown')).toBeNaN()
-  })
-
-  test('completely undefined unit falls back to dividing by 1 (returns ms value)', () => {
-    expect(new Duration(1000).as('nonexistent' as unknown as never)).toBe(1000)
+  test('unknown unit → throws RangeError', () => {
+    expect(() => new Duration(1000).as('unknown' as Unit)).toThrow(/Unknown unit/)
   })
 })
 
@@ -185,9 +181,7 @@ describe('Duration add() and subtract()', () => {
   })
 
   test('add unknown unit → throws', () => {
-    expect(() => new Duration(0).add(1, 'unknown' as Unit)).toThrow(
-      'Cannot add/subtract unit "unknown"'
-    )
+    expect(() => new Duration(0).add(1, 'unknown' as Unit)).toThrow(/Unknown unit/)
   })
 
   test('subtract positive is same as add negative', () => {
@@ -397,7 +391,7 @@ describe('Duration.toString()', () => {
 
   test('toString for small duration', () => {
     const d = new Duration(500)
-    expect(d.toString()).toBe('500ms')
+    expect(d.toString()).toBe('500 milliseconds')
   })
 })
 

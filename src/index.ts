@@ -1,10 +1,25 @@
-import DateFormat from './core/DateFormat'
+// ─────────────────────────────────────────────────────────────────────────────
+// Public API.
+//
+// Two equivalent entry points:
+//   1. The factory function — `dateTime(input)`. Mirrors moment().
+//   2. The `DateTime` class itself, plus static factories.
+//
+// All other classes (Duration, DateRange, DatePeriod, DateCollection,
+// Timezone, Cron) are exposed as named exports.
+//
+// `DateFormat` is re-exported as an alias of `DateTime` for backwards
+// compatibility with earlier 0.x versions of the package.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import DateTime from './core/DateTime'
 import Duration from './core/Duration'
 import DateRange from './collections/DateRange'
+import DatePeriod from './collections/DatePeriod'
 import DateCollection from './collections/DateCollection'
 import Timezone from './ecosystem/Timezone'
 import Cron from './ecosystem/Cron'
-import parseNatural from './ecosystem/NaturalLanguage'
+import parseNatural, { NaturalLanguage } from './ecosystem/NaturalLanguage'
 import {
   isBusinessDay,
   addBusinessDays,
@@ -14,12 +29,26 @@ import {
   businessDaysBetween,
   getHolidays
 } from './ecosystem/BusinessDay'
-import { resolveUnit } from './core/helpers'
+import { Holidays } from './ecosystem/holidays/index'
+import { Locales } from './locale/registry'
+import { Macros } from './plugin/macros'
+import { Clock } from './core/Clock'
+import { resolveUnit } from './core/units'
+import { toNumerals, toWesternNumerals, type NumeralSystem } from './core/numerals'
+
+// New top-level modules (also available via sub-path imports)
+import RangeSet from './collections/RangeSet'
+import { BikramSambat } from './calendars/bs'
+import { RRule, parseRRule, stringifyRRule } from './rrule'
+import * as Astronomy from './astronomy'
+import { DateRule } from './validate'
+
 import type {
   Unit,
   UnitInput,
   DateInput,
   DateObject,
+  CreateOptions,
   SortOrder,
   WeekStart,
   Inclusivity,
@@ -30,9 +59,7 @@ import type {
   LocaleData,
   LocaleRelativeTime,
   LocaleCalendar,
-  PluginFn,
-  DateFormatPluginMethods,
-  DateFormatLike,
+  LocaleLongDateFormats,
   PreciseDiffResult,
   AgeResult,
   CountdownResult,
@@ -40,43 +67,72 @@ import type {
   CalendarGridOptions,
   FiscalConfig,
   CronField,
-  DateFormatStatic
+  PluginFn,
+  Macro,
+  StaticMacro
 } from './core/types'
+import type { DatePeriodOptions } from './collections/DatePeriod'
+import type { ResolvedLocale } from './locale/registry'
+import type { Pattern as NaturalLanguagePattern } from './ecosystem/NaturalLanguage'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Factory function — main entry point
+// Factory function — main entry point. `dateTime()` calls work like Moment.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const dateFormat = Object.assign(
-  (input: DateInput = Date.now(), opts: { utc?: boolean } = {}) => {
-    return new DateFormat(input as string | number | Date | DateFormat, opts)
+export const dateTime = Object.assign(
+  function dateTime(input?: DateInput, opts?: CreateOptions): DateTime {
+    return new DateTime(input as DateInput | undefined, opts)
   },
   {
-    // Core static methods
-    parse: (str: string, fmt: string, strict?: boolean) => DateFormat.parse(str, fmt, strict),
-    fromObject: (obj: DateObject, opts?: { utc?: boolean }) => DateFormat.fromObject(obj, opts),
-    min: (...args: DateInput[]) => DateFormat.min(...args),
-    max: (...args: DateInput[]) => DateFormat.max(...args),
-    duration: (n: number, unit: UnitInput) => DateFormat.duration(n, unit),
-    locale: (name: string, data?: LocaleData) => DateFormat.locale(name, data),
-    use: (plugin: PluginFn) => DateFormat.use(plugin),
+    // Construction
+    now: () => DateTime.now(),
+    today: () => DateTime.today(),
+    tomorrow: () => DateTime.tomorrow(),
+    yesterday: () => DateTime.yesterday(),
+    parse: (str: string, fmt = '', strict = false, locale?: string) =>
+      DateTime.parse(str, fmt, strict, locale),
+    fromObject: (obj: DateObject, opts?: CreateOptions) => DateTime.fromObject(obj, opts),
+    fromUnix: (s: number, opts?: CreateOptions) => DateTime.fromUnix(s, opts),
+    fromTimestamp: (ms: number, opts?: CreateOptions) => DateTime.fromTimestamp(ms, opts),
+    fromExcel: (serial: number) => DateTime.fromExcel(serial),
+    fromDate: (d: Date, opts?: CreateOptions) => DateTime.fromDate(d, opts),
 
-    // Date range
+    // Comparison helpers
+    min: (...args: DateInput[]) => DateTime.min(...args),
+    max: (...args: DateInput[]) => DateTime.max(...args),
+    average: (...args: DateInput[]) => DateTime.average(...args),
+
+    // Companion classes
+    duration: (n: number, unit: UnitInput) => DateTime.duration(n, unit),
     range: (start: DateInput, end: DateInput) => new DateRange(start, end),
-
-    // Natural language
-    natural: (input: string, ref?: DateFormat) => parseNatural(input, ref),
-
-    // Cron
-    cron: (expression: string) => new Cron(expression),
-
-    // Collection
+    period: (opts: DatePeriodOptions) => new DatePeriod(opts),
+    rangeSet: (ranges: ConstructorParameters<typeof RangeSet>[0]) => new RangeSet(ranges),
     collection: (dates: DateInput[]) => new DateCollection(dates),
+    tz: (zone: string) => new Timezone(zone),
+    cron: (expression: string) => new Cron(expression),
+    natural: (input: string, ref?: DateTime) => parseNatural(input, ref),
+    rrule: (input: string) => RRule.parse(input),
+    rule: () => DateRule.empty(),
+    bs: (input: DateInput) =>
+      BikramSambat.fromAD(input instanceof DateTime ? input : new DateTime(input)),
 
-    // Timezone
-    tz: (timezone: string) => new Timezone(timezone),
+    // Locale
+    locale: (name?: string, data?: LocaleData) => {
+      if (data) Locales.register(name ?? data.name ?? 'custom', data)
+      if (name) Locales.setDefault(name)
+      return Locales.getDefault()
+    },
+    getLocale: () => Locales.getDefault(),
 
-    // Business days
+    // Plugin / extensibility
+    use: <O>(plugin: PluginFn<O>, options?: O) => DateTime.use(plugin, options),
+    macro: (name: string, fn: Macro) => DateTime.macro(name, fn),
+    macroStatic: (name: string, fn: StaticMacro) => DateTime.macroStatic(name, fn),
+
+    // Test mocking
+    setTestNow: (t: string | number | Date | null) => DateTime.setTestNow(t),
+
+    // Business-day helpers
     business: {
       isBusinessDay,
       addBusinessDays,
@@ -85,7 +141,34 @@ const dateFormat = Object.assign(
       prevBusinessDay,
       businessDaysBetween,
       getHolidays
-    }
+    },
+
+    // Registries
+    Locales,
+    Holidays,
+    Macros,
+    Clock,
+    NaturalLanguage,
+
+    // New top-level modules
+    BikramSambat,
+    RRule,
+    Astronomy,
+    DateRule,
+
+    // Numeral conversion
+    toNumerals,
+    toWesternNumerals,
+
+    // Constructors (escape hatches)
+    DateTime,
+    Duration,
+    DateRange,
+    DatePeriod,
+    DateCollection,
+    RangeSet,
+    Timezone,
+    Cron
   }
 )
 
@@ -95,12 +178,22 @@ const dateFormat = Object.assign(
 
 export {
   // Classes
-  DateFormat,
+  DateTime,
   Duration,
   DateRange,
+  DatePeriod,
   DateCollection,
+  RangeSet,
   Timezone,
   Cron,
+
+  // New modules
+  BikramSambat,
+  RRule,
+  parseRRule,
+  stringifyRRule,
+  Astronomy,
+  DateRule,
 
   // Functions
   parseNatural,
@@ -112,10 +205,22 @@ export {
   businessDaysBetween,
   getHolidays,
   resolveUnit,
+  toNumerals,
+  toWesternNumerals,
 
-  // Factory
-  dateFormat
+  // Registries
+  Locales,
+  Holidays,
+  Macros,
+  Clock,
+  NaturalLanguage
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Backwards-compat alias — older code imports `DateFormat`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { DateTime as DateFormat }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type exports
@@ -126,6 +231,7 @@ export type {
   UnitInput,
   DateInput,
   DateObject,
+  CreateOptions,
   SortOrder,
   WeekStart,
   Inclusivity,
@@ -136,9 +242,7 @@ export type {
   LocaleData,
   LocaleRelativeTime,
   LocaleCalendar,
-  PluginFn,
-  DateFormatPluginMethods,
-  DateFormatLike,
+  LocaleLongDateFormats,
   PreciseDiffResult,
   AgeResult,
   CountdownResult,
@@ -146,7 +250,21 @@ export type {
   CalendarGridOptions,
   FiscalConfig,
   CronField,
-  DateFormatStatic
+  PluginFn,
+  Macro,
+  StaticMacro,
+  DatePeriodOptions,
+  ResolvedLocale,
+  NaturalLanguagePattern,
+  NumeralSystem
 }
 
-export default dateFormat
+export type { ValidationResult } from './validate'
+export type { Freq, Weekday as RRuleWeekday, WeekdayWithN, RRuleOptions } from './rrule'
+export type { BSDate } from './calendars/bs'
+export type { MoonPhase, MoonPhaseName, Season } from './astronomy'
+
+// Auto-load any user extensions on first import. Side-effecting only.
+import './extensions/index'
+
+export default dateTime
