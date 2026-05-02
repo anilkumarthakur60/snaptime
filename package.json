@@ -1,136 +1,40 @@
 {
-  "name": "@anilkumarthakur/d8",
-  "private": false,
-  "version": "0.1.0",
-  "description": "Modern zero-dependency TypeScript date/time library: formatting, parsing, timezones, business days, cron, RRULE, natural language, Bikram Sambat, astronomy, validators, and more.",
+  "name": "snaptime",
+  "private": true,
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "sideEffects": [
-    "./dist/locale/*.js",
-    "./dist/locale/*.cjs",
-    "./src/locale/locales/*.ts",
-    "./src/locale/default.ts"
-  ],
+  "version": "0.0.0",
+  "description": "Monorepo for @anil-labs/snaptime — a modern, zero-dependency TypeScript date/time library: formatting, parsing, timezones, business days, cron, RRULE, natural language, Bikram Sambat, astronomy, validators, and more.",
+  "scripts": {
+    "build": "pnpm --filter \"./packages/*\" -r build",
+    "dev": "pnpm --filter example-playground dev",
+    "test": "pnpm --filter \"./packages/*\" -r test",
+    "test:coverage": "pnpm --filter @anil-labs/snaptime test:coverage",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm run test",
+    "example:playground": "pnpm --filter example-playground dev",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish",
+    "docs:dev": "pnpm --filter docs dev",
+    "docs:build": "pnpm --filter docs build",
+    "docs:preview": "pnpm --filter docs preview"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-perfectionist": "^5.7.0",
+    "globals": "^17.7.0",
+    "prettier": "^3.8.3",
+    "typescript-eslint": "^8.57.1"
+  },
   "engines": {
     "node": ">=18"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/anilkumarthakur60/snaptime.git"
-  },
-  "homepage": "https://anilkumarthakur60.github.io/snaptime/",
-  "bugs": {
-    "url": "https://github.com/anilkumarthakur60/snaptime/issues"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "dist",
-    "src"
-  ],
-  "keywords": [
-    "date",
-    "time",
-    "datetime",
-    "typescript",
-    "timezone",
-    "iana",
-    "cron",
-    "rrule",
-    "recurrence",
-    "duration",
-    "business-days",
-    "holidays",
-    "date-formatting",
-    "date-parsing",
-    "natural-language",
-    "zero-dependency",
-    "iso-8601",
-    "calendar",
-    "bikram-sambat",
-    "nepali",
-    "astronomy",
-    "sunrise",
-    "moon-phase",
-    "i18n",
-    "fiscal-year",
-    "validator"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./rrule": {
-      "types": "./dist/rrule/index.d.ts",
-      "import": "./dist/rrule.js",
-      "require": "./dist/rrule.cjs"
-    },
-    "./astronomy": {
-      "types": "./dist/astronomy/index.d.ts",
-      "import": "./dist/astronomy.js",
-      "require": "./dist/astronomy.cjs"
-    },
-    "./validate": {
-      "types": "./dist/validate/index.d.ts",
-      "import": "./dist/validate.js",
-      "require": "./dist/validate.cjs"
-    },
-    "./calendars/bs": {
-      "types": "./dist/calendars/bs/index.d.ts",
-      "import": "./dist/calendars/bs.js",
-      "require": "./dist/calendars/bs.cjs"
-    },
-    "./collections/RangeSet": {
-      "types": "./dist/collections/RangeSet.d.ts",
-      "import": "./dist/collections/RangeSet.js",
-      "require": "./dist/collections/RangeSet.cjs"
-    },
-    "./locale/*": {
-      "types": "./dist/locale/*.d.ts",
-      "import": "./dist/locale/*.js",
-      "require": "./dist/locale/*.cjs"
-    },
-    "./package.json": "./package.json"
-  },
-  "author": "Anil Kumar Thakur",
-  "license": "MIT",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ignore-pattern node_modules/ --ignore-pattern dist/ --ignore-pattern package-lock.json",
-    "format": "prettier --write src/ test/",
-    "format:check": "prettier --check src/",
-    "test": "jest --watch",
-    "jest": "jest",
-    "test:coverage": "jest --coverage --coverageReporters=text --coverageReporters=lcov",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.26.0",
-    "@jest/globals": "^30.3.0",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^25.5.0",
-    "eslint": "^10.0.3",
-    "globals": "^17.4.0",
-    "jest": "^30.3.0",
-    "prettier": "3.8.1",
-    "ts-jest": "^29.4.6",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "tsx": "^4.21.0",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.57.1",
-    "vite": "^8.0.1",
-    "vite-plugin-dts": "^4.5.4",
-    "vitepress": "^1.6.4"
-  }
+  "packageManager": "pnpm@11.15.1"
 }

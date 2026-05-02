@@ -1,0 +1,149 @@
+{
+  "name": "@anil-labs/snaptime",
+  "version": "0.0.0",
+  "description": "Modern zero-dependency TypeScript date/time library: formatting, parsing, timezones, business days, cron, RRULE, natural language, Bikram Sambat, astronomy, validators, and more. Works in Node, any JS framework, or straight off a CDN.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.global.js",
+  "jsdelivr": "./dist/index.global.js",
+  "sideEffects": [
+    "./dist/locale/*.js",
+    "./dist/locale/*.cjs"
+  ],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./rrule": {
+      "import": {
+        "types": "./dist/rrule.d.ts",
+        "default": "./dist/rrule.js"
+      },
+      "require": {
+        "types": "./dist/rrule.d.cts",
+        "default": "./dist/rrule.cjs"
+      }
+    },
+    "./astronomy": {
+      "import": {
+        "types": "./dist/astronomy.d.ts",
+        "default": "./dist/astronomy.js"
+      },
+      "require": {
+        "types": "./dist/astronomy.d.cts",
+        "default": "./dist/astronomy.cjs"
+      }
+    },
+    "./validate": {
+      "import": {
+        "types": "./dist/validate.d.ts",
+        "default": "./dist/validate.js"
+      },
+      "require": {
+        "types": "./dist/validate.d.cts",
+        "default": "./dist/validate.cjs"
+      }
+    },
+    "./calendars/bs": {
+      "import": {
+        "types": "./dist/calendars/bs.d.ts",
+        "default": "./dist/calendars/bs.js"
+      },
+      "require": {
+        "types": "./dist/calendars/bs.d.cts",
+        "default": "./dist/calendars/bs.cjs"
+      }
+    },
+    "./collections/RangeSet": {
+      "import": {
+        "types": "./dist/collections/RangeSet.d.ts",
+        "default": "./dist/collections/RangeSet.js"
+      },
+      "require": {
+        "types": "./dist/collections/RangeSet.d.cts",
+        "default": "./dist/collections/RangeSet.cjs"
+      }
+    },
+    "./locale/*": {
+      "import": {
+        "types": "./dist/locale/*.d.ts",
+        "default": "./dist/locale/*.js"
+      },
+      "require": {
+        "types": "./dist/locale/*.d.cts",
+        "default": "./dist/locale/*.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "date",
+    "time",
+    "datetime",
+    "typescript",
+    "timezone",
+    "iana",
+    "cron",
+    "rrule",
+    "recurrence",
+    "duration",
+    "business-days",
+    "holidays",
+    "date-formatting",
+    "date-parsing",
+    "natural-language",
+    "zero-dependency",
+    "iso-8601",
+    "calendar",
+    "bikram-sambat",
+    "nepali",
+    "astronomy",
+    "sunrise",
+    "moon-phase",
+    "i18n",
+    "fiscal-year",
+    "validator"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "author": "Er. Anil Kumar Thakur <anilkumarthakur60@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anilkumarthakur60/snaptime.git",
+    "directory": "packages/snaptime"
+  },
+  "homepage": "https://anilkumarthakur60.github.io/snaptime/",
+  "bugs": "https://github.com/anilkumarthakur60/snaptime/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "^4.1.8",
+    "tsup": "^8.5.1",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.8"
+  }
+}
