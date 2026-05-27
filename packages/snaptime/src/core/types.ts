@@ -1,9 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Core public types for the library.
-// All other modules import from here. Keep this file dependency-free.
+// All other modules import from here. Keep this file free of runtime
+// dependencies — type-only imports are fine.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type DateTime from './DateTime'
+import type { BoundaryUnit, RoundToUnit } from './manipulate'
 
 // ── Time units ──────────────────────────────────────────────────────────────
 
@@ -46,22 +48,90 @@ export type UnitInput =
   | 'y'
   | 'years'
 
-/** Units valid for arithmetic (add/subtract). */
-export type ArithmeticUnit = Exclude<Unit, 'date' | 'fortnight'>
+/**
+ * Units valid for startOf/endOf/floor/ceil/round.
+ * Source of truth lives next to the boundary implementation in ./manipulate.
+ */
+export type { BoundaryUnit, RoundToUnit } from './manipulate'
 
-/** Units valid for startOf/endOf. */
-export type BoundaryUnit =
-  | 'year'
-  | 'quarter'
-  | 'month'
-  | 'week'
-  | 'isoWeek'
-  | 'day'
-  | 'date'
-  | 'hour'
-  | 'minute'
-  | 'second'
-  | 'millisecond'
+/** Boundary units plus every alias that resolves to one of them. */
+export type BoundaryUnitInput =
+  | BoundaryUnit
+  | 'y'
+  | 'yr'
+  | 'yrs'
+  | 'years'
+  | 'Q'
+  | 'quarters'
+  | 'M'
+  | 'months'
+  | 'w'
+  | 'weeks'
+  | 'd'
+  | 'days'
+  | 'D'
+  | 'dates'
+  | 'h'
+  | 'hr'
+  | 'hrs'
+  | 'hours'
+  | 'm'
+  | 'min'
+  | 'mins'
+  | 'minutes'
+  | 's'
+  | 'sec'
+  | 'secs'
+  | 'seconds'
+  | 'ms'
+  | 'milliseconds'
+
+/** Fixed-size sub-day units accepted by `roundTo`, plus their aliases. */
+export type RoundToUnitInput =
+  | RoundToUnit
+  | 'h'
+  | 'hr'
+  | 'hrs'
+  | 'hours'
+  | 'm'
+  | 'min'
+  | 'mins'
+  | 'minutes'
+  | 's'
+  | 'sec'
+  | 'secs'
+  | 'seconds'
+  | 'ms'
+  | 'milliseconds'
+
+/** Units accepted by `set()` — the fields a JS Date can actually store. */
+export type SettableUnit = 'year' | 'month' | 'date' | 'hour' | 'minute' | 'second' | 'millisecond'
+
+/** Settable units plus every alias that resolves to one of them. */
+export type SettableUnitInput =
+  | SettableUnit
+  | 'y'
+  | 'yr'
+  | 'yrs'
+  | 'years'
+  | 'M'
+  | 'months'
+  | 'D'
+  | 'dates'
+  | 'h'
+  | 'hr'
+  | 'hrs'
+  | 'hours'
+  | 'm'
+  | 'min'
+  | 'mins'
+  | 'minutes'
+  | 's'
+  | 'sec'
+  | 'secs'
+  | 'seconds'
+  | 'ms'
+  | 'milliseconds'
 
 /** Iso/locale weekday — 0=Sunday in JS Date, but we expose 1=Monday for ISO. */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
@@ -82,7 +152,7 @@ export type DateInput = string | number | Date | DateTimeLike
  */
 export interface DateTimeLike {
   clone(): DateTimeLike
-  get(unit: Unit | 'day'): number
+  get(unit: Unit): number
   isUtc(): boolean
   isValid(): boolean
   toDate(): Date
@@ -214,7 +284,7 @@ export interface CountdownResult {
 
 // ── Calendar grid ───────────────────────────────────────────────────────────
 
-export interface CalendarCell<D = unknown> {
+export interface CalendarCell<D = DateTime> {
   date: D
   isCurrentMonth: boolean
   isToday: boolean
@@ -241,8 +311,8 @@ export interface CronField {
 
 // ── Holidays ────────────────────────────────────────────────────────────────
 
-export type HolidayCountry =
-  'US' | 'UK' | 'IN' | 'DE' | 'FR' | 'CA' | 'AU' | 'JP' | 'NZ' | 'IT' | 'ES' | 'BR' | 'NP'
+/** Countries with a registered holiday provider. */
+export type HolidayCountry = 'US' | 'UK' | 'IN' | 'DE' | 'FR' | 'CA' | 'AU' | 'JP' | 'NP'
 
 // ── Plugins / macros ────────────────────────────────────────────────────────
 
@@ -253,10 +323,19 @@ export type HolidayCountry =
 export type PluginFn<O = unknown> = (DT: typeof DateTime, options?: O) => void
 
 /** A user-defined instance method. `this` is bound to the DateTime instance. */
-export type Macro = (this: DateTime, ...args: unknown[]) => unknown
+export type MacroFn<A extends unknown[] = unknown[], R = unknown> = (
+  this: DateTime,
+  ...args: A
+) => R
 
 /** A user-defined static method. */
-export type StaticMacro = (...args: unknown[]) => unknown
+export type StaticMacroFn<A extends unknown[] = unknown[], R = unknown> = (...args: A) => R
+
+/** Alias of {@link MacroFn}. */
+export type Macro<A extends unknown[] = unknown[], R = unknown> = MacroFn<A, R>
+
+/** Alias of {@link StaticMacroFn}. */
+export type StaticMacro<A extends unknown[] = unknown[], R = unknown> = StaticMacroFn<A, R>
 
 /**
  * Type-safe macro extension is done by augmenting the DateTime class

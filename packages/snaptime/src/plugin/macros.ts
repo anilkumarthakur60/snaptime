@@ -12,9 +12,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type DateTime from '../core/DateTime'
+import type { MacroFn, StaticMacroFn } from '../core/types'
 
-export type MacroFn = (this: DateTime, ...args: unknown[]) => unknown
-export type StaticMacroFn = (...args: unknown[]) => unknown
+export type { MacroFn, StaticMacroFn }
 
 interface MacroRegistry {
   instance: Record<string, MacroFn>
@@ -62,21 +62,25 @@ export function applyMacros(DT: typeof DateTime): void {
 
 /**
  * Register an instance macro. The function is bound to a DateTime instance
- * via `this`. Returns the registry for chaining.
+ * via `this`. Accepts realistically-typed macros — the concrete parameter and
+ * return types are erased only inside the registry.
  */
-export function registerMacro(name: string, fn: MacroFn): void {
+export function registerMacro<A extends unknown[], R>(name: string, fn: MacroFn<A, R>): void {
   if (registry.instance[name]) {
     throw new Error(`Macro "${name}" is already registered`)
   }
-  registry.instance[name] = fn
+  registry.instance[name] = fn as MacroFn
 }
 
 /** Register a static macro on the DateTime constructor. */
-export function registerStaticMacro(name: string, fn: StaticMacroFn): void {
+export function registerStaticMacro<A extends unknown[], R>(
+  name: string,
+  fn: StaticMacroFn<A, R>
+): void {
   if (registry.static[name]) {
     throw new Error(`Static macro "${name}" is already registered`)
   }
-  registry.static[name] = fn
+  registry.static[name] = fn as StaticMacroFn
 }
 
 /** Remove all registered macros. Used by tests. */

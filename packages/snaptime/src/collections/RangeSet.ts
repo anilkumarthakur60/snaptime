@@ -15,7 +15,7 @@ function toDR(input: DateRange | [DateInput, DateInput]): DateRange {
   return input instanceof DateRange ? input : new DateRange(input[0], input[1])
 }
 
-export default class RangeSet implements Iterable<DateRange> {
+export class RangeSet implements Iterable<DateRange> {
   private readonly _ranges: ReadonlyArray<DateRange>
 
   constructor(ranges: (DateRange | [DateInput, DateInput])[] = []) {
@@ -170,3 +170,8 @@ export default class RangeSet implements Iterable<DateRange> {
     return this._ranges.map((r) => r.toString()).join(' ∪ ')
   }
 }
+
+// Dual export: the named export keeps `import { RangeSet }` working and makes
+// the CJS build interop-safe for node16 TS consumers (no FalseExportDefault);
+// the default export preserves the original `import RangeSet from ...` form.
+export default RangeSet

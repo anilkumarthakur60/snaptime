@@ -258,7 +258,7 @@ describe('Getters, Setters & Immutability', () => {
 
   test('invalid unit throws', () => {
     expect(() => dt.get('unknown' as Unit)).toThrow(/unit/i)
-    expect(() => dt.set('unknown' as Unit, 1)).toThrow(/unit/i)
+    expect(() => dt.set('unknown' as never, 1)).toThrow(/unit/i)
   })
 })
 
