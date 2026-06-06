@@ -36,8 +36,49 @@ export interface ResolvedLocale {
 const _store: Record<string, LocaleData> = { en: EN }
 let _default = 'en'
 
+/**
+ * Every key of LocaleData, as a checked literal list. `satisfies` rejects
+ * entries that are not LocaleData keys, and the `_localeDataKeysComplete`
+ * assertion below fails to compile if LocaleData gains a field that is
+ * missing here — forcing this list (and the runtime guard) to stay in sync.
+ */
+const LOCALE_DATA_KEYS = [
+  'calendar',
+  'longDateFormat',
+  'meridiem',
+  'months',
+  'monthsShort',
+  'name',
+  'ordinal',
+  'relativeTime',
+  'weekdays',
+  'weekdaysMin',
+  'weekdaysShort',
+  'weekStart'
+] as const satisfies readonly (keyof LocaleData)[]
+
+type MissingLocaleDataKeys = Exclude<keyof LocaleData, (typeof LOCALE_DATA_KEYS)[number]>
+// Compile-time completeness check — if this line errors, add the reported
+// key(s) to LOCALE_DATA_KEYS (and make sure the built-in EN locale sets them).
+const _localeDataKeysComplete: [MissingLocaleDataKeys] extends [never]
+  ? true
+  : MissingLocaleDataKeys = true
+void _localeDataKeysComplete
+
+/** Runtime-checked upgrade of the built-in English locale to Required. */
+function completeLocale(data: LocaleData): Required<LocaleData> {
+  for (const key of LOCALE_DATA_KEYS) {
+    if (data[key] == null) {
+      throw new TypeError(`Built-in "en" locale is missing required field "${key}"`)
+    }
+  }
+  return data as Required<LocaleData>
+}
+
+const EN_COMPLETE = completeLocale(EN)
+
 function resolve(data: LocaleData | undefined): ResolvedLocale {
-  const en = EN as Required<LocaleData>
+  const en = EN_COMPLETE
   const months = data?.months ?? en.months
   const weekdays = data?.weekdays ?? en.weekdays
   return {
