@@ -14,7 +14,7 @@
 
 import DateTime from '../core/DateTime'
 import { parseRRule, stringifyRRule } from './parser'
-import type { RRuleOptions, Weekday, WeekdayWithN } from './types'
+import type { DateTimeInput, RRuleOptions, Weekday, WeekdayWithN } from './types'
 
 const WEEKDAY_TO_NUM: Record<Weekday, number> = {
   SU: 0,
@@ -26,11 +26,12 @@ const WEEKDAY_TO_NUM: Record<Weekday, number> = {
   SA: 6
 }
 
-function toDate(input: Date | number | string | undefined): Date | null {
+function toDate(input: DateTimeInput | undefined): Date | null {
   if (input == null) return null
   if (input instanceof Date) return new Date(input.getTime())
-  if (typeof input === 'number') return new Date(input)
-  return new Date(input)
+  if (typeof input === 'number' || typeof input === 'string') return new Date(input)
+  // DateTime (or anything DateTime-like) — normalize via its epoch-ms valueOf()
+  return new Date(input.valueOf())
 }
 
 function clone(d: Date): Date {
@@ -41,19 +42,35 @@ function lastDayOfMonth(year: number, month0: number): number {
   return new Date(year, month0 + 1, 0).getDate()
 }
 
+function daysInYear(year: number): number {
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 366 : 365
+}
+
+// Candidates are built from local wall-clock components, so day-of-year and
+// ISO week must be computed from local components too (Math.round tolerates
+// DST-induced offsets in the millisecond arithmetic).
 function dayOfYear(d: Date): number {
-  const start = Date.UTC(d.getUTCFullYear(), 0, 1)
-  const here = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
-  return Math.floor((here - start) / 86_400_000) + 1
+  const start = new Date(d.getFullYear(), 0, 1).getTime()
+  const here = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  return Math.round((here - start) / 86_400_000) + 1
 }
 
 function isoWeekNumber(d: Date): number {
-  const target = new Date(d.getTime())
-  target.setUTCHours(0, 0, 0, 0)
-  const dayNum = target.getUTCDay() || 7
-  target.setUTCDate(target.getUTCDate() + 4 - dayNum)
-  const yearStart = Date.UTC(target.getUTCFullYear(), 0, 1)
-  return Math.ceil(((target.getTime() - yearStart) / 86_400_000 + 1) / 7)
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const dayNum = target.getDay() || 7
+  target.setDate(target.getDate() + 4 - dayNum)
+  const yearStart = new Date(target.getFullYear(), 0, 1).getTime()
+  const days = Math.round((target.getTime() - yearStart) / 86_400_000) + 1
+  return Math.ceil(days / 7)
+}
+
+function weekdayNum(w: Weekday | WeekdayWithN): number {
+  return WEEKDAY_TO_NUM[typeof w === 'string' ? w : w.day]
+}
+
+function matchesMonthday(d: Date, bymonthday: number[]): boolean {
+  const dim = lastDayOfMonth(d.getFullYear(), d.getMonth())
+  return bymonthday.some((md) => (md > 0 ? md === d.getDate() : dim + md + 1 === d.getDate()))
 }
 
 // Iteration cap to prevent runaway loops
@@ -84,7 +101,7 @@ export class RRule implements Iterable<DateTime> {
   }
 
   /** All occurrences inside [start, end]. */
-  between(start: Date | number | string, end: Date | number | string, limit?: number): DateTime[] {
+  between(start: DateTimeInput, end: DateTimeInput, limit?: number): DateTime[] {
     const sMs = toDate(start)!.getTime()
     const eMs = toDate(end)!.getTime()
     const out: DateTime[] = []
@@ -99,7 +116,7 @@ export class RRule implements Iterable<DateTime> {
   }
 
   /** First N occurrences, optionally starting from `from`. */
-  take(n: number, from?: Date | number | string): DateTime[] {
+  take(n: number, from?: DateTimeInput): DateTime[] {
     const fromMs = from != null ? toDate(from)!.getTime() : -Infinity
     const out: DateTime[] = []
     for (const d of this) {
@@ -111,7 +128,7 @@ export class RRule implements Iterable<DateTime> {
   }
 
   /** Next occurrence at or after `from`. */
-  next(from?: Date | number | string): DateTime | null {
+  next(from?: DateTimeInput): DateTime | null {
     const fromMs = from != null ? toDate(from)!.getTime() : Date.now()
     for (const d of this) {
       if (d.valueOf() >= fromMs) return d
@@ -120,7 +137,7 @@ export class RRule implements Iterable<DateTime> {
   }
 
   /** True when `instant` is one of the rule's occurrences. */
-  matches(instant: Date | number | string): boolean {
+  matches(instant: DateTimeInput): boolean {
     const t = toDate(instant)!.getTime()
     for (const d of this) {
       if (d.valueOf() === t) return true
@@ -140,6 +157,11 @@ export class RRule implements Iterable<DateTime> {
 
     let count = 0
     let windowStart = clone(dtstart)
+    // Normalize the window anchor so INTERVAL arithmetic never overflows a
+    // short month (e.g. Jan 31 + 1 month must mean "February", not Mar 3).
+    // Candidate days come from dtstart, so only year/month are read from it.
+    if (o.freq === 'MONTHLY') windowStart.setDate(1)
+    else if (o.freq === 'YEARLY') windowStart.setMonth(0, 1)
     let iter = 0
 
     while (iter++ < MAX_ITER) {
@@ -225,8 +247,8 @@ export class RRule implements Iterable<DateTime> {
         break
     }
 
-    // Sub-daily fan-out
-    candidates = this._fanOutTime(candidates, dtstart)
+    // BYHOUR/BYMINUTE/BYSECOND — expand or limit per the RFC 5545 table
+    candidates = this._expandTime(candidates, dtstart)
 
     // BY filters that always apply post-expansion
     candidates = candidates.filter((d) => this._matchesByFilters(d))
@@ -236,6 +258,50 @@ export class RRule implements Iterable<DateTime> {
 
   private _yearlyCandidates(year: number, dtstart: Date): Date[] {
     const o = this.options
+    const h = dtstart.getHours()
+    const mi = dtstart.getMinutes()
+    const s = dtstart.getSeconds()
+    const ms = dtstart.getMilliseconds()
+
+    // BYYEARDAY/BYWEEKNO expand over the whole year. Candidate days are
+    // generated for every day; _matchesByFilters keeps the matching ones.
+    // BYDAY/BYMONTHDAY act as limits in this mode (RFC 5545 §3.3.10).
+    if (o.byyearday?.length || o.byweekno?.length) {
+      const out: Date[] = []
+      const yearLen = daysInYear(year)
+      for (let dy = 1; dy <= yearLen; dy++) {
+        const d = new Date(year, 0, dy, h, mi, s, ms)
+        if (o.byweekday?.length && !o.byweekday.some((w) => weekdayNum(w) === d.getDay())) continue
+        if (o.bymonthday?.length && !matchesMonthday(d, o.bymonthday)) continue
+        out.push(d)
+      }
+      return out
+    }
+
+    // BYDAY without BYMONTH expands across the whole year; an N prefix means
+    // "the Nth <weekday> of the year" (RFC 5545 §3.3.10).
+    if (o.byweekday?.length && !o.bymonth && !o.bymonthday?.length) {
+      const out: Date[] = []
+      const yearLen = daysInYear(year)
+      for (const w of o.byweekday) {
+        const spec = typeof w === 'string' ? ({ day: w } as WeekdayWithN) : w
+        const target = WEEKDAY_TO_NUM[spec.day]
+        const matches: Date[] = []
+        for (let dy = 1; dy <= yearLen; dy++) {
+          const d = new Date(year, 0, dy, h, mi, s, ms)
+          if (d.getDay() === target) matches.push(d)
+        }
+        if (spec.n != null) {
+          const idx = spec.n > 0 ? spec.n - 1 : matches.length + spec.n
+          const d = matches[idx]
+          if (d != null) out.push(d)
+        } else {
+          out.push(...matches)
+        }
+      }
+      return out
+    }
+
     const out: Date[] = []
     const months = o.bymonth ?? [dtstart.getMonth() + 1]
     for (const m of months) {
@@ -248,22 +314,21 @@ export class RRule implements Iterable<DateTime> {
     const o = this.options
     const out: Date[] = []
     const dim = lastDayOfMonth(year, month0)
+    const mk = (day: number): Date =>
+      new Date(
+        year,
+        month0,
+        day,
+        dtstart.getHours(),
+        dtstart.getMinutes(),
+        dtstart.getSeconds(),
+        dtstart.getMilliseconds()
+      )
 
     if (o.bymonthday && o.bymonthday.length) {
       for (const md of o.bymonthday) {
         const day = md > 0 ? md : dim + md + 1
-        if (day >= 1 && day <= dim) {
-          out.push(
-            new Date(
-              year,
-              month0,
-              day,
-              dtstart.getHours(),
-              dtstart.getMinutes(),
-              dtstart.getSeconds()
-            )
-          )
-        }
+        if (day >= 1 && day <= dim) out.push(mk(day))
       }
     } else if (o.byweekday && o.byweekday.length) {
       // For each weekday spec, find all matching dates in the month
@@ -277,39 +342,16 @@ export class RRule implements Iterable<DateTime> {
         if (spec.n != null) {
           const idx = spec.n > 0 ? spec.n - 1 : matches.length + spec.n
           const day = matches[idx]
-          if (day != null) {
-            out.push(
-              new Date(
-                year,
-                month0,
-                day,
-                dtstart.getHours(),
-                dtstart.getMinutes(),
-                dtstart.getSeconds()
-              )
-            )
-          }
+          if (day != null) out.push(mk(day))
         } else {
-          for (const day of matches) {
-            out.push(
-              new Date(
-                year,
-                month0,
-                day,
-                dtstart.getHours(),
-                dtstart.getMinutes(),
-                dtstart.getSeconds()
-              )
-            )
-          }
+          for (const day of matches) out.push(mk(day))
         }
       }
-    } else {
-      // Anchored to dtstart's day-of-month
-      const day = Math.min(dtstart.getDate(), dim)
-      out.push(
-        new Date(year, month0, day, dtstart.getHours(), dtstart.getMinutes(), dtstart.getSeconds())
-      )
+    } else if (dtstart.getDate() <= dim) {
+      // Anchored to dtstart's day-of-month. Months without that day (e.g.
+      // February for a day-31 anchor) are SKIPPED, not clamped (RFC 5545:
+      // "invalid date … are ignored" — matches rrule.js / dateutil).
+      out.push(mk(dtstart.getDate()))
     }
 
     return out
@@ -333,7 +375,12 @@ export class RRule implements Iterable<DateTime> {
       const off = (target - wkst + 7) % 7
       const d = clone(weekStart)
       d.setDate(d.getDate() + off)
-      d.setHours(dtstart.getHours(), dtstart.getMinutes(), dtstart.getSeconds(), 0)
+      d.setHours(
+        dtstart.getHours(),
+        dtstart.getMinutes(),
+        dtstart.getSeconds(),
+        dtstart.getMilliseconds()
+      )
       out.push(d)
     }
     return out
@@ -341,27 +388,70 @@ export class RRule implements Iterable<DateTime> {
 
   private _dailyCandidates(windowStart: Date, dtstart: Date): Date[] {
     const d = clone(windowStart)
-    d.setHours(dtstart.getHours(), dtstart.getMinutes(), dtstart.getSeconds(), 0)
+    d.setHours(
+      dtstart.getHours(),
+      dtstart.getMinutes(),
+      dtstart.getSeconds(),
+      dtstart.getMilliseconds()
+    )
     return [d]
   }
 
-  /** Apply BYHOUR/BYMINUTE/BYSECOND fan-out (combinatorial). */
-  private _fanOutTime(input: Date[], dtstart: Date): Date[] {
+  /**
+   * Apply BYHOUR/BYMINUTE/BYSECOND following RFC 5545 §3.3.10's
+   * limit-vs-expand table:
+   *
+   *            BYHOUR   BYMINUTE  BYSECOND
+   *   SECONDLY limit    limit     limit
+   *   MINUTELY limit    limit     expand
+   *   HOURLY   limit    expand    expand
+   *   DAILY+   expand   expand    expand
+   */
+  private _expandTime(input: Date[], dtstart: Date): Date[] {
     const o = this.options
-    const hours = o.byhour ?? [dtstart.getHours()]
-    const minutes = o.byminute ?? [dtstart.getMinutes()]
-    const seconds = o.bysecond ?? [dtstart.getSeconds()]
-    const noFanOut = !o.byhour && !o.byminute && !o.bysecond
-    if (noFanOut) return input
+    const freq = o.freq
+    const msec = dtstart.getMilliseconds()
+
+    if (freq !== 'HOURLY' && freq !== 'MINUTELY' && freq !== 'SECONDLY') {
+      // DAILY and coarser: all three expand (combinatorial fan-out).
+      if (!o.byhour && !o.byminute && !o.bysecond) return input
+      const hours = o.byhour ?? [dtstart.getHours()]
+      const minutes = o.byminute ?? [dtstart.getMinutes()]
+      const seconds = o.bysecond ?? [dtstart.getSeconds()]
+      const out: Date[] = []
+      for (const base of input) {
+        for (const h of hours) {
+          for (const mi of minutes) {
+            for (const s of seconds) {
+              const d = clone(base)
+              d.setHours(h, mi, s, msec)
+              out.push(d)
+            }
+          }
+        }
+      }
+      return out
+    }
+
+    // Sub-daily: a BY* part at or above the frequency's precision LIMITS the
+    // stepped instants; only finer-grained parts expand.
+    const expandMinute = freq === 'HOURLY' ? o.byminute : undefined
+    const expandSecond = freq !== 'SECONDLY' ? o.bysecond : undefined
+    const limitMinute = freq === 'HOURLY' ? undefined : o.byminute
+    const limitSecond = freq === 'SECONDLY' ? o.bysecond : undefined
+
     const out: Date[] = []
     for (const base of input) {
-      for (const h of hours) {
-        for (const mi of minutes) {
-          for (const s of seconds) {
-            const d = clone(base)
-            d.setHours(h, mi, s, 0)
-            out.push(d)
-          }
+      if (o.byhour && !o.byhour.includes(base.getHours())) continue
+      if (limitMinute && !limitMinute.includes(base.getMinutes())) continue
+      if (limitSecond && !limitSecond.includes(base.getSeconds())) continue
+      const minutes = expandMinute ?? [base.getMinutes()]
+      const seconds = expandSecond ?? [base.getSeconds()]
+      for (const mi of minutes) {
+        for (const s of seconds) {
+          const d = clone(base)
+          d.setMinutes(mi, s)
+          out.push(d)
         }
       }
     }
@@ -371,6 +461,16 @@ export class RRule implements Iterable<DateTime> {
   private _matchesByFilters(d: Date): boolean {
     const o = this.options
     if (o.bymonth && !o.bymonth.includes(d.getMonth() + 1)) return false
+    // For DAILY and finer frequencies BYDAY/BYMONTHDAY are limits (they only
+    // expand for WEEKLY/MONTHLY/YEARLY, which handle them at candidate
+    // generation) — RFC 5545 §3.3.10.
+    const freq = o.freq
+    if (freq === 'DAILY' || freq === 'HOURLY' || freq === 'MINUTELY' || freq === 'SECONDLY') {
+      if (o.byweekday?.length && !o.byweekday.some((w) => weekdayNum(w) === d.getDay())) {
+        return false
+      }
+      if (o.bymonthday?.length && !matchesMonthday(d, o.bymonthday)) return false
+    }
     if (o.byyearday) {
       const dy = dayOfYear(d)
       const yearLen =

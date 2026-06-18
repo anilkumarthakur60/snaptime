@@ -277,18 +277,21 @@ describe('Cron.between', () => {
 // Error cases
 // ---------------------------------------------------------------------------
 describe('Cron error cases', () => {
-  test('prev() throws when no match found within 366 days', () => {
+  // The search horizon is 1500 days (> one full leap cycle) so rules like
+  // "0 0 29 2 *" resolve; impossible specs still throw, with the horizon
+  // documented in the message.
+  test('prev() throws when no match found within the search horizon', () => {
     // "0 0 32 * *" is impossible
     const cron = new Cron('0 0 32 * *')
     const from = local(2026, 1, 15, 12, 0)
-    expect(() => cron.prev(from)).toThrow('no matching date found within 366 days')
+    expect(() => cron.prev(from)).toThrow('no matching date found within 1500 days')
   })
 
-  test('next() throws when no match found within 366 days', () => {
+  test('next() throws when no match found within the search horizon', () => {
     // "0 0 32 * *" is impossible
     const cron = new Cron('0 0 32 * *')
     const from = local(2026, 1, 15, 12, 0)
-    expect(() => cron.next(from)).toThrow('no matching date found within 366 days')
+    expect(() => cron.next(from)).toThrow('no matching date found within 1500 days')
   })
 })
 
@@ -378,14 +381,14 @@ describe('Cron.humanize additional branches', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Non-DOW inverted range (lo > hi, isDow=false) – false branch of else if (isDow)
+// Non-DOW inverted range (lo > hi, isDow=false) — Vixie cron wraps reversed
+// ranges around the field boundary, so "59-0" means minutes 59 and 0.
 // ---------------------------------------------------------------------------
 describe('Cron non-DOW inverted range', () => {
-  test('"59-0 * * * *" inverted minute range → empty set, matches nothing', () => {
-    // lo=59, hi=0, isDow=false → false branch of else if (isDow) → empty values set
+  test('"59-0 * * * *" inverted minute range wraps → matches 59 and 0 only', () => {
     const cron = new Cron('59-0 * * * *')
-    expect(cron.matches(local(2026, 1, 15, 9, 59))).toBe(false)
-    expect(cron.matches(local(2026, 1, 15, 9, 0))).toBe(false)
+    expect(cron.matches(local(2026, 1, 15, 9, 59))).toBe(true)
+    expect(cron.matches(local(2026, 1, 15, 9, 0))).toBe(true)
     expect(cron.matches(local(2026, 1, 15, 9, 30))).toBe(false)
   })
 })

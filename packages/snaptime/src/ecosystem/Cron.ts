@@ -49,6 +49,11 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 
 const MAX_ITER_MINUTES = 366 * 24 * 60
 
+// Search horizon for next()/prev(). Must span a full leap cycle so rules like
+// "0 0 29 2 *" (Feb 29) are found — 4 years + margin. Impossible specs (e.g.
+// Feb 30) give up after this many days.
+const HORIZON_DAYS = 1500
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Field parser — turns "*/15" / "1-5" / "MON-FRI" / "1,3,5" into a CronField.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,17 +99,19 @@ function parseField(
       hi = step != null ? max : lo
     }
 
-    if (isDow) {
-      if (lo === 7) lo = 0
-      if (hi === 7) hi = 0
-    }
-
     const s = step ?? 1
+    // DOW spans 0-7 during expansion with 7 remapped to Sunday as each value
+    // is added (Vixie cron) — so `0-7` covers every day, `5-7` is Fri,Sat,Sun.
+    const add = (v: number) => values.add(isDow && v === 7 ? 0 : v)
     if (lo <= hi) {
-      for (let i = lo; i <= hi; i += s) values.add(i)
-    } else if (isDow) {
-      for (let i = lo; i <= 6; i += s) values.add(i)
-      for (let i = 0; i <= hi; i += s) values.add(i)
+      for (let i = lo; i <= hi; i += s) add(i)
+    } else {
+      // Reversed range → wrap around the field boundary (Vixie cron):
+      // months `11-2` → 11,12,1,2; minutes `50-10` → 50..59,0..10.
+      const effMax = isDow ? 7 : max
+      const span = effMax - min + 1
+      const len = hi - lo + span + 1
+      for (let k = 0; k < len; k += s) add(min + ((lo - min + k) % span))
     }
   }
 
@@ -174,20 +181,22 @@ export default class Cron {
 
   matches(date: DateInput): boolean {
     const d = date instanceof DateTime ? date : new DateTime(date)
-    const min = d.get('minute')
-    const hr = d.get('hour')
-    const day = d.get('date')
-    const mo = d.get('month')
-    const dw = d.get('day')
+    return this._timeMatches(d) && this._dateMatches(d)
+  }
 
-    if (!this.minute.any && !this.minute.values.has(min)) return false
-    if (!this.hour.any && !this.hour.values.has(hr)) return false
-    if (!this.month.any && !this.month.values.has(mo)) return false
+  private _timeMatches(d: DateTime): boolean {
+    if (!this.minute.any && !this.minute.values.has(d.get('minute'))) return false
+    if (!this.hour.any && !this.hour.values.has(d.get('hour'))) return false
+    return true
+  }
+
+  private _dateMatches(d: DateTime): boolean {
+    if (!this.month.any && !this.month.values.has(d.get('month'))) return false
 
     const domAny = this.dom.any
     const dowAny = this.dow.any
-    const domMatch = domAny || this.dom.values.has(day)
-    const dowMatch = dowAny || this.dow.values.has(dw)
+    const domMatch = domAny || this.dom.values.has(d.get('date'))
+    const dowMatch = dowAny || this.dow.values.has(d.get('day'))
 
     // Cron semantic: when both DOM and DOW are restricted, OR them together
     if (!domAny && !dowAny) return domMatch || dowMatch
@@ -197,21 +206,37 @@ export default class Cron {
   next(from?: DateInput): DateTime {
     const start = from ? (from instanceof DateTime ? from : new DateTime(from)) : new DateTime()
     let cursor = start.set('second', 0).set('millisecond', 0).add(1, 'minute')
-    for (let i = 0; i < MAX_ITER_MINUTES; i++) {
-      if (this.matches(cursor)) return cursor
-      cursor = cursor.add(1, 'minute')
+    // Scan day by day (skipping whole days whose date fields cannot match) so
+    // rare dates like Feb 29 are found across a full leap cycle.
+    for (let day = 0; day < HORIZON_DAYS; day++) {
+      if (this._dateMatches(cursor)) {
+        const dom = cursor.get('date')
+        while (cursor.get('date') === dom) {
+          if (this._timeMatches(cursor)) return cursor
+          cursor = cursor.add(1, 'minute')
+        }
+      } else {
+        cursor = cursor.add(1, 'day').set('hour', 0).set('minute', 0)
+      }
     }
-    throw new Error('Cron.next: no matching date found within 366 days')
+    throw new Error(`Cron.next: no matching date found within ${HORIZON_DAYS} days`)
   }
 
   prev(from?: DateInput): DateTime {
     const start = from ? (from instanceof DateTime ? from : new DateTime(from)) : new DateTime()
     let cursor = start.set('second', 0).set('millisecond', 0).subtract(1, 'minute')
-    for (let i = 0; i < MAX_ITER_MINUTES; i++) {
-      if (this.matches(cursor)) return cursor
-      cursor = cursor.subtract(1, 'minute')
+    for (let day = 0; day < HORIZON_DAYS; day++) {
+      if (this._dateMatches(cursor)) {
+        const dom = cursor.get('date')
+        while (cursor.get('date') === dom) {
+          if (this._timeMatches(cursor)) return cursor
+          cursor = cursor.subtract(1, 'minute')
+        }
+      } else {
+        cursor = cursor.subtract(1, 'day').set('hour', 23).set('minute', 59)
+      }
     }
-    throw new Error('Cron.prev: no matching date found within 366 days')
+    throw new Error(`Cron.prev: no matching date found within ${HORIZON_DAYS} days`)
   }
 
   /** All matches in `[start, end]`, optionally capped at `limit`. */
