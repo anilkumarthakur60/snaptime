@@ -71,7 +71,15 @@ export default class Timezone {
    *   tz.format('2026-04-29T00:00:00Z', 'YYYY-MM-DD HH:mm')
    */
   format(date: DateInput, fmt: string): string {
-    return this.toLocalDate(date).format(fmt)
+    const d = toDT(date)
+    // The shifted DateTime is held in UTC mode, so its own Z/ZZ tokens would
+    // always render "+00:00". Substitute the zone's real offset as literals
+    // (skipping any [bracketed] text) before delegating.
+    const offset = this.offsetMinutes(d)
+    const withOffset = fmt.replace(/\[[^\]]*\]|ZZ|Z/g, (token) =>
+      token.startsWith('[') ? token : `[${formatOffset(offset, token === 'ZZ' ? '' : ':')}]`
+    )
+    return this.toLocalDate(d).format(withOffset)
   }
 
   /** Whether this zone is observing DST at `date`. */

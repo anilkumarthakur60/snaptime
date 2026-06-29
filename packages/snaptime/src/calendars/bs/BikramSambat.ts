@@ -7,6 +7,7 @@ import {
   BS_WEEKDAYS_NE
 } from './data'
 import DateTime from '../../core/DateTime'
+import type { DateInput } from '../../core/types'
 
 const MS_PER_DAY = 86_400_000
 
@@ -217,10 +218,10 @@ export function formatBS(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const BikramSambat = {
-  /** From an AD DateTime/Date/timestamp. */
-  fromAD(input: DateTime | Date | number): BSDate {
-    if (input instanceof DateTime) return adToBs(input.toDate())
-    return adToBs(input)
+  /** From an AD DateTime/Date/timestamp/ISO string. */
+  fromAD(input: DateInput): BSDate {
+    if (input instanceof Date || typeof input === 'number') return adToBs(input)
+    return adToBs(new DateTime(input).toDate())
   },
 
   /** Build an AD DateTime from BS components. */
@@ -230,7 +231,7 @@ export const BikramSambat = {
 
   /** Format a BS date. */
   format(
-    input: DateTime | Date | number,
+    input: DateInput,
     fmt = 'YYYY-MM-DD',
     opts?: { numerals?: 'western' | 'devanagari'; weekday?: 'ne' | 'en' }
   ): string {
@@ -239,6 +240,9 @@ export const BikramSambat = {
 
   /** Days in a given BS month (1-12). */
   daysInMonth(year: number, month: number): number {
+    if (!Number.isInteger(month) || month < 1 || month > 12) {
+      throw new RangeError(`BS month ${month} out of range`)
+    }
     const months = getMonths(year)
     if (!months) throw new RangeError(`BS year ${year} not registered`)
     return months[month - 1]!

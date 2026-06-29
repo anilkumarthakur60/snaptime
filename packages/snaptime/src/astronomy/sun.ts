@@ -8,8 +8,16 @@
 // Date (sunrise/sunset/transit) or a number (azimuth/altitude/etc.).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import DateTime from '../core/DateTime'
+import type { DateInput } from '../core/types'
+
 const RAD = Math.PI / 180
 const DEG = 180 / Math.PI
+
+/** Normalize any DateInput (DateTime, Date, timestamp, ISO string) to a Date. */
+function toDate(input: DateInput): Date {
+  return input instanceof Date ? input : new DateTime(input).toDate()
+}
 
 /** Julian day number for a JS Date. */
 function julianDay(d: Date): number {
@@ -126,19 +134,20 @@ function timeAtAltitude(
 }
 
 /** Geometric sunrise (refraction-adjusted standard altitude -0.833°). */
-export function sunrise(date: Date, lat: number, lon: number): Date | null {
-  return timeAtAltitude(date, lat, lon, -0.833, -1)
+export function sunrise(date: DateInput, lat: number, lon: number): Date | null {
+  return timeAtAltitude(toDate(date), lat, lon, -0.833, -1)
 }
 
 /** Geometric sunset. */
-export function sunset(date: Date, lat: number, lon: number): Date | null {
-  return timeAtAltitude(date, lat, lon, -0.833, 1)
+export function sunset(date: DateInput, lat: number, lon: number): Date | null {
+  return timeAtAltitude(toDate(date), lat, lon, -0.833, 1)
 }
 
 /** Solar noon (sun's transit). */
-export function solarNoon(date: Date, lat: number, lon: number): Date {
+export function solarNoon(date: DateInput, lat: number, lon: number): Date {
   // Reuse equationOfTime
-  const utcMidnight = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  const d = toDate(date)
+  const utcMidnight = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
   const noonUTC = utcMidnight + (12 - lon / 15) * 3_600_000
   const t = julianCenturies(julianDay(new Date(noonUTC)))
   const eqTime = equationOfTime(t)
@@ -149,7 +158,7 @@ export function solarNoon(date: Date, lat: number, lon: number): Date {
 }
 
 /** Day length in milliseconds (sunset - sunrise). 0 for polar night. */
-export function dayLength(date: Date, lat: number, lon: number): number {
+export function dayLength(date: DateInput, lat: number, lon: number): number {
   const r = sunrise(date, lat, lon)
   const s = sunset(date, lat, lon)
   if (!r || !s) return 0
@@ -158,43 +167,46 @@ export function dayLength(date: Date, lat: number, lon: number): number {
 
 /** Civil twilight (sun at -6°). */
 export function civilTwilight(
-  date: Date,
+  date: DateInput,
   lat: number,
   lon: number
 ): { dawn: Date | null; dusk: Date | null } {
+  const d = toDate(date)
   return {
-    dawn: timeAtAltitude(date, lat, lon, -6, -1),
-    dusk: timeAtAltitude(date, lat, lon, -6, 1)
+    dawn: timeAtAltitude(d, lat, lon, -6, -1),
+    dusk: timeAtAltitude(d, lat, lon, -6, 1)
   }
 }
 
 /** Nautical twilight (sun at -12°). */
 export function nauticalTwilight(
-  date: Date,
+  date: DateInput,
   lat: number,
   lon: number
 ): { dawn: Date | null; dusk: Date | null } {
+  const d = toDate(date)
   return {
-    dawn: timeAtAltitude(date, lat, lon, -12, -1),
-    dusk: timeAtAltitude(date, lat, lon, -12, 1)
+    dawn: timeAtAltitude(d, lat, lon, -12, -1),
+    dusk: timeAtAltitude(d, lat, lon, -12, 1)
   }
 }
 
 /** Astronomical twilight (sun at -18°). */
 export function astronomicalTwilight(
-  date: Date,
+  date: DateInput,
   lat: number,
   lon: number
 ): { dawn: Date | null; dusk: Date | null } {
+  const d = toDate(date)
   return {
-    dawn: timeAtAltitude(date, lat, lon, -18, -1),
-    dusk: timeAtAltitude(date, lat, lon, -18, 1)
+    dawn: timeAtAltitude(d, lat, lon, -18, -1),
+    dusk: timeAtAltitude(d, lat, lon, -18, 1)
   }
 }
 
 /** Hour-angle helper exposed for advanced users. */
-export function sunHourAngle(date: Date, lat: number, altitudeDeg = -0.833): number | null {
-  const t = julianCenturies(julianDay(date))
+export function sunHourAngle(date: DateInput, lat: number, altitudeDeg = -0.833): number | null {
+  const t = julianCenturies(julianDay(toDate(date)))
   const decl = sunDeclination(t)
   const cosArg =
     Math.cos(RAD * (90 - altitudeDeg)) / (Math.cos(RAD * lat) * Math.cos(RAD * decl)) -
@@ -204,6 +216,6 @@ export function sunHourAngle(date: Date, lat: number, altitudeDeg = -0.833): num
 }
 
 /** Sun declination in degrees at a given instant. */
-export function sunDeclinationAt(d: Date): number {
-  return sunDeclination(julianCenturies(julianDay(d)))
+export function sunDeclinationAt(d: DateInput): number {
+  return sunDeclination(julianCenturies(julianDay(toDate(d))))
 }

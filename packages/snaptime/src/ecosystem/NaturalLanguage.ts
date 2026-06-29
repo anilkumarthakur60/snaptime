@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import DateTime from '../core/DateTime'
-import type { UnitInput } from '../core/types'
+import type { DateInput, UnitInput } from '../core/types'
 
 const WEEKDAYS: Record<string, number> = {
   sunday: 0,
@@ -221,8 +221,8 @@ const userPatterns: Pattern[] = []
 
 export const NaturalLanguage = {
   /** Try each pattern in order; returns invalid DateTime if none matches. */
-  parse(input: string, ref?: DateTime): DateTime {
-    const base = ref ?? new DateTime()
+  parse(input: string, ref?: DateInput): DateTime {
+    const base = ref == null ? new DateTime() : ref instanceof DateTime ? ref : new DateTime(ref)
     const lower = input.trim().toLowerCase()
     for (const p of [...userPatterns, ...BUILTIN_PATTERNS]) {
       const m = p.match.exec(lower)
@@ -250,6 +250,6 @@ export const NaturalLanguage = {
   }
 }
 
-export default function parseNatural(input: string, ref?: DateTime): DateTime {
+export default function parseNatural(input: string, ref?: DateInput): DateTime {
   return NaturalLanguage.parse(input, ref)
 }
