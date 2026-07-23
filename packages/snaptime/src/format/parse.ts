@@ -32,10 +32,13 @@ export function parseWithFormat(
   locale: ResolvedLocale,
   strict = false
 ): ParseResult {
-  // Stash literals
+  // Stash literals. Pre-existing ESC sentinel characters in the format string
+  // are stashed as literals too, so the only ESC chars left in `stashed` are
+  // the ones we emitted — embedded U+0001 can never corrupt index decoding.
   const literals: string[] = []
-  const stashed = fmt.replace(/\[([^\]]*)\]/g, (_, txt: string) => {
-    literals.push(txt)
+  // eslint-disable-next-line no-control-regex -- U+0001 is the stash sentinel; matching it is the point
+  const stashed = fmt.replace(/\[([^\]]*)\]|\u0001/gu, (match, txt: string | undefined) => {
+    literals.push(txt ?? match)
     return `${ESC}${literals.length - 1}${ESC}`
   })
 
@@ -81,6 +84,10 @@ export function parseWithFormat(
     TOKENS[tok]?.apply?.(target, raw, locale)
   }
 
+  // A token matched textually but could not be resolved (e.g. a month name
+  // that exists in no locale table). That is garbage in any mode, not leniency.
+  if (target.invalid) return { ms: NaN, hadOffset: false, hadZ: false, target }
+
   // Direct unix overrides
   if (target.unixMillis != null) {
     return { ms: target.unixMillis, hadOffset: true, hadZ: true, target }
@@ -102,6 +109,12 @@ export function parseWithFormat(
     if (target.hour != null && (target.hour < 0 || target.hour > 23)) {
       return { ms: NaN, hadOffset: false, hadZ: false, target }
     }
+    if (target.minute != null && (target.minute < 0 || target.minute > 59)) {
+      return { ms: NaN, hadOffset: false, hadZ: false, target }
+    }
+    if (target.second != null && (target.second < 0 || target.second > 59)) {
+      return { ms: NaN, hadOffset: false, hadZ: false, target }
+    }
   }
 
   // Resolve hour12 + meridiem → hour
@@ -112,8 +125,21 @@ export function parseWithFormat(
   }
 
   const Y = target.year ?? 1970
-  const M = (target.month ?? 1) - 1
-  const D = target.date ?? 1
+  let M = (target.month ?? 1) - 1
+  let D = target.date ?? 1
+
+  // Day-of-year resolves the date fields only — time-of-day and offset fields
+  // parsed alongside it are preserved.
+  if (target.dayOfYear != null) {
+    let doy = target.dayOfYear
+    M = 0
+    while (M < 11 && doy > daysInMonth(Y, M + 1)) {
+      doy -= daysInMonth(Y, M + 1)
+      M++
+    }
+    D = doy
+  }
+
   const h = target.hour ?? 0
   const min = target.minute ?? 0
   const s = target.second ?? 0
@@ -133,13 +159,6 @@ export function parseWithFormat(
   } else {
     // No offset specified — interpret as local time
     unixMs = new Date(Y, M, D, h, min, s, ms).getTime()
-  }
-
-  if (target.dayOfYear != null) {
-    const start = Date.UTC(Y, 0, 1)
-    unixMs = start + (target.dayOfYear - 1) * 86_400_000
-    hadOffset = true
-    hadZ = true
   }
 
   return { ms: unixMs, hadOffset, hadZ, target }

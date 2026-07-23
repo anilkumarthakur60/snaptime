@@ -12,10 +12,13 @@ export function formatDate(fmt: string, c: DateComponents, locale: ResolvedLocal
   // Expand long-format tokens first (LT, LTS, L, LL, LLL, LLLL, l, ll, lll, llll)
   fmt = expandLongFormat(fmt, locale)
 
-  // Stash square-bracket literals
+  // Stash square-bracket literals. Pre-existing ESC sentinel characters in the
+  // format string are stashed as literals too, so the only ESC chars left in
+  // `stashed` are the ones we emitted — embedded U+0001 stays a plain literal.
   const literals: string[] = []
-  const stashed = fmt.replace(/\[([^\]]*)\]/g, (_, txt: string) => {
-    literals.push(txt)
+  // eslint-disable-next-line no-control-regex -- U+0001 is the stash sentinel; matching it is the point
+  const stashed = fmt.replace(/\[([^\]]*)\]|\u0001/gu, (match, txt: string | undefined) => {
+    literals.push(txt ?? match)
     return `${ESC}${literals.length - 1}${ESC}`
   })
 
@@ -50,10 +53,12 @@ export function formatDate(fmt: string, c: DateComponents, locale: ResolvedLocal
 const LONG_TOKENS = ['LTS', 'LT', 'LLLL', 'LLL', 'LL', 'L', 'llll', 'lll', 'll', 'l']
 
 function expandLongFormat(fmt: string, locale: ResolvedLocale): string {
-  // Stash literals to avoid expanding inside [LT]
+  // Stash literals to avoid expanding inside [LT]. Pre-existing ESC sentinel
+  // characters are stashed too so they cannot corrupt index decoding below.
   const literals: string[] = []
-  const stashed = fmt.replace(/\[([^\]]*)\]/g, (_, txt: string) => {
-    literals.push(txt)
+  // eslint-disable-next-line no-control-regex -- U+0001 is the stash sentinel; matching it is the point
+  const stashed = fmt.replace(/\[([^\]]*)\]|\u0001/gu, (match, txt: string | undefined) => {
+    literals.push(txt ?? match)
     return `${ESC}${literals.length - 1}${ESC}`
   })
 

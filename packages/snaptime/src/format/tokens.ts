@@ -37,6 +37,8 @@ export interface ParseTarget {
   dayOfYear?: number
   hour?: number
   hour12?: number
+  /** Set when a captured value cannot be resolved (e.g. unknown month name). */
+  invalid?: boolean
   meridiem?: 'am' | 'pm'
   millisecond?: number
   minute?: number
@@ -71,7 +73,10 @@ function offsetOf(c: DateComponents): number {
 export const TOKENS: Record<string, FormatToken> = {
   // ── Year ──────────────────────────────────────────────────────────────────
   YYYY: {
-    format: (c) => String(c.year).padStart(4, '0'),
+    format: (c) => {
+      const abs = String(Math.abs(c.year)).padStart(4, '0')
+      return c.year < 0 ? `-${abs}` : abs
+    },
     parse: NUM4,
     apply: (t, v) => {
       t.year = Number(v)
@@ -110,6 +115,7 @@ export const TOKENS: Record<string, FormatToken> = {
     apply: (t, v, l) => {
       const idx = l.months.findIndex((m) => m.toLowerCase() === v.toLowerCase())
       if (idx >= 0) t.month = idx + 1
+      else t.invalid = true
     }
   },
   MMM: {
@@ -118,6 +124,7 @@ export const TOKENS: Record<string, FormatToken> = {
     apply: (t, v, l) => {
       const idx = l.monthsShort.findIndex((m) => m.toLowerCase() === v.toLowerCase())
       if (idx >= 0) t.month = idx + 1
+      else t.invalid = true
     }
   },
   Mo: { format: (c, l) => l.ordinal(c.month) },

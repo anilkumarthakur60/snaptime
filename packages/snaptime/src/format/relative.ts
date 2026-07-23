@@ -91,8 +91,16 @@ export function calendarLabel(
   weekdayName: string,
   loc?: LocaleCalendar
 ): string {
-  const sub = (tpl: string) =>
-    tpl.replace('{time}', formattedTime).replace('{day}', weekdayName).replace('L', formattedDate)
+  // Render the template like the main formatter: [bracketed] sections are
+  // literals (brackets stripped, content untouched); outside them the
+  // {time}/{day} placeholders and the LT/L long-format tokens are substituted.
+  const sub = (tpl: string): string =>
+    tpl.replace(/\[([^\]]*)\]|\{time\}|\{day\}|LT|L/g, (match, literal: string | undefined) => {
+      if (literal !== undefined) return literal
+      if (match === '{time}' || match === 'LT') return formattedTime
+      if (match === '{day}') return weekdayName
+      return formattedDate
+    })
 
   if (diffDays >= 0 && diffDays < 1) return sub(loc?.sameDay ?? '[Today at] {time}')
   if (diffDays >= 1 && diffDays < 2) return sub(loc?.nextDay ?? '[Tomorrow at] {time}')
@@ -147,7 +155,11 @@ export function preciseDiff(
     days--
   }
   if (days < 0) {
-    days += dimPrev
+    // Borrow one month. `dimPrev` is the length of the month before the upper
+    // date; when the lower date's day-of-month exceeds it, the month anchor
+    // clamps to that month's end, so borrow the lower day count instead
+    // (matches moment-precise-range: Jan 31 → Mar 1 is 1 month 1 day).
+    days += dimPrev < aParts.date ? aParts.date : dimPrev
     months--
   }
   if (months < 0) {
