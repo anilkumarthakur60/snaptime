@@ -145,14 +145,14 @@ export class DateRule {
   year(y: number, message?: string): DateRule {
     return this._add({
       kind: 'value',
-      fn: (d) => ((d.year() as number) === y ? null : (message ?? `Year must be ${y}`))
+      fn: (d) => (d.year() === y ? null : (message ?? `Year must be ${y}`))
     })
   }
 
   month(m: number, message?: string): DateRule {
     return this._add({
       kind: 'value',
-      fn: (d) => ((d.month() as number) === m ? null : (message ?? `Month must be ${m}`))
+      fn: (d) => (d.month() === m ? null : (message ?? `Month must be ${m}`))
     })
   }
 

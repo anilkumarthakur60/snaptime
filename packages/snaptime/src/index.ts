@@ -46,8 +46,16 @@ import { DateRule } from './validate'
 import type {
   Unit,
   UnitInput,
+  BoundaryUnit,
+  BoundaryUnitInput,
+  RoundToUnit,
+  RoundToUnitInput,
+  SettableUnit,
+  SettableUnitInput,
+  Weekday,
   DateInput,
   DateObject,
+  DateTimeLike,
   CreateOptions,
   SortOrder,
   WeekStart,
@@ -69,7 +77,9 @@ import type {
   CronField,
   PluginFn,
   Macro,
-  StaticMacro
+  StaticMacro,
+  MacroFn,
+  StaticMacroFn
 } from './core/types'
 import type { DatePeriodOptions } from './collections/DatePeriod'
 import type { ResolvedLocale } from './locale/registry'
@@ -89,7 +99,7 @@ export const dateTime = Object.assign(
     today: () => DateTime.today(),
     tomorrow: () => DateTime.tomorrow(),
     yesterday: () => DateTime.yesterday(),
-    parse: (str: string, fmt = '', strict = false, locale?: string) =>
+    parse: (str?: string, fmt = '', strict = false, locale?: string) =>
       DateTime.parse(str, fmt, strict, locale),
     fromObject: (obj: DateObject, opts?: CreateOptions) => DateTime.fromObject(obj, opts),
     fromUnix: (s: number, opts?: CreateOptions) => DateTime.fromUnix(s, opts),
@@ -126,8 +136,10 @@ export const dateTime = Object.assign(
 
     // Plugin / extensibility
     use: <O>(plugin: PluginFn<O>, options?: O) => DateTime.use(plugin, options),
-    macro: (name: string, fn: Macro) => DateTime.macro(name, fn),
-    macroStatic: (name: string, fn: StaticMacro) => DateTime.macroStatic(name, fn),
+    macro: <A extends unknown[], R>(name: string, fn: (this: DateTime, ...args: A) => R) =>
+      DateTime.macro(name, fn),
+    macroStatic: <A extends unknown[], R>(name: string, fn: (...args: A) => R) =>
+      DateTime.macroStatic(name, fn),
 
     // Test mocking
     setTestNow: (t: string | number | Date | null) => DateTime.setTestNow(t),
@@ -229,8 +241,16 @@ export { DateTime as DateFormat }
 export type {
   Unit,
   UnitInput,
+  BoundaryUnit,
+  BoundaryUnitInput,
+  RoundToUnit,
+  RoundToUnitInput,
+  SettableUnit,
+  SettableUnitInput,
+  Weekday,
   DateInput,
   DateObject,
+  DateTimeLike,
   CreateOptions,
   SortOrder,
   WeekStart,
@@ -253,11 +273,16 @@ export type {
   PluginFn,
   Macro,
   StaticMacro,
+  MacroFn,
+  StaticMacroFn,
   DatePeriodOptions,
   ResolvedLocale,
   NaturalLanguagePattern,
   NumeralSystem
 }
+
+export type { IClock } from './core/Clock'
+export type { HolidayProvider } from './ecosystem/holidays/index'
 
 export type { ValidationResult } from './validate'
 export type { Freq, Weekday as RRuleWeekday, WeekdayWithN, RRuleOptions } from './rrule'

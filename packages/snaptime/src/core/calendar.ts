@@ -12,10 +12,12 @@ export function dayOfYear(d: Date, isUtc: boolean): number {
     const start = Date.UTC(d.getUTCFullYear(), 0, 1)
     return Math.floor((d.getTime() - start) / 86_400_000) + 1
   }
+  // Diff local *midnights* and round: a DST transition makes some local days
+  // 23 or 25 hours long, so flooring the raw ms difference would drop a day
+  // for early-morning times after a spring-forward.
   const start = new Date(d.getFullYear(), 0, 1).getTime()
-  // Account for DST transitions across the year start
-  const diff = d.getTime() - start
-  return Math.floor(diff / 86_400_000) + 1
+  const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  return Math.round((dayStart - start) / 86_400_000) + 1
 }
 
 /**

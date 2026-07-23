@@ -44,7 +44,12 @@ export function clamp(n: number, lo: number, hi: number): number {
 
 /** Days in month for any year (1-indexed month). */
 export function daysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate()
+  // setUTCFullYear (unlike the Date constructor) treats years 0-99 literally
+  // instead of mapping them to 1900-1999. Day 0 of the *next* month is the
+  // last day of `month`; month overflow normalizes like the constructor.
+  const d = new Date(0)
+  d.setUTCFullYear(year, month, 0)
+  return d.getUTCDate()
 }
 
 /** True if year is leap. */
@@ -83,7 +88,14 @@ export const UTC_GETTERS: Record<string, FieldGetter> = {
 
 export const LOCAL_SETTERS: Record<string, FieldSetter> = {
   year: (d, v) => d.setFullYear(v),
-  month: (d, v) => d.setMonth(v - 1),
+  // Clamp the day-of-month to the target month's length (moment/dayjs
+  // behavior): Jan 31 set to February lands on Feb 28/29, not Mar 2/3.
+  month: (d, v) => {
+    const day = d.getDate()
+    d.setDate(1)
+    d.setMonth(v - 1)
+    d.setDate(Math.min(day, daysInMonth(d.getFullYear(), d.getMonth() + 1)))
+  },
   date: (d, v) => d.setDate(v),
   hour: (d, v) => d.setHours(v),
   minute: (d, v) => d.setMinutes(v),
@@ -93,7 +105,13 @@ export const LOCAL_SETTERS: Record<string, FieldSetter> = {
 
 export const UTC_SETTERS: Record<string, FieldSetter> = {
   year: (d, v) => d.setUTCFullYear(v),
-  month: (d, v) => d.setUTCMonth(v - 1),
+  // See LOCAL_SETTERS.month — clamps day-of-month to the target month length.
+  month: (d, v) => {
+    const day = d.getUTCDate()
+    d.setUTCDate(1)
+    d.setUTCMonth(v - 1)
+    d.setUTCDate(Math.min(day, daysInMonth(d.getUTCFullYear(), d.getUTCMonth() + 1)))
+  },
   date: (d, v) => d.setUTCDate(v),
   hour: (d, v) => d.setUTCHours(v),
   minute: (d, v) => d.setUTCMinutes(v),

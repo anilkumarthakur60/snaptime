@@ -281,15 +281,19 @@ export default class Duration {
     return this.humanize()
   }
 
-  /** Token-based formatter — `HH:mm:ss.SSS`, `H[h]m[m]`, etc. */
+  /**
+   * Token-based formatter — `HH:mm:ss.SSS`, `H[h]m[m]`, etc.
+   * Like {@link humanize}, components are computed on the absolute value;
+   * negative durations are rendered with a single leading `-`.
+   */
   format(fmt: string): string {
-    const ms = this._ms
+    const ms = Math.abs(this._ms)
     const H = Math.floor(ms / 3_600_000)
     const m = Math.floor((ms % 3_600_000) / 60_000)
     const s = Math.floor((ms % 60_000) / 1000)
     const S = Math.floor(ms % 1000)
 
-    return fmt
+    const out = fmt
       .replace(/HH/g, pad(H))
       .replace(/H(?!H)/g, String(H))
       .replace(/mm/g, pad(m))
@@ -297,5 +301,6 @@ export default class Duration {
       .replace(/ss/g, pad(s))
       .replace(/s(?!s)/g, String(s))
       .replace(/SSS/g, pad(S, 3))
+    return this._ms < 0 ? `-${out}` : out
   }
 }

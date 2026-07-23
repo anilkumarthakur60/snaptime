@@ -67,8 +67,11 @@ export function startOf(d: Date, unit: BoundaryUnit, mode: Mode, weekStartSunday
 
   switch (unit) {
     case 'year':
-      set.month(out, 1)
+      // Set the date to 1 *before* changing the month — setting the month
+      // first can overflow when the current day-of-month exceeds the target
+      // month's length (e.g. May 31 → setMonth(April) lands on May 1).
       set.date(out, 1)
+      set.month(out, 1)
       set.hour(out, 0)
       set.minute(out, 0)
       set.second(out, 0)
@@ -77,8 +80,8 @@ export function startOf(d: Date, unit: BoundaryUnit, mode: Mode, weekStartSunday
     case 'quarter': {
       const m = get.month(out)
       const startMonth = Math.floor((m - 1) / 3) * 3 + 1
-      set.month(out, startMonth)
       set.date(out, 1)
+      set.month(out, startMonth)
       set.hour(out, 0)
       set.minute(out, 0)
       set.second(out, 0)
@@ -251,19 +254,14 @@ export function nthOf(
 // Round / Floor / Ceil
 // ─────────────────────────────────────────────────────────────────────────────
 
-const UNIT_MS: Record<BoundaryUnit, number | null> = {
+/** Fixed-size sub-day units supported by {@link roundToMultiple}. */
+export type RoundToUnit = 'hour' | 'minute' | 'second' | 'millisecond'
+
+const ROUND_TO_UNIT_MS: Record<RoundToUnit, number> = {
   millisecond: 1,
   second: 1_000,
   minute: 60_000,
-  hour: 3_600_000,
-  day: 86_400_000,
-  date: 86_400_000,
-  week: 604_800_000,
-  isoWeek: 604_800_000,
-  // For month/quarter/year, round/floor/ceil go via boundary navigation
-  month: null,
-  quarter: null,
-  year: null
+  hour: 3_600_000
 }
 
 export function floorTo(d: Date, unit: BoundaryUnit, mode: Mode): Date {
@@ -276,25 +274,29 @@ export function ceilTo(d: Date, unit: BoundaryUnit, mode: Mode): Date {
   return addToBoundary(s, unit, mode)
 }
 
+/**
+ * Round to the nearest calendar boundary of `unit`: whichever of
+ * `startOf(unit)` and the next boundary is closer (ties round up). This is
+ * calendar-aware for every unit — unlike a raw epoch-ms grid it respects the
+ * local (or UTC-mode) day/week starts and DST transitions.
+ */
 export function roundTo(d: Date, unit: BoundaryUnit, mode: Mode): Date {
-  const ms = UNIT_MS[unit]
-  if (ms != null) {
-    return new Date(Math.round(d.getTime() / ms) * ms)
-  }
-  // Calendar units — pick whichever boundary is closer
   const lo = startOf(d, unit, mode)
   const hi = addToBoundary(lo, unit, mode)
   return d.getTime() - lo.getTime() < hi.getTime() - d.getTime() ? lo : hi
 }
 
-/** Round to the nearest multiple of `n` of `unit` (e.g. nearest 15 minutes). */
-export function roundToMultiple(d: Date, n: number, unit: BoundaryUnit): Date {
-  const ms = UNIT_MS[unit]
-  if (ms == null) {
-    throw new RangeError(`roundToMultiple does not support calendar unit "${unit}"`)
-  }
-  const stride = n * ms
-  return new Date(Math.round(d.getTime() / stride) * stride)
+/**
+ * Round to the nearest multiple of `n` of a fixed-size sub-day `unit`
+ * (e.g. nearest 15 minutes). The grid is anchored at the current day's start
+ * in the given mode — not at the raw UTC epoch — so results line up with
+ * local wall-clock boundaries in any timezone offset.
+ */
+export function roundToMultiple(d: Date, n: number, unit: RoundToUnit, mode: Mode): Date {
+  const stride = n * ROUND_TO_UNIT_MS[unit]
+  const dayStart = startOf(d, 'day', mode).getTime()
+  const offset = d.getTime() - dayStart
+  return new Date(dayStart + Math.round(offset / stride) * stride)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

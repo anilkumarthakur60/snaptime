@@ -7,8 +7,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type DateTime from '../core/DateTime'
+import type { PluginFn } from '../core/types'
 
-export type PluginFn<O = unknown> = (DT: typeof DateTime, options?: O) => void
+export type { PluginFn }
 
 const installed = new WeakSet<PluginFn<unknown>>()
 
