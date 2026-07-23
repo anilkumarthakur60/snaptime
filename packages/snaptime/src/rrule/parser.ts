@@ -129,7 +129,13 @@ export function stringifyRRule(opts: RRuleOptions): string {
   if (opts.interval && opts.interval !== 1) parts.push(`INTERVAL=${opts.interval}`)
   if (opts.count != null) parts.push(`COUNT=${opts.count}`)
   if (opts.until != null) {
-    const d = opts.until instanceof Date ? opts.until : new Date(opts.until)
+    const u = opts.until
+    const d =
+      u instanceof Date
+        ? u
+        : typeof u === 'number' || typeof u === 'string'
+          ? new Date(u)
+          : new Date(u.valueOf()) // DateTime — normalize via epoch ms
     parts.push(`UNTIL=${fmtCompact(d)}`)
   }
   if (opts.byweekday)
