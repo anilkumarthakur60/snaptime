@@ -11,7 +11,9 @@
 //   autumn  = 2451810.21715 + 365242.01767*Y -  0.11575*Y² + 0.00337*Y³ + 0.00078*Y⁴
 //   winter  = 2451900.05952 + 365242.74049*Y -  0.06223*Y² - 0.00823*Y³ + 0.00032*Y⁴
 //
-// And for years 1000-2000 there's a separate set anchored at year 1000.
+// Table 27.B above is anchored at year 2000 and valid for years 1000-3000.
+// For years below 1000 there's a separate set (Table 27.A) anchored at year 0
+// with Y = year / 1000, valid for years -1000 to +1000.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
@@ -23,7 +25,8 @@ const COEFFS_2000: Record<Season, [number, number, number, number, number]> = {
   winter: [2451900.05952, 365242.74049, -0.06223, -0.00823, 0.00032]
 }
 
-const COEFFS_1000: Record<Season, [number, number, number, number, number]> = {
+// Meeus Table 27.A — anchored at year 0 (Y = year/1000), for years < 1000.
+const COEFFS_0: Record<Season, [number, number, number, number, number]> = {
   spring: [1721139.29189, 365242.1374, 0.06134, 0.00111, -0.00071],
   summer: [1721233.25401, 365241.72562, -0.05323, 0.00907, 0.00025],
   autumn: [1721325.70455, 365242.49558, -0.11677, -0.00297, 0.00074],
@@ -35,8 +38,10 @@ function jdToDate(jd: number): Date {
 }
 
 function jde0(year: number, season: Season): number {
-  const coeffs = year >= 2000 ? COEFFS_2000[season] : COEFFS_1000[season]
-  const Y = year >= 2000 ? (year - 2000) / 1000 : (year - 1000) / 1000
+  // Table 27.B (anchored at 2000) covers years 1000-3000; Table 27.A
+  // (anchored at year 0) covers years below 1000.
+  const coeffs = year >= 1000 ? COEFFS_2000[season] : COEFFS_0[season]
+  const Y = year >= 1000 ? (year - 2000) / 1000 : year / 1000
   const Y2 = Y * Y
   const Y3 = Y2 * Y
   const Y4 = Y3 * Y

@@ -6,6 +6,14 @@
 // the phase. Accurate to within a day for civil purposes.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import DateTime from '../core/DateTime'
+import type { DateInput } from '../core/types'
+
+/** Normalize any DateInput (DateTime, Date, timestamp, ISO string) to a Date. */
+function toDate(input: DateInput): Date {
+  return input instanceof Date ? input : new DateTime(input).toDate()
+}
+
 const SYNODIC_MONTH = 29.530588853
 /** A known new moon instant — 2000-01-06 18:14 UTC. */
 const NEW_MOON_REF = Date.UTC(2000, 0, 6, 18, 14)
@@ -42,8 +50,8 @@ const NAMES: { name: MoonPhaseName; emoji: string }[] = [
   { name: 'waning-crescent', emoji: '🌘' }
 ]
 
-export function moonPhase(d: Date): MoonPhase {
-  const age = ((d.getTime() - NEW_MOON_REF) / 86_400_000) % SYNODIC_MONTH
+export function moonPhase(d: DateInput): MoonPhase {
+  const age = ((toDate(d).getTime() - NEW_MOON_REF) / 86_400_000) % SYNODIC_MONTH
   const normalized = age < 0 ? age + SYNODIC_MONTH : age
   const phaseFrac = normalized / SYNODIC_MONTH // 0..1
   // illumination: 0 at new, 1 at full, back to 0 at next new
@@ -55,22 +63,24 @@ export function moonPhase(d: Date): MoonPhase {
 }
 
 /** Convenience: just the illumination (0..1). */
-export function moonIllumination(d: Date): number {
+export function moonIllumination(d: DateInput): number {
   return moonPhase(d).illumination
 }
 
 /** Date of the next new moon (>= `from`). */
-export function nextNewMoon(from: Date): Date {
-  const phase = moonPhase(from)
+export function nextNewMoon(from: DateInput): Date {
+  const d = toDate(from)
+  const phase = moonPhase(d)
   const remaining = SYNODIC_MONTH - phase.age
-  return new Date(from.getTime() + remaining * 86_400_000)
+  return new Date(d.getTime() + remaining * 86_400_000)
 }
 
 /** Date of the next full moon (>= `from`). */
-export function nextFullMoon(from: Date): Date {
-  const phase = moonPhase(from)
+export function nextFullMoon(from: DateInput): Date {
+  const d = toDate(from)
+  const phase = moonPhase(d)
   // Full moon occurs at phase fraction 0.5 (~14.77 days into cycle)
   const target = SYNODIC_MONTH / 2
   const offset = phase.age <= target ? target - phase.age : SYNODIC_MONTH - phase.age + target
-  return new Date(from.getTime() + offset * 86_400_000)
+  return new Date(d.getTime() + offset * 86_400_000)
 }
