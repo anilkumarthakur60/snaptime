@@ -1,0 +1,1464 @@
+import type {
+  Unit,
+  UnitInput,
+  BoundaryUnitInput,
+  RoundToUnitInput,
+  SettableUnitInput,
+  Weekday,
+  DateInput,
+  DateObject,
+  Inclusivity,
+  CreateOptions,
+  CalendarCell,
+  CalendarGridOptions,
+  FiscalConfig,
+  PreciseDiffResult,
+  AgeResult,
+  CountdownResult
+} from './types'
+import { Clock } from './Clock'
+import { resolveUnit, msPerUnit } from './units'
+import {
+  LOCAL_GETTERS,
+  UTC_GETTERS,
+  LOCAL_SETTERS,
+  UTC_SETTERS,
+  daysInMonth as _daysInMonth,
+  isLeapYear as _isLeapYear
+} from './helpers'
+import {
+  startOf as _startOf,
+  endOf as _endOf,
+  type BoundaryUnit,
+  firstOf as _firstOf,
+  lastOf as _lastOf,
+  nthOf as _nthOf,
+  floorTo as _floor,
+  ceilTo as _ceil,
+  roundTo as _round,
+  roundToMultiple as _roundToMultiple,
+  addMonths as _addMonths,
+  type Mode
+} from './manipulate'
+import {
+  dayOfYear as _dayOfYear,
+  isoWeek as _isoWeek,
+  isoWeekYear as _isoWeekYear,
+  weeksInIsoYear as _weeksInIsoYear,
+  quarterOf as _quarterOf,
+  daysInYear as _daysInYear
+} from './calendar'
+
+import { formatDate } from '../format/format'
+import { parseWithFormat } from '../format/parse'
+import {
+  toISO,
+  toRFC2822 as _toRFC2822,
+  toRFC3339 as _toRFC3339,
+  toExcel as _toExcel,
+  fromExcel as _fromExcel,
+  toSQL as _toSQL,
+  toSQLDate as _toSQLDate,
+  toSQLTime as _toSQLTime
+} from '../format/serializers'
+import { formatIntl as _formatIntl } from '../format/intl'
+import {
+  relativeTime as _relativeTime,
+  calendarLabel as _calendarLabel,
+  preciseDiff as _preciseDiff,
+  age as _age,
+  countdown as _countdown
+} from '../format/relative'
+import type { DateComponents } from '../format/tokens'
+
+import { Locales, type ResolvedLocale } from '../locale/registry'
+import { Macros } from '../plugin/macros'
+import { install, type PluginFn } from '../plugin/plugin'
+import Duration from './Duration'
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+// Seconds (and fractional seconds) are optional per ISO 8601.
+const ISO_DATETIME_NO_TZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/
+// Field capture used for the explicit UTC construction path. Building the
+// Date ourselves (instead of appending "Z" and re-parsing) keeps years
+// 0000-0999 out of the engine's legacy parser, which would otherwise map
+// them to 1900-1999 or Invalid Date.
+const ISO_CAPTURE = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?$/
+
+/** Build a UTC Date from an {@link ISO_CAPTURE} match, validating field ranges. */
+function utcFromIsoMatch(m: RegExpExecArray): Date {
+  const year = Number(m[1])
+  const month = Number(m[2])
+  const day = Number(m[3])
+  const hour = m[4] ? Number(m[4]) : 0
+  const minute = m[5] ? Number(m[5]) : 0
+  const second = m[6] ? Number(m[6]) : 0
+  const ms = m[7] ? Number(`${m[7]}00`.slice(0, 3)) : 0
+  const validTime =
+    (hour <= 23 && minute <= 59 && second <= 59) ||
+    (hour === 24 && minute === 0 && second === 0 && ms === 0)
+  if (month < 1 || month > 12 || day < 1 || day > _daysInMonth(year, month) || !validTime) {
+    return new Date(NaN)
+  }
+  const out = new Date(0)
+  out.setUTCFullYear(year, month - 1, day)
+  out.setUTCHours(hour, minute, second, ms)
+  return out
+}
+
+const BOUNDARY_UNITS: ReadonlySet<string> = new Set([
+  'year',
+  'quarter',
+  'month',
+  'week',
+  'isoWeek',
+  'day',
+  'date',
+  'hour',
+  'minute',
+  'second',
+  'millisecond'
+])
+
+/**
+ * Resolve a boundary-unit input (canonical name or alias) to a canonical
+ * {@link BoundaryUnit}. Throws RangeError for units that have no calendar
+ * boundary (fortnight, decade, century, millennium).
+ */
+function resolveBoundaryUnit(unit: BoundaryUnitInput | UnitInput): BoundaryUnit {
+  if (unit === 'isoWeek') return 'isoWeek'
+  const u = resolveUnit(unit)
+  if (!BOUNDARY_UNITS.has(u)) {
+    throw new RangeError(`Unit "${u}" is not a boundary unit`)
+  }
+  return u as BoundaryUnit
+}
+
+/**
+ * Compile-time gate for boundary-unit parameters. Literal boundary units and
+ * their aliases pass; values statically typed as the *full* `UnitInput`
+ * union also pass (legacy call sites) and are validated at runtime; any
+ * other literal (e.g. `'decade'`) is rejected by the type checker.
+ */
+type BoundaryArg<U> = [U] extends [BoundaryUnitInput]
+  ? unknown
+  : [UnitInput] extends [U]
+    ? unknown
+    : never
+
+/** Round the amount to the nearest integer, half away from zero (moment's absRound). */
+function absRound(n: number): number {
+  return n < 0 ? -Math.round(-n) : Math.round(n)
+}
+
+/** Months represented by each variable-length calendar unit. */
+const MONTHS_PER_UNIT: Partial<Record<Unit, number>> = {
+  month: 1,
+  quarter: 3,
+  year: 12,
+  decade: 120,
+  century: 1200,
+  millennium: 12000
+}
+
+function isDateTime(x: unknown): x is DateTime {
+  return x instanceof DateTime
+}
+
+/**
+ * Coerce any DateInput into a DateTime instance. Accepts the structural
+ * `DateTimeLike` from older instances of the library across realms.
+ */
+function toDT(input: DateInput, opts?: CreateOptions): DateTime {
+  if (isDateTime(input)) return input
+  return new DateTime(input, opts)
+}
+
+/**
+ * The main user-facing class. Immutable: every modifier returns a new instance.
+ *
+ * Construction:
+ *   new DateTime()                       — now
+ *   new DateTime('2026-04-29')           — ISO date
+ *   new DateTime(1700000000000)          — ms epoch
+ *   new DateTime(jsDate)                 — wrap a JS Date
+ *   new DateTime(other)                  — clone another DateTime
+ *
+ * Static factories for everything else: `parse`, `fromObject`, `fromUnix`, etc.
+ */
+class DateTime {
+  // ── Internal state ───────────────────────────────────────────────────────
+  private readonly _d: Date
+  private readonly _utc: boolean
+  private _localeName: string | null
+  /** Forced offset minutes — set by `shiftZone`; null otherwise. */
+  private _offsetMinutes: number | null = null
+  /** IANA name attached by `shiftZone`; informational only. */
+  private _zoneName: string | null = null;
+
+  // Type-level extension hook for plugins
+  declare ['constructor']: typeof DateTime
+
+  constructor(input: DateInput | undefined = undefined, opts: CreateOptions = {}) {
+    let isUtc = opts.utc ?? false
+    let raw: DateInput = input ?? Clock.now()
+
+    // ISO strings without an explicit zone are treated as UTC instants
+    if (typeof raw === 'string') {
+      if (raw.endsWith('Z')) {
+        isUtc = true
+        raw = raw.slice(0, -1)
+      } else if (ISO_DATETIME_NO_TZ.test(raw) || ISO_DATE.test(raw)) {
+        isUtc = true
+      }
+    }
+
+    if (isDateTime(raw)) {
+      this._d = new Date(raw.valueOf())
+      this._utc = raw._utc
+    } else if (raw instanceof Date) {
+      this._d = new Date(raw.getTime())
+      this._utc = isUtc
+    } else if (typeof raw === 'number') {
+      this._d = new Date(raw)
+      this._utc = isUtc
+    } else if (typeof raw === 'object') {
+      // Structural DateTimeLike (older library instance / another realm)
+      this._d = new Date(raw.valueOf())
+      this._utc = opts.utc ?? raw.isUtc()
+    } else {
+      const m = isUtc ? ISO_CAPTURE.exec(raw) : null
+      if (m) {
+        this._d = utcFromIsoMatch(m)
+      } else if (isUtc && !/[zZ]$/.test(raw) && !/[+-]\d\d:?\d\d$/.test(raw)) {
+        this._d = new Date(raw + 'Z')
+      } else {
+        this._d = new Date(raw)
+      }
+      this._utc = isUtc
+    }
+
+    this._localeName = opts.locale ?? null
+
+    // Apply any registered macros lazily — only need to do it once per class
+    DateTime._ensureMacros()
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Plugin & locale machinery (static)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private static _macrosApplied = false
+
+  private static _ensureMacros(): void {
+    if (DateTime._macrosApplied) return
+    DateTime._macrosApplied = true
+    Macros.apply(DateTime)
+  }
+
+  /** Register a plugin. Plugins run exactly once. */
+  static use<O>(plugin: PluginFn<O>, options?: O): typeof DateTime {
+    install(DateTime, plugin, options)
+    Macros.apply(DateTime)
+    return DateTime
+  }
+
+  /**
+   * Register an instance macro. To get type-safety on the new method, augment
+   * the DateTime interface in your own code:
+   *
+   *   declare module '@anilkumarthakur/d8' {
+   *     interface DateTime {
+   *       greet(): string
+   *     }
+   *   }
+   */
+  static macro<A extends unknown[], R>(
+    name: string,
+    fn: (this: DateTime, ...args: A) => R
+  ): typeof DateTime {
+    Macros.register(name, fn)
+    Macros.apply(DateTime)
+    return DateTime
+  }
+
+  /** Register a static macro on the DateTime constructor. */
+  static macroStatic<A extends unknown[], R>(name: string, fn: (...args: A) => R): typeof DateTime {
+    Macros.registerStatic(name, fn)
+    Macros.apply(DateTime)
+    return DateTime
+  }
+
+  /** Pin the library's notion of "now" to a specific instant (test helper). */
+  static setTestNow(t: string | number | Date | null): void {
+    Clock.setTestNow(t)
+  }
+
+  /** Set or get the global default locale. */
+  static locale(name?: string): string {
+    if (name) Locales.setDefault(name)
+    return Locales.getDefault()
+  }
+
+  static getLocale(): string {
+    return Locales.getDefault()
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Static factories
+  // ─────────────────────────────────────────────────────────────────────────
+
+  static now(): DateTime {
+    return new DateTime(Clock.now())
+  }
+
+  static today(): DateTime {
+    return DateTime.now().startOf('day')
+  }
+
+  static tomorrow(): DateTime {
+    return DateTime.now().add(1, 'day').startOf('day')
+  }
+
+  static yesterday(): DateTime {
+    return DateTime.now().subtract(1, 'day').startOf('day')
+  }
+
+  static fromObject(obj: DateObject, opts: CreateOptions = {}): DateTime {
+    const { year, month = 1, day = 1, hour = 0, minute = 0, second = 0, millisecond = 0 } = obj
+    if (opts.utc) {
+      return new DateTime(Date.UTC(year, month - 1, day, hour, minute, second, millisecond), opts)
+    }
+    return new DateTime(new Date(year, month - 1, day, hour, minute, second, millisecond), opts)
+  }
+
+  static fromUnix(seconds: number, opts: CreateOptions = {}): DateTime {
+    return new DateTime(seconds * 1000, { utc: true, ...opts })
+  }
+
+  static fromTimestamp(ms: number, opts: CreateOptions = {}): DateTime {
+    return new DateTime(ms, opts)
+  }
+
+  static fromExcel(serial: number): DateTime {
+    return new DateTime(_fromExcel(serial), { utc: true })
+  }
+
+  static fromDate(d: Date, opts: CreateOptions = {}): DateTime {
+    return new DateTime(d, opts)
+  }
+
+  /**
+   * Strict-or-loose format parse. Returns an invalid DateTime (NaN) on
+   * mismatch. Pass `strict=true` to also enforce that fields are in range.
+   */
+  static parse(input?: string, fmt = '', strict = false, locale?: string): DateTime {
+    if (!fmt) {
+      return new DateTime(input)
+    }
+    const result = parseWithFormat(input ?? '', fmt, Locales.get(locale), strict)
+    if (Number.isNaN(result.ms)) return new DateTime(NaN)
+    return new DateTime(result.ms, { utc: result.hadOffset })
+  }
+
+  static min(...args: DateInput[]): DateTime {
+    if (args.length === 0) throw new Error('DateTime.min requires at least one argument')
+    return args.map((a) => toDT(a)).reduce((a, b) => (a.isBefore(b) ? a : b))
+  }
+
+  static max(...args: DateInput[]): DateTime {
+    if (args.length === 0) throw new Error('DateTime.max requires at least one argument')
+    return args.map((a) => toDT(a)).reduce((a, b) => (a.isAfter(b) ? a : b))
+  }
+
+  static average(...args: DateInput[]): DateTime {
+    if (args.length === 0) throw new Error('DateTime.average requires at least one argument')
+    const ms = args.map((a) => toDT(a).valueOf())
+    const avg = ms.reduce((a, b) => a + b, 0) / ms.length
+    return new DateTime(avg)
+  }
+
+  static duration(n: number, unit: UnitInput): Duration {
+    return new Duration(n * msPerUnit(resolveUnit(unit)))
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Core
+  // ─────────────────────────────────────────────────────────────────────────
+
+  valueOf(): number {
+    return this._d.getTime()
+  }
+
+  /** Unix seconds (integer). */
+  unix(): number {
+    return Math.floor(this.valueOf() / 1000)
+  }
+
+  /** Alias for `valueOf()`. */
+  timestamp(): number {
+    return this.valueOf()
+  }
+
+  isValid(): boolean {
+    return !Number.isNaN(this._d.getTime())
+  }
+
+  isUtc(): boolean {
+    return this._utc
+  }
+
+  isLocal(): boolean {
+    return !this._utc
+  }
+
+  toDate(): Date {
+    return new Date(this.valueOf())
+  }
+
+  /** Alias of `toDate()`. */
+  toJSDate(): Date {
+    return this.toDate()
+  }
+
+  clone(): DateTime {
+    const c = new DateTime(this, { utc: this._utc })
+    if (this._localeName) c._localeName = this._localeName
+    return c
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Per-instance locale
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Set or read this instance's locale. Returns a new instance when setting.
+   *   .locale()              -> 'en'
+   *   .locale('fr')          -> new DateTime with locale='fr'
+   */
+  locale(): string
+  locale(name: string): DateTime
+  locale(name?: string): DateTime | string {
+    if (name === undefined) return this._localeName ?? Locales.getDefault()
+    const c = this.clone()
+    c._localeName = name
+    return c
+  }
+
+  /** Resolved locale data — never null. */
+  getLocaleData(): ResolvedLocale {
+    return Locales.get(this._localeName ?? undefined)
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Get / Set
+  // ─────────────────────────────────────────────────────────────────────────
+
+  get(unit: Unit): number {
+    if (unit === 'quarter') return _quarterOf(this.get('month'))
+    if (unit === 'week') return _isoWeek(this._d, this._utc)
+    if (unit === 'fortnight') return Math.ceil(_isoWeek(this._d, this._utc) / 2)
+    if (unit === 'decade') return Math.floor(this.get('year') / 10)
+    // Century/millennium are 1-indexed and END on the round year: 2000 is the
+    // final year of the 20th century, 2001 the first of the 21st.
+    if (unit === 'century') return Math.ceil(this.get('year') / 100)
+    if (unit === 'millennium') return Math.ceil(this.get('year') / 1000)
+    const fn = (this._utc ? UTC_GETTERS : LOCAL_GETTERS)[unit]
+    if (!fn) throw new RangeError(`Cannot get unit "${unit}"`)
+    return fn(this._d)
+  }
+
+  set(unit: SettableUnitInput, value: number): DateTime {
+    const canonical = resolveUnit(unit)
+    const c = this.clone()
+    const fn = (this._utc ? UTC_SETTERS : LOCAL_SETTERS)[canonical]
+    if (!fn) throw new RangeError(`Cannot set unit "${canonical}"`)
+    fn(c._d, value)
+    return c
+  }
+
+  // Sugar getters/setters — Carbon-style
+  year(): number
+  year(v: number): DateTime
+  year(v?: number): number | DateTime {
+    return v == null ? this.get('year') : this.set('year', v)
+  }
+  month(): number
+  month(v: number): DateTime
+  month(v?: number): number | DateTime {
+    return v == null ? this.get('month') : this.set('month', v)
+  }
+  date(): number
+  date(v: number): DateTime
+  date(v?: number): number | DateTime {
+    return v == null ? this.get('date') : this.set('date', v)
+  }
+  hour(): number
+  hour(v: number): DateTime
+  hour(v?: number): number | DateTime {
+    return v == null ? this.get('hour') : this.set('hour', v)
+  }
+  minute(): number
+  minute(v: number): DateTime
+  minute(v?: number): number | DateTime {
+    return v == null ? this.get('minute') : this.set('minute', v)
+  }
+  second(): number
+  second(v: number): DateTime
+  second(v?: number): number | DateTime {
+    return v == null ? this.get('second') : this.set('second', v)
+  }
+  millisecond(): number
+  millisecond(v: number): DateTime
+  millisecond(v?: number): number | DateTime {
+    return v == null ? this.get('millisecond') : this.set('millisecond', v)
+  }
+  /** Day-of-week (0=Sun..6=Sat). Read-only. */
+  dayOfWeek(): number {
+    return this.get('day')
+  }
+  /** Day-of-year (1..366). */
+  dayOfYear(): number {
+    return _dayOfYear(this._d, this._utc)
+  }
+  /** ISO week number (1..53). */
+  isoWeek(): number {
+    return _isoWeek(this._d, this._utc)
+  }
+  isoWeekYear(): number {
+    return _isoWeekYear(this._d, this._utc)
+  }
+  /** ISO weeks in the current ISO year — 52 or 53. */
+  weeksInIsoYear(): number {
+    return _weeksInIsoYear(this.isoWeekYear())
+  }
+  /** Locale-default week number (currently aliased to ISO). */
+  week(): number {
+    return this.isoWeek()
+  }
+  /** Total days in the current month. */
+  daysInMonth(): number {
+    return _daysInMonth(this.get('year'), this.get('month'))
+  }
+  daysInYear(): number {
+    return _daysInYear(this.get('year'))
+  }
+  quarter(): number {
+    return _quarterOf(this.get('month'))
+  }
+  weekday(): number {
+    return this.get('day')
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Arithmetic
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Add `n` of `unit`. Calendar units (day/week/fortnight/month/quarter/year/
+   * decade/century/millennium) advance via `Date.setX`, which preserves the
+   * wall-clock time across DST transitions in local mode. Sub-day units
+   * (hour/minute/second/millisecond) advance by absolute milliseconds — use
+   * `{ keepLocalTime: true }` if you want the wall-clock-preserving behavior
+   * for sub-day units as well (rare).
+   *
+   * Fractional amounts:
+   * - Sub-day units advance by the exact fractional milliseconds.
+   * - day/week/fortnight split into a whole-day calendar step plus the
+   *   fractional remainder in absolute milliseconds (`add(1.5, 'day')` =
+   *   1 calendar day + 12 hours; `add(0.5, 'day')` = 12 hours).
+   * - month/quarter/year/decade/century/millennium have no fixed length, so
+   *   the amount is converted to months and rounded to the nearest whole
+   *   month, half away from zero — moment's behavior (`add(0.5, 'year')` =
+   *   6 months; `add(0.5, 'month')` = 1 month).
+   */
+  add(n: number, unit: UnitInput, opts: { keepLocalTime?: boolean } = {}): DateTime {
+    const u = resolveUnit(unit)
+    const c = this.clone()
+    const mode = this._mode()
+    const monthsPer = MONTHS_PER_UNIT[u]
+    if (monthsPer != null) {
+      const months = absRound(n * monthsPer)
+      return DateTime._wrap(_addMonths(c._d, months, mode), this._utc, this._localeName)
+    }
+    if (u === 'day' || u === 'date' || u === 'week' || u === 'fortnight') {
+      const get = mode === 'utc' ? UTC_GETTERS : LOCAL_GETTERS
+      const set = mode === 'utc' ? UTC_SETTERS : LOCAL_SETTERS
+      const factor = u === 'week' ? 7 : u === 'fortnight' ? 14 : 1
+      const days = n * factor
+      const wholeDays = Math.trunc(days)
+      const fracMs = Math.round((days - wholeDays) * 86_400_000)
+      set.date!(c._d, get.date!(c._d) + wholeDays)
+      if (fracMs !== 0) c._d.setTime(c._d.getTime() + fracMs)
+      return DateTime._wrap(c._d, this._utc, this._localeName)
+    }
+    if (opts.keepLocalTime && !this._utc) {
+      const get = LOCAL_GETTERS
+      const set = LOCAL_SETTERS
+      switch (u) {
+        case 'hour':
+          set.hour!(c._d, get.hour!(c._d) + n)
+          break
+        case 'minute':
+          set.minute!(c._d, get.minute!(c._d) + n)
+          break
+        case 'second':
+          set.second!(c._d, get.second!(c._d) + n)
+          break
+        case 'millisecond':
+          set.millisecond!(c._d, get.millisecond!(c._d) + n)
+          break
+      }
+      return DateTime._wrap(c._d, this._utc, this._localeName)
+    }
+    const ms = msPerUnit(u)
+    return DateTime._wrap(new Date(this.valueOf() + n * ms), this._utc, this._localeName)
+  }
+
+  subtract(n: number, unit: UnitInput, opts?: { keepLocalTime?: boolean }): DateTime {
+    return this.add(-n, unit, opts)
+  }
+
+  /** Difference between this and `other` in `unit`. Floored unless `floating`. */
+  diff(other: DateInput, unit: UnitInput = 'millisecond', floating = false): number {
+    const o = toDT(other)
+    const u = resolveUnit(unit)
+    const ms = this.valueOf() - o.valueOf()
+
+    // For calendar units use calendar arithmetic (not raw ms / approx)
+    if (u === 'year' || u === 'month' || u === 'quarter') {
+      const sign = ms < 0 ? -1 : 1
+      const a = sign === 1 ? o : this
+      const b = sign === 1 ? this : o
+      let units: number
+      if (u === 'year') {
+        units = b.get('year') - a.get('year')
+        const probe = a.add(units, 'year')
+        if (probe.isAfter(b)) units -= 1
+      } else if (u === 'month') {
+        units = (b.get('year') - a.get('year')) * 12 + (b.get('month') - a.get('month'))
+        const probe = a.add(units, 'month')
+        if (probe.isAfter(b)) units -= 1
+      } else {
+        units = (b.get('year') - a.get('year')) * 4 + (b.quarter() - a.quarter())
+        const probe = a.add(units, 'quarter')
+        if (probe.isAfter(b)) units -= 1
+      }
+      const result = sign * units
+      if (!floating) return result
+      // Floating refinement
+      const startSame = a.add(units, u).valueOf()
+      const endNext = a.add(units + 1, u).valueOf()
+      const frac = (b.valueOf() - startSame) / (endNext - startSame)
+      return Math.round((sign * (units + frac) + Number.EPSILON) * 100) / 100
+    }
+
+    const per = msPerUnit(u)
+    const result = ms / per
+    if (floating) return Math.round((result + Number.EPSILON) * 100) / 100
+    return Math[result < 0 ? 'ceil' : 'floor'](result)
+  }
+
+  /** Convenience diffs. */
+  diffInMilliseconds(other: DateInput): number {
+    return this.diff(other, 'millisecond')
+  }
+  diffInSeconds(other: DateInput): number {
+    return this.diff(other, 'second')
+  }
+  diffInMinutes(other: DateInput): number {
+    return this.diff(other, 'minute')
+  }
+  diffInHours(other: DateInput): number {
+    return this.diff(other, 'hour')
+  }
+  diffInDays(other: DateInput): number {
+    return this.diff(other, 'day')
+  }
+  diffInWeeks(other: DateInput): number {
+    return this.diff(other, 'week')
+  }
+  diffInMonths(other: DateInput): number {
+    return this.diff(other, 'month')
+  }
+  diffInQuarters(other: DateInput): number {
+    return this.diff(other, 'quarter')
+  }
+  diffInYears(other: DateInput): number {
+    return this.diff(other, 'year')
+  }
+
+  /**
+   * Count weekdays (Mon-Fri) between this and `other`. Excludes both endpoints.
+   * Negative if `other` is earlier than this.
+   */
+  diffInWeekdays(other: DateInput): number {
+    const a = this.valueOf() < toDT(other).valueOf() ? this : toDT(other)
+    const b = this.valueOf() < toDT(other).valueOf() ? toDT(other) : this
+    let count = 0
+    let cursor = a.add(1, 'day').startOf('day')
+    while (cursor.isBefore(b)) {
+      if (cursor.isWeekday()) count++
+      cursor = cursor.add(1, 'day')
+    }
+    return this.valueOf() < toDT(other).valueOf() ? count : -count
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Comparisons
+  // ─────────────────────────────────────────────────────────────────────────
+
+  isBefore(o: DateInput): boolean {
+    return this.valueOf() < toDT(o).valueOf()
+  }
+  isAfter(o: DateInput): boolean {
+    return this.valueOf() > toDT(o).valueOf()
+  }
+  isSame(o: DateInput, unit?: UnitInput): boolean {
+    if (!unit) return this.valueOf() === toDT(o).valueOf()
+    const u = resolveBoundaryUnit(unit)
+    return this.startOf(u).valueOf() === toDT(o).startOf(u).valueOf()
+  }
+  isSameOrBefore(o: DateInput, unit?: UnitInput): boolean {
+    return this.isSame(o, unit) || this.isBefore(o)
+  }
+  isSameOrAfter(o: DateInput, unit?: UnitInput): boolean {
+    return this.isSame(o, unit) || this.isAfter(o)
+  }
+  isBetween(
+    a: DateInput,
+    b: DateInput,
+    unit?: UnitInput,
+    inclusivity: Inclusivity = '()'
+  ): boolean {
+    const u = unit ? resolveBoundaryUnit(unit) : null
+    const self = u ? this.startOf(u).valueOf() : this.valueOf()
+    const A = u ? toDT(a).startOf(u).valueOf() : toDT(a).valueOf()
+    const B = u ? toDT(b).startOf(u).valueOf() : toDT(b).valueOf()
+    const leftOk = inclusivity[0] === '[' ? self >= A : self > A
+    const rightOk = inclusivity[1] === ']' ? self <= B : self < B
+    return leftOk && rightOk
+  }
+
+  // Operator-style aliases
+  eq(o: DateInput): boolean {
+    return this.valueOf() === toDT(o).valueOf()
+  }
+  ne(o: DateInput): boolean {
+    return !this.eq(o)
+  }
+  lt(o: DateInput): boolean {
+    return this.isBefore(o)
+  }
+  lte(o: DateInput): boolean {
+    return this.isSameOrBefore(o)
+  }
+  gt(o: DateInput): boolean {
+    return this.isAfter(o)
+  }
+  gte(o: DateInput): boolean {
+    return this.isSameOrAfter(o)
+  }
+
+  /** Return the earlier of `this` and `other`. */
+  min(other: DateInput): DateTime {
+    return this.isBefore(other) ? this : toDT(other)
+  }
+
+  /** Return the later of `this` and `other`. */
+  max(other: DateInput): DateTime {
+    return this.isAfter(other) ? this : toDT(other)
+  }
+
+  /** From a list of candidates, return the one nearest to `this`. */
+  closestTo(candidates: DateInput[]): DateTime {
+    if (candidates.length === 0) throw new Error('closestTo: empty candidates')
+    return candidates
+      .map((c) => toDT(c))
+      .reduce((best, next) =>
+        Math.abs(next.valueOf() - this.valueOf()) < Math.abs(best.valueOf() - this.valueOf())
+          ? next
+          : best
+      )
+  }
+
+  /** From a list of candidates, return the one farthest from `this`. */
+  farthestFrom(candidates: DateInput[]): DateTime {
+    if (candidates.length === 0) throw new Error('farthestFrom: empty candidates')
+    return candidates
+      .map((c) => toDT(c))
+      .reduce((best, next) =>
+        Math.abs(next.valueOf() - this.valueOf()) > Math.abs(best.valueOf() - this.valueOf())
+          ? next
+          : best
+      )
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // State queries
+  // ─────────────────────────────────────────────────────────────────────────
+
+  isDST(): boolean {
+    if (this._utc) return false
+    const y = this.get('year')
+    const jan = new Date(y, 0, 1).getTimezoneOffset()
+    const jul = new Date(y, 6, 1).getTimezoneOffset()
+    // Standard time is the larger getTimezoneOffset (further behind UTC).
+    // DST iff the current offset differs from it — false when jan === jul
+    // (zones that never observe DST). Mirrors Timezone.isDST().
+    return this._d.getTimezoneOffset() !== Math.max(jan, jul)
+  }
+
+  isLeapYear(): boolean {
+    return _isLeapYear(this.get('year'))
+  }
+
+  isWeekday(): boolean {
+    const d = this.get('day')
+    return d !== 0 && d !== 6
+  }
+  isWeekend(): boolean {
+    return !this.isWeekday()
+  }
+  isSunday(): boolean {
+    return this.get('day') === 0
+  }
+  isMonday(): boolean {
+    return this.get('day') === 1
+  }
+  isTuesday(): boolean {
+    return this.get('day') === 2
+  }
+  isWednesday(): boolean {
+    return this.get('day') === 3
+  }
+  isThursday(): boolean {
+    return this.get('day') === 4
+  }
+  isFriday(): boolean {
+    return this.get('day') === 5
+  }
+  isSaturday(): boolean {
+    return this.get('day') === 6
+  }
+
+  isPast(): boolean {
+    return this.valueOf() < Clock.now()
+  }
+  isFuture(): boolean {
+    return this.valueOf() > Clock.now()
+  }
+  isNow(): boolean {
+    return this.valueOf() === Clock.now()
+  }
+  isMidnight(): boolean {
+    return (
+      this.get('hour') === 0 &&
+      this.get('minute') === 0 &&
+      this.get('second') === 0 &&
+      this.get('millisecond') === 0
+    )
+  }
+  isStartOfDay(): boolean {
+    return this.isMidnight()
+  }
+  isEndOfDay(): boolean {
+    return (
+      this.get('hour') === 23 &&
+      this.get('minute') === 59 &&
+      this.get('second') === 59 &&
+      this.get('millisecond') === 999
+    )
+  }
+
+  /**
+   * "Same Mar-15 as the birthday" — month + date match.
+   */
+  isBirthday(birthday: DateInput): boolean {
+    const b = toDT(birthday)
+    return b.get('month') === this.get('month') && b.get('date') === this.get('date')
+  }
+
+  // Same/Current/Next/Last variants — generated programmatically below
+  isSameYear(o: DateInput): boolean {
+    return this.isSame(o, 'year')
+  }
+  isSameMonth(o: DateInput): boolean {
+    return this.isSame(o, 'month')
+  }
+  isSameWeek(o: DateInput): boolean {
+    return this.isSame(o, 'week')
+  }
+  isSameDay(o: DateInput): boolean {
+    return this.isSame(o, 'day')
+  }
+  isSameHour(o: DateInput): boolean {
+    return this.isSame(o, 'hour')
+  }
+  isSameMinute(o: DateInput): boolean {
+    return this.isSame(o, 'minute')
+  }
+  isSameSecond(o: DateInput): boolean {
+    return this.isSame(o, 'second')
+  }
+  isSameQuarter(o: DateInput): boolean {
+    return this.get('year') === toDT(o).get('year') && this.quarter() === toDT(o).quarter()
+  }
+
+  isToday(): boolean {
+    return this.isSame(DateTime.now(), 'day')
+  }
+  isTomorrow(): boolean {
+    return this.isSame(DateTime.now().add(1, 'day'), 'day')
+  }
+  isYesterday(): boolean {
+    return this.isSame(DateTime.now().subtract(1, 'day'), 'day')
+  }
+  isCurrentWeek(): boolean {
+    return this.isSame(DateTime.now(), 'week')
+  }
+  isNextWeek(): boolean {
+    return this.isSame(DateTime.now().add(1, 'week'), 'week')
+  }
+  isLastWeek(): boolean {
+    return this.isSame(DateTime.now().subtract(1, 'week'), 'week')
+  }
+  isCurrentMonth(): boolean {
+    return this.isSame(DateTime.now(), 'month')
+  }
+  isNextMonth(): boolean {
+    return this.isSame(DateTime.now().add(1, 'month'), 'month')
+  }
+  isLastMonth(): boolean {
+    return this.isSame(DateTime.now().subtract(1, 'month'), 'month')
+  }
+  isCurrentQuarter(): boolean {
+    return this.isSameQuarter(DateTime.now())
+  }
+  isNextQuarter(): boolean {
+    return this.isSameQuarter(DateTime.now().add(1, 'quarter'))
+  }
+  isLastQuarter(): boolean {
+    return this.isSameQuarter(DateTime.now().subtract(1, 'quarter'))
+  }
+  isCurrentYear(): boolean {
+    return this.isSame(DateTime.now(), 'year')
+  }
+  isNextYear(): boolean {
+    return this.isSame(DateTime.now().add(1, 'year'), 'year')
+  }
+  isLastYear(): boolean {
+    return this.isSame(DateTime.now().subtract(1, 'year'), 'year')
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // UTC / local
+  // ─────────────────────────────────────────────────────────────────────────
+
+  utc(): DateTime {
+    return new DateTime(this.valueOf(), { utc: true, locale: this._localeName ?? undefined })
+  }
+
+  local(): DateTime {
+    return new DateTime(this.valueOf(), { utc: false, locale: this._localeName ?? undefined })
+  }
+
+  /** UTC offset in minutes (positive = ahead of UTC). */
+  utcOffset(): number {
+    if (this._offsetMinutes != null) return this._offsetMinutes
+    return this._utc ? 0 : -this._d.getTimezoneOffset()
+  }
+
+  /**
+   * Return a new DateTime whose getters/format reflect the wall-clock time in
+   * the given IANA zone. Equivalent of Luxon's `setZone`. The underlying
+   * instant is preserved.
+   *
+   *   dt.shiftZone('Asia/Kathmandu').format('YYYY-MM-DD HH:mm Z')
+   */
+  shiftZone(zone: string): DateTime {
+    const offset = computeZoneOffsetMinutes(zone, this.valueOf())
+    const shifted = new DateTime(this.valueOf() + offset * 60_000, {
+      utc: true,
+      locale: this._localeName ?? undefined
+    })
+    shifted._offsetMinutes = offset
+    shifted._zoneName = zone
+    return shifted
+  }
+
+  /** Alias of {@link shiftZone}. */
+  setZone(zone: string): DateTime {
+    return this.shiftZone(zone)
+  }
+
+  /** IANA zone name attached via shiftZone, or null if untagged. */
+  zoneName(): string | null {
+    return this._zoneName
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Boundary navigation
+  // ─────────────────────────────────────────────────────────────────────────
+
+  startOf<U extends BoundaryUnitInput | UnitInput>(unit: U & BoundaryArg<U>): DateTime {
+    const u = resolveBoundaryUnit(unit)
+    return DateTime._wrap(_startOf(this._d, u, this._mode()), this._utc, this._localeName)
+  }
+
+  endOf<U extends BoundaryUnitInput | UnitInput>(unit: U & BoundaryArg<U>): DateTime {
+    const u = resolveBoundaryUnit(unit)
+    return DateTime._wrap(_endOf(this._d, u, this._mode()), this._utc, this._localeName)
+  }
+
+  /** First occurrence within month/quarter/year. Optionally pinned to weekday. */
+  firstOf(container: 'month' | 'quarter' | 'year', weekday?: Weekday): DateTime {
+    return DateTime._wrap(
+      _firstOf(this._d, container, this._mode(), weekday),
+      this._utc,
+      this._localeName
+    )
+  }
+
+  /** Last occurrence within month/quarter/year. Optionally pinned to weekday. */
+  lastOf(container: 'month' | 'quarter' | 'year', weekday?: Weekday): DateTime {
+    return DateTime._wrap(
+      _lastOf(this._d, container, this._mode(), weekday),
+      this._utc,
+      this._localeName
+    )
+  }
+
+  /**
+   * Nth occurrence of `weekday` within `container`.
+   * Returns invalid DateTime (NaN) if N exceeds count of that weekday.
+   */
+  nthOf(container: 'month' | 'quarter' | 'year', n: number, weekday: Weekday): DateTime {
+    const r = _nthOf(this._d, container, n, weekday, this._mode())
+    if (r === null) return new DateTime(NaN)
+    return DateTime._wrap(r, this._utc, this._localeName)
+  }
+
+  /**
+   * Move to the next occurrence of a weekday (0=Sun..6=Sat). Without
+   * argument, advances to the same weekday next week.
+   */
+  next(weekday?: Weekday): DateTime {
+    const target = weekday ?? this.get('day')
+    const dow = this.get('day')
+    let diff = (target - dow + 7) % 7
+    if (diff === 0) diff = 7
+    return this.add(diff, 'day')
+  }
+
+  /** Move to the previous occurrence of a weekday. */
+  previous(weekday?: Weekday): DateTime {
+    const target = weekday ?? this.get('day')
+    const dow = this.get('day')
+    let diff = (dow - target + 7) % 7
+    if (diff === 0) diff = 7
+    return this.subtract(diff, 'day')
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Round / Floor / Ceil
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Round to the nearest calendar boundary of `unit` — whichever of
+   * `startOf(unit)` / the next boundary is closer (ties round up). Calendar-
+   * aware for every unit: day/week/etc. snap to local (or UTC-mode) calendar
+   * boundaries, never to a raw UTC-epoch grid.
+   */
+  round<U extends BoundaryUnitInput | UnitInput>(unit: U & BoundaryArg<U>): DateTime {
+    const u = resolveBoundaryUnit(unit)
+    return DateTime._wrap(_round(this._d, u, this._mode()), this._utc, this._localeName)
+  }
+  floor<U extends BoundaryUnitInput | UnitInput>(unit: U & BoundaryArg<U>): DateTime {
+    const u = resolveBoundaryUnit(unit)
+    return DateTime._wrap(_floor(this._d, u, this._mode()), this._utc, this._localeName)
+  }
+  ceil<U extends BoundaryUnitInput | UnitInput>(unit: U & BoundaryArg<U>): DateTime {
+    const u = resolveBoundaryUnit(unit)
+    return DateTime._wrap(_ceil(this._d, u, this._mode()), this._utc, this._localeName)
+  }
+  /**
+   * Round to the nearest multiple of `n` of a fixed-size sub-day `unit`
+   * (e.g. `roundTo(15, 'minute')`). The grid is anchored at the current
+   * day's start in this instance's mode, so it lines up with wall-clock
+   * boundaries in any timezone offset. For calendar units use {@link round}.
+   */
+  roundTo(n: number, unit: RoundToUnitInput): DateTime {
+    const u = resolveUnit(unit)
+    if (u !== 'hour' && u !== 'minute' && u !== 'second' && u !== 'millisecond') {
+      throw new RangeError(`roundTo supports fixed-size sub-day units only; got "${u}"`)
+    }
+    return DateTime._wrap(
+      _roundToMultiple(this._d, n, u, this._mode()),
+      this._utc,
+      this._localeName
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Formatting
+  // ─────────────────────────────────────────────────────────────────────────
+
+  format(fmt = 'YYYY-MM-DD HH:mm:ss'): string {
+    if (!this.isValid()) return 'Invalid Date'
+    return formatDate(fmt, this._components(), this.getLocaleData())
+  }
+
+  formatIntl(opts: Intl.DateTimeFormatOptions = {}): string {
+    return _formatIntl(this.toDate(), this._utc, this._localeName ?? Locales.getDefault(), opts)
+  }
+
+  toString(): string {
+    return this.isValid() ? this.toISOString() : 'Invalid Date'
+  }
+  toISOString(): string {
+    return toISO(this.valueOf())
+  }
+  toJSON(): string {
+    return this.toISOString()
+  }
+  toRFC2822(): string {
+    return _toRFC2822(this._d)
+  }
+  toRFC3339(): string {
+    return _toRFC3339(this._d)
+  }
+  toExcel(): number {
+    return _toExcel(this.valueOf())
+  }
+  toSQL(): string {
+    return _toSQL(this._d)
+  }
+  toSQLDate(): string {
+    return _toSQLDate(this._d)
+  }
+  toSQLTime(): string {
+    return _toSQLTime(this._d)
+  }
+  toMillis(): number {
+    return this.valueOf()
+  }
+  toUnix(): number {
+    return this.unix()
+  }
+
+  // ── Carbon-style presets ─────────────────────────────────────────────────
+
+  /** "2026-04-29T12:34:56+00:00" — alias of {@link toRFC3339}. */
+  toAtomString(): string {
+    return this.toRFC3339()
+  }
+  /** "Wednesday, 29-Apr-2026 12:34:56 GMT" — RFC 850. */
+  toCookieString(): string {
+    return this.format('dddd, DD-MMM-YYYY HH:mm:ss [GMT]')
+  }
+  /** "2026-04-29T12:34:56+00:00" — W3C / ISO 8601 with offset. */
+  toW3cString(): string {
+    return this.toRFC3339()
+  }
+  /** "Wed, 29 Apr 2026 12:34:56 +0000" — RFC 1123 / RSS feed style. */
+  toRssString(): string {
+    return this.toRFC2822()
+  }
+  /** "Apr 29, 2026". */
+  toFormattedDateString(): string {
+    return this.format('MMM D, YYYY')
+  }
+  /** "Wed, Apr 29, 2026". */
+  toFormattedDayDateString(): string {
+    return this.format('ddd, MMM D, YYYY')
+  }
+  /** "Wed, Apr 29, 2026 12:34 PM". */
+  toDayDateTimeString(): string {
+    return this.format('ddd, MMM D, YYYY h:mm A')
+  }
+  /** "12:34:56". */
+  toTimeString(): string {
+    return this.format('HH:mm:ss')
+  }
+  /** "2026-04-29". */
+  toDateString(): string {
+    return this.format('YYYY-MM-DD')
+  }
+  /** "12:34:56" using locale's LTS preset. */
+  toLongTimeString(): string {
+    return this.format('LTS')
+  }
+  /** Locale's L preset. */
+  toLocaleDateString(): string {
+    return this.format('L')
+  }
+  /** Locale's LL preset. */
+  toLocaleLongDateString(): string {
+    return this.format('LL')
+  }
+  /** Locale's LLLL preset. */
+  toLocaleFullString(): string {
+    return this.format('LLLL')
+  }
+  /** "1d", "2h", "45m" — best-effort short relative-to-now. */
+  toShortString(): string {
+    const ms = Math.abs(this.valueOf() - Clock.now())
+    if (ms < 60_000) return 'now'
+    if (ms < 3_600_000) return `${Math.round(ms / 60_000)}m`
+    if (ms < 86_400_000) return `${Math.round(ms / 3_600_000)}h`
+    return `${Math.round(ms / 86_400_000)}d`
+  }
+
+  toObject(): Required<Omit<DateObject, 'day'>> & { day: number } {
+    return {
+      year: this.get('year'),
+      month: this.get('month'),
+      day: this.get('date'),
+      hour: this.get('hour'),
+      minute: this.get('minute'),
+      second: this.get('second'),
+      millisecond: this.get('millisecond')
+    }
+  }
+
+  toArray(): [number, number, number, number, number, number, number] {
+    return [
+      this.get('year'),
+      this.get('month') - 1,
+      this.get('date'),
+      this.get('hour'),
+      this.get('minute'),
+      this.get('second'),
+      this.get('millisecond')
+    ]
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Relative
+  // ─────────────────────────────────────────────────────────────────────────
+
+  fromNow(withoutSuffix = false): string {
+    return _relativeTime(
+      this.valueOf() - Clock.now(),
+      this.getLocaleData().relativeTime,
+      withoutSuffix
+    )
+  }
+
+  from(other: DateInput, withoutSuffix = false): string {
+    return _relativeTime(
+      this.valueOf() - toDT(other).valueOf(),
+      this.getLocaleData().relativeTime,
+      withoutSuffix
+    )
+  }
+
+  toNow(withoutSuffix = false): string {
+    return _relativeTime(
+      Clock.now() - this.valueOf(),
+      this.getLocaleData().relativeTime,
+      withoutSuffix
+    )
+  }
+
+  to(other: DateInput, withoutSuffix = false): string {
+    return _relativeTime(
+      toDT(other).valueOf() - this.valueOf(),
+      this.getLocaleData().relativeTime,
+      withoutSuffix
+    )
+  }
+
+  /** Carbon-style alias for `fromNow`. */
+  diffForHumans(other?: DateInput): string {
+    return other === undefined ? this.fromNow() : this.from(other)
+  }
+
+  calendar(reference?: DateInput): string {
+    const refRaw = reference ? toDT(reference) : DateTime.now()
+    // Normalize the reference to this instance's mode so both startOf('day')
+    // calls use the same calendar-day definition; round to absorb DST days.
+    const ref = this._utc ? refRaw.utc() : refRaw.local()
+    const diffDays = Math.round(
+      (this.startOf('day').valueOf() - ref.startOf('day').valueOf()) / 86_400_000
+    )
+    const loc = this.getLocaleData()
+    return _calendarLabel(
+      diffDays,
+      this.format(loc.longDateFormat.LT ?? 'h:mm A'),
+      this.format(loc.longDateFormat.L ?? 'MM/DD/YYYY'),
+      this.format('dddd'),
+      loc.calendar
+    )
+  }
+
+  preciseDiff(other: DateInput): PreciseDiffResult {
+    const o = toDT(other)
+    const isAfter = this.valueOf() >= o.valueOf()
+    const a = isAfter ? o : this
+    const b = isAfter ? this : o
+    const prevMonth = new DateTime(new Date(b.get('year'), b.get('month') - 2, 1))
+    return _preciseDiff(
+      {
+        year: a.get('year'),
+        month: a.get('month'),
+        date: a.get('date'),
+        hour: a.get('hour'),
+        minute: a.get('minute'),
+        second: a.get('second'),
+        millisecond: a.get('millisecond')
+      },
+      {
+        year: b.get('year'),
+        month: b.get('month'),
+        date: b.get('date'),
+        hour: b.get('hour'),
+        minute: b.get('minute'),
+        second: b.get('second'),
+        millisecond: b.get('millisecond')
+      },
+      prevMonth.daysInMonth()
+    )
+  }
+
+  preciseFrom(other: DateInput, maxParts = 3): string {
+    return this.preciseDiff(other).humanize(maxParts)
+  }
+
+  age(): AgeResult {
+    return _age(DateTime.now().preciseDiff(this))
+  }
+
+  countdown(): CountdownResult {
+    return _countdown(this.valueOf(), Clock.now())
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Calendar grid
+  // ─────────────────────────────────────────────────────────────────────────
+
+  calendarGrid(opts: CalendarGridOptions = {}): CalendarCell<DateTime>[][] {
+    const weekStartOffset = opts.weekStart === 'monday' ? 1 : opts.weekStart === 'saturday' ? 6 : 0
+    const year = this.get('year')
+    const month = this.get('month')
+    const firstDay = new DateTime(new Date(year, month - 1, 1))
+    const dim = this.daysInMonth()
+    const today = DateTime.now().startOf('day')
+    const startPad = (firstDay.get('day') - weekStartOffset + 7) % 7
+
+    const cells: CalendarCell<DateTime>[] = []
+    for (let i = startPad - 1; i >= 0; i--) {
+      const d = firstDay.subtract(i + 1, 'day').startOf('day')
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: d.isSame(today, 'day'),
+        isWeekend: d.isWeekend()
+      })
+    }
+    for (let day = 1; day <= dim; day++) {
+      const d = new DateTime(new Date(year, month - 1, day))
+      cells.push({
+        date: d,
+        isCurrentMonth: true,
+        isToday: d.isSame(today, 'day'),
+        isWeekend: d.isWeekend()
+      })
+    }
+    let nextDay = 1
+    while (cells.length < 42) {
+      const d = new DateTime(new Date(year, month, nextDay++))
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: d.isSame(today, 'day'),
+        isWeekend: d.isWeekend()
+      })
+    }
+
+    const grid: CalendarCell<DateTime>[][] = []
+    for (let i = 0; i < 42; i += 7) grid.push(cells.slice(i, i + 7))
+    return grid
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Fiscal year
+  // ─────────────────────────────────────────────────────────────────────────
+
+  fiscalYear(config: FiscalConfig = { startMonth: 1 }): number {
+    if (config.startMonth === 1) return this.get('year')
+    return this.get('month') >= config.startMonth ? this.get('year') + 1 : this.get('year')
+  }
+
+  fiscalQuarter(config: FiscalConfig = { startMonth: 1 }): number {
+    const adjusted = ((this.get('month') - config.startMonth + 12) % 12) + 1
+    return Math.ceil(adjusted / 3)
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Internal helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private _mode(): Mode {
+    return this._utc ? 'utc' : 'local'
+  }
+
+  private _components(): DateComponents {
+    return {
+      year: this.get('year'),
+      month: this.get('month'),
+      date: this.get('date'),
+      hour: this.get('hour'),
+      minute: this.get('minute'),
+      second: this.get('second'),
+      millisecond: this.get('millisecond'),
+      day: this.get('day'),
+      timestampMs: this.valueOf(),
+      dayOfYear: this.dayOfYear(),
+      isoWeek: this.isoWeek(),
+      isoWeekYear: this.isoWeekYear(),
+      quarter: this.quarter(),
+      nativeDate: this._d,
+      offsetMinutes: this._offsetMinutes ?? (this._utc ? 0 : undefined)
+    }
+  }
+
+  /** Internal: build a DateTime from a JS Date with explicit utc flag. */
+  private static _wrap(d: Date, utc: boolean, localeName: string | null): DateTime {
+    const out = new DateTime(d, { utc })
+    if (localeName) out._localeName = localeName
+    return out
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper — IANA zone offset minutes for a specific instant.
+// Inlined here to avoid an import cycle with src/ecosystem/Timezone.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function computeZoneOffsetMinutes(zone: string, ms: number): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: zone,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false
+  }).formatToParts(new Date(ms))
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0)
+  const hour = get('hour') % 24
+  const tzMs = Date.UTC(
+    get('year'),
+    get('month') - 1,
+    get('day'),
+    hour,
+    get('minute'),
+    get('second')
+  )
+  return Math.round((tzMs - ms) / 60_000)
+}
+
+export default DateTime

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>@anil-labs/snaptime — CDN demo</title>
+  </head>
+  <body>
+    <h1>snaptime straight off a CDN</h1>
+    <p>
+      No bundler, no build step — one <code>&lt;script&gt;</code> tag. In your own page, load it
+      from unpkg or jsDelivr instead of the local path:
+    </p>
+    <pre>&lt;script src="https://unpkg.com/@anil-labs/snaptime"&gt;&lt;/script&gt;</pre>
+    <pre id="out"></pre>
+
+    <!-- Local build (examples run against the workspace build). On a real page use:
+         https://unpkg.com/@anil-labs/snaptime or
+         https://cdn.jsdelivr.net/npm/@anil-labs/snaptime -->
+    <script src="../../packages/snaptime/dist/index.global.js"></script>
+    <script>
+      const { dateTime, Duration, Cron, parseNatural } = Snaptime
+      const out = []
+      const log = (label, value) => out.push(label + '\n  ' + value)
+
+      const d = dateTime('2026-01-15T10:30:00')
+      log('format', d.format('dddd, MMMM D, YYYY h:mm A'))
+      log('add 3 weeks', d.add(3, 'week').format('YYYY-MM-DD'))
+      log('duration 2h30m in minutes', Duration.parse('2h30m').as('minute'))
+      log(
+        'next weekday 9am',
+        new Cron('0 9 * * 1-5').next(new Date('2026-01-15T12:00:00')).toISOString()
+      )
+      log('next friday', parseNatural('next friday', new Date('2026-01-15')).format('YYYY-MM-DD'))
+
+      document.querySelector('#out').textContent = out.join('\n\n')
+    </script>
+  </body>
+</html>
