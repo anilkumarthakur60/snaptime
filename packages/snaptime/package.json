@@ -12,6 +12,28 @@
     "./dist/locale/*.js",
     "./dist/locale/*.cjs"
   ],
+  "typesVersions": {
+    "*": {
+      "rrule": [
+        "./dist/rrule.d.ts"
+      ],
+      "astronomy": [
+        "./dist/astronomy.d.ts"
+      ],
+      "validate": [
+        "./dist/validate.d.ts"
+      ],
+      "calendars/bs": [
+        "./dist/calendars/bs.d.ts"
+      ],
+      "collections/RangeSet": [
+        "./dist/collections/RangeSet.d.ts"
+      ],
+      "locale/*": [
+        "./dist/locale/*.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "import": {
