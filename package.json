@@ -24,17 +24,17 @@
     "docs:preview": "pnpm --filter docs preview"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
+    "@changesets/cli": "^2.31.1",
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.1.0",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-perfectionist": "^5.7.0",
-    "globals": "^17.7.0",
-    "prettier": "^3.8.3",
-    "typescript-eslint": "^8.57.1"
+    "eslint-plugin-perfectionist": "^5.10.0",
+    "globals": "^17.9.0",
+    "prettier": "^3.9.6",
+    "typescript-eslint": "^8.65.0"
   },
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "pnpm@11.15.1"
+  "packageManager": "pnpm@11.18.0"
 }
