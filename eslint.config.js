@@ -40,6 +40,14 @@ export default tseslint.config(
     }
   },
 
+  // Build/release scripts: plain Node ESM.
+  {
+    files: ['packages/*/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { ...globals.node }
+    }
+  },
+
   // Tests and examples (incl. plain .mjs/.js): fast, non-type-aware linting,
   // with Node + browser globals available.
   {

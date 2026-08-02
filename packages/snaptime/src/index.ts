@@ -289,7 +289,4 @@ export type { Freq, Weekday as RRuleWeekday, WeekdayWithN, RRuleOptions } from '
 export type { BSDate } from './calendars/bs'
 export type { MoonPhase, MoonPhaseName, Season } from './astronomy'
 
-// Auto-load any user extensions on first import. Side-effecting only.
-import './extensions/index'
-
 export default dateTime

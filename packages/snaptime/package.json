@@ -43,7 +43,8 @@
       "require": {
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
-      }
+      },
+      "default": "./dist/index.js"
     },
     "./rrule": {
       "import": {
@@ -53,7 +54,8 @@
       "require": {
         "types": "./dist/rrule.d.cts",
         "default": "./dist/rrule.cjs"
-      }
+      },
+      "default": "./dist/rrule.js"
     },
     "./astronomy": {
       "import": {
@@ -63,7 +65,8 @@
       "require": {
         "types": "./dist/astronomy.d.cts",
         "default": "./dist/astronomy.cjs"
-      }
+      },
+      "default": "./dist/astronomy.js"
     },
     "./validate": {
       "import": {
@@ -73,7 +76,8 @@
       "require": {
         "types": "./dist/validate.d.cts",
         "default": "./dist/validate.cjs"
-      }
+      },
+      "default": "./dist/validate.js"
     },
     "./calendars/bs": {
       "import": {
@@ -83,7 +87,8 @@
       "require": {
         "types": "./dist/calendars/bs.d.cts",
         "default": "./dist/calendars/bs.cjs"
-      }
+      },
+      "default": "./dist/calendars/bs.js"
     },
     "./collections/RangeSet": {
       "import": {
@@ -93,7 +98,8 @@
       "require": {
         "types": "./dist/collections/RangeSet.d.cts",
         "default": "./dist/collections/RangeSet.cjs"
-      }
+      },
+      "default": "./dist/collections/RangeSet.js"
     },
     "./locale/*": {
       "import": {
@@ -103,15 +109,18 @@
       "require": {
         "types": "./dist/locale/*.d.cts",
         "default": "./dist/locale/*.cjs"
-      }
+      },
+      "default": "./dist/locale/*.js"
     },
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/check-dist.mjs",
+    "prepublishOnly": "node scripts/check-dist.mjs",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",

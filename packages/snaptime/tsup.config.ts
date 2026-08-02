@@ -6,6 +6,17 @@ import { defineConfig } from 'tsup'
 // into the shared registry, so `splitting` is required for BOTH formats:
 // every entry must resolve the registry from a shared chunk, not an inlined
 // per-entry copy.
+//
+// `treeshake` is deliberately NOT enabled: it runs a second rollup pass over
+// esbuild's output, which emits a duplicate `//# sourceMappingURL=` comment in
+// every artifact and warns about our (intentional) default-plus-named exports.
+// esbuild already tree-shakes, and consumers bundle the ESM entry themselves —
+// the pass only shrinks the shared CJS chunks, ~1.7% gzipped overall, while
+// making the ESM/CJS entry files slightly *larger*.
+//
+// No sourcemaps: they were 63% of the unpacked tarball (1.3 MB of maps for
+// 780 KB of code), do not affect consumers' bundle size (bundlers strip
+// them), and the test suite runs against `src` rather than `dist`.
 const ENTRIES = {
   index: 'src/index.ts',
   rrule: 'src/rrule/index.ts',
@@ -42,20 +53,22 @@ export default defineConfig([
     splitting: true,
     dts: true,
     clean: true,
-    treeshake: true,
-    sourcemap: true,
+    sourcemap: false,
     target: 'es2020',
     tsconfig: 'tsconfig.tsup.json'
   },
   // IIFE (index.global.js) exposing `Snaptime` for direct CDN <script> usage.
+  // Minified: unpkg/jsdelivr serve this file byte-for-byte, so unlike the
+  // ESM/CJS builds there is no consumer bundler to do the minification.
   {
     entry: { index: 'src/index.ts' },
     format: ['iife'],
     globalName: 'Snaptime',
+    minify: true,
     dts: false,
+    // The library build owns `clean`; this pass must not wipe it.
     clean: false,
-    treeshake: true,
-    sourcemap: true,
+    sourcemap: false,
     target: 'es2020',
     tsconfig: 'tsconfig.tsup.json'
   }

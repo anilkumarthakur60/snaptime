@@ -1,4 +1,30 @@
-# Logs
+# ─── Dependencies ────────────────────────────────────────────────
+# Unanchored: matches at the root and in every workspace package.
+node_modules
+.pnpm-store/
+
+# ─── Build output ────────────────────────────────────────────────
+dist
+dist-ssr
+dist-nots
+build/
+.output/
+*.tgz
+
+# ─── Caches ──────────────────────────────────────────────────────
+.turbo/
+.cache/
+.vite/
+.tsup/
+.rollup.cache/
+.eslintcache
+*.tsbuildinfo
+
+# ─── Tests & coverage ────────────────────────────────────────────
+coverage
+*.lcov
+
+# ─── Logs ────────────────────────────────────────────────────────
 logs
 *.log
 npm-debug.log*
@@ -7,28 +33,29 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ─── Environment & local overrides ───────────────────────────────
+.env
+.env.*
+!.env.example
 *.local
+.claude/settings.local.json
 
-# Editor directories and files
+# ─── Editor & OS ─────────────────────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-coverage
 
-# VitePress documentation
+# ─── VitePress documentation ─────────────────────────────────────
 docs/.vitepress/dist
 docs/.vitepress/cache
 docs/.vitepress/.temp
 .vitepress/dist
 .vitepress/cache
 .vitepress/.temp
-
