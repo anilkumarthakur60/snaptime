@@ -1,6 +1,6 @@
 {
   "name": "@anil-labs/snaptime",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Modern zero-dependency TypeScript date/time library: formatting, parsing, timezones, business days, cron, RRULE, natural language, Bikram Sambat, astronomy, validators, and more. Works in Node, any JS framework, or straight off a CDN.",
   "type": "module",
   "main": "./dist/index.cjs",
