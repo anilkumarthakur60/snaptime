@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Date manipulation primitives used by DateTime — pure operations on a JS Date
+// Date manipulation primitives used by DateTime  pure operations on a JS Date
 // that produce a new JS Date. Keeps the DateTime class focused on identity &
 // dispatch rather than mechanics.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ export function startOf(d: Date, unit: BoundaryUnit, mode: Mode, weekStartSunday
 
   switch (unit) {
     case 'year':
-      // Set the date to 1 *before* changing the month — setting the month
+      // Set the date to 1 *before* changing the month  setting the month
       // first can overflow when the current day-of-month exceeds the target
       // month's length (e.g. May 31 → setMonth(April) lands on May 1).
       set.date(out, 1)
@@ -277,7 +277,7 @@ export function ceilTo(d: Date, unit: BoundaryUnit, mode: Mode): Date {
 /**
  * Round to the nearest calendar boundary of `unit`: whichever of
  * `startOf(unit)` and the next boundary is closer (ties round up). This is
- * calendar-aware for every unit — unlike a raw epoch-ms grid it respects the
+ * calendar-aware for every unit  unlike a raw epoch-ms grid it respects the
  * local (or UTC-mode) day/week starts and DST transitions.
  */
 export function roundTo(d: Date, unit: BoundaryUnit, mode: Mode): Date {
@@ -289,7 +289,7 @@ export function roundTo(d: Date, unit: BoundaryUnit, mode: Mode): Date {
 /**
  * Round to the nearest multiple of `n` of a fixed-size sub-day `unit`
  * (e.g. nearest 15 minutes). The grid is anchored at the current day's start
- * in the given mode — not at the raw UTC epoch — so results line up with
+ * in the given mode  not at the raw UTC epoch  so results line up with
  * local wall-clock boundaries in any timezone offset.
  */
 export function roundToMultiple(d: Date, n: number, unit: RoundToUnit, mode: Mode): Date {
@@ -303,7 +303,7 @@ export function roundToMultiple(d: Date, n: number, unit: RoundToUnit, mode: Mod
 // Add / set primitives
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Calendar-correct add for month/year — clamps date if target month is shorter. */
+/** Calendar-correct add for month/year  clamps date if target month is shorter. */
 export function addMonths(d: Date, n: number, mode: Mode): Date {
   const out = clone(d)
   const get = getters(mode)

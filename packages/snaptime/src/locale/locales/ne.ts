@@ -2,7 +2,7 @@ import type { LocaleData } from '../../core/types'
 import { Locales } from '../registry'
 
 /**
- * Nepali (ne) locale — included as a friendly default given the package author
+ * Nepali (ne) locale  included as a friendly default given the package author
  * is based in Nepal.
  */
 export const NE: LocaleData = {

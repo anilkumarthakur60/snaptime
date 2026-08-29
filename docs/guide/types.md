@@ -42,10 +42,10 @@ Controls boundary inclusion for `isBetween()`:
 type Inclusivity = '()' | '[]' | '[)' | '(]'
 ```
 
-- `'()'` — exclusive on both ends (default)
-- `'[]'` — inclusive on both ends
-- `'[)'` — inclusive start, exclusive end
-- `'(]'` — exclusive start, inclusive end
+- `'()'`  exclusive on both ends (default)
+- `'[]'`  inclusive on both ends
+- `'[)'`  inclusive start, exclusive end
+- `'(]'`  exclusive start, inclusive end
 
 ### Specialized Unit Types
 
@@ -67,7 +67,7 @@ type HolidayCountry = 'US' | 'UK' | 'IN' | 'DE' | 'FR' | 'CA' | 'AU'
 
 ### `DateInput`
 
-The universal input type accepted by most D8 APIs — parsing, comparison, arithmetic, and factory methods:
+The universal input type accepted by most D8 APIs  parsing, comparison, arithmetic, and factory methods:
 
 ```typescript
 type DateInput = string | number | Date | DateFormatLike

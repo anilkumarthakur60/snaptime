@@ -1,4 +1,4 @@
-// Astronomy helpers — sunrise/sunset/twilight, moon phase, seasons.
+// Astronomy helpers  sunrise/sunset/twilight, moon phase, seasons.
 //
 // Pure-math implementations: no network, no data tables. Accuracy is good
 // enough for civil purposes (within a minute or two for sun, within a day

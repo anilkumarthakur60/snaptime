@@ -58,7 +58,7 @@ export function isLeapYear(year: number): boolean {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Field accessors — keyed by UTC vs local mode. Used by DateTime.get/set.
+// Field accessors  keyed by UTC vs local mode. Used by DateTime.get/set.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type FieldGetter = (d: Date) => number
@@ -105,7 +105,7 @@ export const LOCAL_SETTERS: Record<string, FieldSetter> = {
 
 export const UTC_SETTERS: Record<string, FieldSetter> = {
   year: (d, v) => d.setUTCFullYear(v),
-  // See LOCAL_SETTERS.month — clamps day-of-month to the target month length.
+  // See LOCAL_SETTERS.month  clamps day-of-month to the target month length.
   month: (d, v) => {
     const day = d.getUTCDate()
     d.setUTCDate(1)

@@ -135,7 +135,7 @@ export function stringifyRRule(opts: RRuleOptions): string {
         ? u
         : typeof u === 'number' || typeof u === 'string'
           ? new Date(u)
-          : new Date(u.valueOf()) // DateTime — normalize via epoch ms
+          : new Date(u.valueOf()) // DateTime  normalize via epoch ms
     parts.push(`UNTIL=${fmtCompact(d)}`)
   }
   if (opts.byweekday)

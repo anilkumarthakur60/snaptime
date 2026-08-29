@@ -35,7 +35,7 @@ Absolute duration between start and end.
 
 | Param | Type | Default | Description |
 |:------|:-----|:--------|:------------|
-| `date` | `string \| number \| Date \| DateFormat` | — | Date to check |
+| `date` | `string \| number \| Date \| DateFormat` |  | Date to check |
 | `inclusive` | `boolean` | `true` | Include endpoints |
 
 ### `overlaps(other): boolean`

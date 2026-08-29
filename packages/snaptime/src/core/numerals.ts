@@ -21,7 +21,7 @@ export function toNumerals(input: string, system: NumeralSystem): string {
   return input.replace(/[0-9]/g, (d) => table[Number(d)]!)
 }
 
-/** Reverse — collapse any of the supported systems back to ASCII. */
+/** Reverse  collapse any of the supported systems back to ASCII. */
 export function toWesternNumerals(input: string): string {
   let out = input
   for (const sys of Object.keys(DIGITS) as NumeralSystem[]) {

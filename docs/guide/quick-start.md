@@ -55,7 +55,7 @@ b.diff(a, 'hour')      // → 24
 // isBetween with inclusivity
 const c = d8('2026-01-15T12:00:00Z')
 c.isBetween(a, b, '[]')  // → true  (inclusive on both ends)
-c.isBetween(a, b, '()')  // → false (exclusive — c equals a)
+c.isBetween(a, b, '()')  // → false (exclusive  c equals a)
 ```
 
 ## 5. Relative Time & Age

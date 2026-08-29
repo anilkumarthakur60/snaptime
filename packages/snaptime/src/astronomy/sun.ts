@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Solar position calculations — pure math, no API calls.
+// Solar position calculations  pure math, no API calls.
 //
 // Based on NOAA's Solar Calculator (https://gml.noaa.gov/grad/solcalc/).
 // Accurate to within ~1 minute for civil purposes within years 1801-2099.

@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Duration — an immutable span of time.
+// Duration  an immutable span of time.
 //
 // Stored as a single signed millisecond count. Calendar-relative operations
-// (like "what date is 2 months from now") live on DateTime — Duration only
+// (like "what date is 2 months from now") live on DateTime  Duration only
 // represents quantities of time independent of any anchor.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -282,7 +282,7 @@ export default class Duration {
   }
 
   /**
-   * Token-based formatter — `HH:mm:ss.SSS`, `H[h]m[m]`, etc.
+   * Token-based formatter  `HH:mm:ss.SSS`, `H[h]m[m]`, etc.
    * Like {@link humanize}, components are computed on the absolute value;
    * negative durations are rendered with a single leading `-`.
    */

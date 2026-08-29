@@ -25,7 +25,7 @@ const COEFFS_2000: Record<Season, [number, number, number, number, number]> = {
   winter: [2451900.05952, 365242.74049, -0.06223, -0.00823, 0.00032]
 }
 
-// Meeus Table 27.A — anchored at year 0 (Y = year/1000), for years < 1000.
+// Meeus Table 27.A  anchored at year 0 (Y = year/1000), for years < 1000.
 const COEFFS_0: Record<Season, [number, number, number, number, number]> = {
   spring: [1721139.29189, 365242.1374, 0.06134, 0.00111, -0.00071],
   summer: [1721233.25401, 365241.72562, -0.05323, 0.00907, 0.00025],

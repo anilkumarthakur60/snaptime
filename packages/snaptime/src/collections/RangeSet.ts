@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// RangeSet — set algebra over a collection of DateRanges.
+// RangeSet  set algebra over a collection of DateRanges.
 //
 // Useful for availability/booking apps:
 //   const open = new RangeSet([businessHours]).subtract(holidays).subtract(bookings)

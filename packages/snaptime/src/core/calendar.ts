@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Calendar arithmetic — pure functions over JS Date.
+// Calendar arithmetic  pure functions over JS Date.
 // Used by DateTime to compute dayOfYear, ISO week, quarter, etc. without
 // circular imports back into the class.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ export function isoWeek(d: Date, isUtc: boolean): number {
 }
 
 /**
- * The "ISO week year" — sometimes differs from the calendar year for dates near
+ * The "ISO week year"  sometimes differs from the calendar year for dates near
  * the year boundary (e.g. Jan 1 may belong to ISO week 52 of the prior year).
  */
 export function isoWeekYear(d: Date, isUtc: boolean): number {
@@ -54,7 +54,7 @@ export function isoWeekYear(d: Date, isUtc: boolean): number {
   return target.getFullYear()
 }
 
-/** Total ISO weeks in a year — 52 or 53. */
+/** Total ISO weeks in a year  52 or 53. */
 export function weeksInIsoYear(year: number): number {
   // Year has 53 weeks if Jan 1 is Thursday, or Dec 31 is Thursday (leap years)
   const lastDayOfYear = new Date(year, 11, 31)
@@ -88,7 +88,7 @@ export function isLeapYear(year: number): boolean {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
 }
 
-/** Days in a year — 365 or 366. */
+/** Days in a year  365 or 366. */
 export function daysInYear(year: number): number {
   return isLeapYear(year) ? 366 : 365
 }

@@ -275,8 +275,8 @@ describe('Duration.abs()', () => {
   })
 })
 
-// ─── humanize(true) — short form ─────────────────────────────────────────────
-describe('Duration.humanize(true) — short form', () => {
+// ─── humanize(true)  short form ─────────────────────────────────────────────
+describe('Duration.humanize(true)  short form', () => {
   test('< 1000ms → e.g. "500ms"', () => {
     expect(new Duration(500).humanize(true)).toBe('500ms')
   })
@@ -314,8 +314,8 @@ describe('Duration.humanize(true) — short form', () => {
   })
 })
 
-// ─── humanize(false) — long form ─────────────────────────────────────────────
-describe('Duration.humanize(false) — long form', () => {
+// ─── humanize(false)  long form ─────────────────────────────────────────────
+describe('Duration.humanize(false)  long form', () => {
   test('multi-unit: 2d3h15m includes days, hours, minutes', () => {
     const d = Duration.parse('2d3h15m')
     const result = d.humanize(false)

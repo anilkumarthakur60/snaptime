@@ -1,6 +1,6 @@
 # Introduction
 
-**D8** is a modern, zero-dependency TypeScript date/time library that gives you everything you need for date manipulation, formatting, timezone handling, business calendars, cron scheduling, and natural language parsing — in a single, fully-typed package.
+**D8** is a modern, zero-dependency TypeScript date/time library that gives you everything you need for date manipulation, formatting, timezone handling, business calendars, cron scheduling, and natural language parsing  in a single, fully-typed package.
 
 ## Why D8?
 
@@ -8,9 +8,9 @@ Most date libraries ask you to choose: lightweight _or_ feature-rich. D8 gives y
 
 | | D8 |
 |:--|:--|
-| **Type safety** | 100 % TypeScript — no `any` escape hatches |
+| **Type safety** | 100 % TypeScript  no `any` escape hatches |
 | **Dependencies** | Zero |
-| **Bundle** | ESM + UMD + `.d.ts` — use anywhere |
+| **Bundle** | ESM + UMD + `.d.ts`  use anywhere |
 | **Methods** | 80+ on `DateFormat` alone |
 | **Timezones** | Full IANA support via built-in `Intl` |
 | **Business logic** | Business days + holidays for 7 countries |
@@ -71,6 +71,6 @@ date.countdown().humanize() // "5 days, 8 hours"
 
 ## Next Steps
 
-- [Installation](./installation) — Set up D8 in your project
-- [Quick Start](./quick-start) — Build your first date program
-- [DateFormat](./dateformat) — Deep dive into the core class
+- [Installation](./installation)  Set up D8 in your project
+- [Quick Start](./quick-start)  Build your first date program
+- [DateFormat](./dateformat)  Deep dive into the core class

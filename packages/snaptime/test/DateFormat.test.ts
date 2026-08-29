@@ -391,7 +391,7 @@ describe('Day of week checks', () => {
 // Fake time: 2026-01-15T12:00:00.000Z (Thursday, Jan 2026, week 3, Q1)
 describe('Temporal is* checks', () => {
   // Derive test inputs from the (mocked) "now" so UTC/local construction modes
-  // match across the comparand and DateTime.now() — otherwise `isSame(_, 'year')`
+  // match across the comparand and DateTime.now()  otherwise `isSame(_, 'year')`
   // can drift across timezones.
   const now = () => DateFormat.now()
 
@@ -739,7 +739,7 @@ describe('weekday / quarter / isoWeek / isoWeekYear', () => {
   })
 
   test('isoWeek() for 2026-01-01 → ISO week 1', () => {
-    // 2026-01-01 (Thu) — under ISO 8601, week 1 contains the first Thursday.
+    // 2026-01-01 (Thu)  under ISO 8601, week 1 contains the first Thursday.
     const d = new DateFormat('2026-01-01')
     expect(d.isoWeek()).toBe(1)
   })
@@ -865,7 +865,7 @@ describe('format()', () => {
   test('DD → zero-padded date', () => expect(d.format('DD')).toBe('15'))
   test('D → date', () => expect(d.format('D')).toBe('15'))
 
-  // isoWeek for 2026-01-15 = 3 (ISO 8601 — Thursday in week 3 of 2026).
+  // isoWeek for 2026-01-15 = 3 (ISO 8601  Thursday in week 3 of 2026).
   test('WW → zero-padded week', () => expect(d.format('WW')).toBe('03'))
   test('W → week number', () => expect(d.format('W')).toBe('3'))
 

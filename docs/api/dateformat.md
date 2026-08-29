@@ -56,7 +56,7 @@ Create a `DateFormat` from a plain object with date components: `{ year, month, 
 
 ---
 
-## Instance Methods — Formatting
+## Instance Methods  Formatting
 
 ### `format(fmt?): string`
 Format using tokens. Default: `'YYYY-MM-DD HH:mm:ss'`. Returns `'Invalid Date'` if invalid.
@@ -99,7 +99,7 @@ Alias for `valueOf()`.
 
 ---
 
-## Instance Methods — Get / Set
+## Instance Methods  Get / Set
 
 ### `get(unit): number`
 Get a component. Units: `year`, `month` (1-12), `date`, `day` (0-6), `hour`, `minute`, `second`, `millisecond`.
@@ -115,7 +115,7 @@ Seconds since epoch (floored).
 
 ---
 
-## Instance Methods — Arithmetic
+## Instance Methods  Arithmetic
 
 ### `add(n, unit): DateFormat`
 Add `n` units.
@@ -134,7 +134,7 @@ Deep copy.
 
 ---
 
-## Instance Methods — Comparison
+## Instance Methods  Comparison
 
 ### `isBefore(other): boolean`
 ### `isAfter(other): boolean`
@@ -175,7 +175,7 @@ Difference in the given unit. `floating=true` for decimal precision.
 
 ---
 
-## Instance Methods — Validation
+## Instance Methods  Validation
 
 ### `isValid(): boolean`
 ### `isUtc(): boolean`
@@ -192,13 +192,13 @@ Sat–Sun.
 
 ---
 
-## Instance Methods — Day-of-Week
+## Instance Methods  Day-of-Week
 
 `isSunday()` · `isMonday()` · `isTuesday()` · `isWednesday()` · `isThursday()` · `isFriday()` · `isSaturday()`
 
 ---
 
-## Instance Methods — Period Checks
+## Instance Methods  Period Checks
 
 Each period has four methods following the pattern:
 
@@ -230,7 +230,7 @@ Microsecond aliases: `isSameMicro`, `isCurrentMicro`, `isNextMicro`, `isLastMicr
 
 ---
 
-## Instance Methods — Relative Time
+## Instance Methods  Relative Time
 
 ### `fromNow(): string`
 e.g. `"in 5 days"` or `"3 hours ago"`.
@@ -252,7 +252,7 @@ Time remaining until this date. Returns `{ days, hours, minutes, seconds, millis
 
 ---
 
-## Instance Methods — Calendar
+## Instance Methods  Calendar
 
 ### `calendarGrid(opts?): CalendarCell<DateFormat>[][]`
 6×7 month-view grid. Options: `{ weekStart: 'sunday' | 'monday' }`.
@@ -277,7 +277,7 @@ Alias for `isoWeek()`.
 
 ---
 
-## Instance Methods — Fiscal
+## Instance Methods  Fiscal
 
 ### `fiscalYear(config?): number`
 Fiscal year number. Config: `{ startMonth: number }` (1–12, default 1).
@@ -287,7 +287,7 @@ Fiscal quarter (1–4).
 
 ---
 
-## Instance Methods — Mode
+## Instance Methods  Mode
 
 ### `utc(): DateFormat`
 Convert to UTC mode.

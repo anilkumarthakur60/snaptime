@@ -1,6 +1,6 @@
 # Timezone
 
-IANA timezone support using the built-in `Intl` API — format in any timezone, get offsets, detect DST, and convert wall-clock times.
+IANA timezone support using the built-in `Intl` API  format in any timezone, get offsets, detect DST, and convert wall-clock times.
 
 ## Creating Timezones
 

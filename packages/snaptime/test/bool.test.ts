@@ -103,7 +103,7 @@ describe('dateFormat boolean predicates', () => {
     expect(dateFormat('2025-05-04T12:00:00Z').isSameSecond('2025-05-04T12:00:01Z')).toBe(false)
   })
 
-  // ─── isCurrent* / isNext* / isLast* — derived from now ────────────────────
+  // ─── isCurrent* / isNext* / isLast*  derived from now ────────────────────
   test('isCurrentYear / isNextYear / isLastYear', () => {
     const now = dateFormat.now()
     expect(now.isCurrentYear()).toBe(true)

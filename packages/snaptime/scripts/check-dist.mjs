@@ -1,22 +1,22 @@
 /**
  * Post-build guard (pattern shared with js-match's check-dist.mjs).
  *
- * 1. SIZE BUDGETS — the main entries are the ones consumers pay for; a sudden
+ * 1. SIZE BUDGETS  the main entries are the ones consumers pay for; a sudden
  *    jump means something was pulled in that should not have been.
  *
- * 2. NODE16 DECLARATION RESOLUTION — assert no emitted declaration carries an
+ * 2. NODE16 DECLARATION RESOLUTION  assert no emitted declaration carries an
  *    extensionless relative specifier. Those are illegal under
  *    `moduleResolution: "node16"`/"nodenext", and since nearly every consumer
  *    runs `skipLibCheck: true` the diagnostic is swallowed while resolution
- *    still fails — silently degrading the public API to `any`.
+ *    still fails  silently degrading the public API to `any`.
  *
- * 3. EXPORTS-MAP INTEGRITY — with 8 subpath patterns × 4 artifacts each plus a
+ * 3. EXPORTS-MAP INTEGRITY  with 8 subpath patterns × 4 artifacts each plus a
  *    `locale/*` wildcard, a partial build is a real risk. Every concrete file
  *    referenced by `exports`, `typesVersions`, `main`/`module`/`types`, and
  *    `unpkg` must exist, and every locale must ship all four artifacts
  *    (.js/.cjs/.d.ts/.d.cts).
  *
- * 4. NO SOURCEMAPS — maps were 63% of the unpacked tarball before being
+ * 4. NO SOURCEMAPS  maps were 63% of the unpacked tarball before being
  *    dropped; a stray `sourcemap: true` should not creep back in.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
@@ -45,7 +45,7 @@ function walk(dir) {
 
 const files = walk(DIST)
 
-// ── 1. Size budgets (KB) — ~15% headroom over the current build. ──────────
+// ── 1. Size budgets (KB)  ~15% headroom over the current build. ──────────
 const SIZE_BUDGETS = {
   'index.js': 40,
   'index.cjs': 45,
@@ -154,7 +154,7 @@ if (incomplete === 0) {
 // ── 4. Sourcemaps must not creep back in. ─────────────────────────────────
 const maps = files.filter((f) => f.endsWith('.map'))
 if (maps.length > 0) {
-  fail(`${maps.length} sourcemap file(s) in dist — sourcemaps are deliberately off.`)
+  fail(`${maps.length} sourcemap file(s) in dist  sourcemaps are deliberately off.`)
 }
 
 if (failed) {

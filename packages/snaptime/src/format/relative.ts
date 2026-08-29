@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Relative-time, calendar-label, precise-diff, age, countdown.
-// All functions are pure — they take primitives and return primitives.
+// All functions are pure  they take primitives and return primitives.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { pad, pluralize } from '../core/helpers'
@@ -81,7 +81,7 @@ export function relativeTime(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Calendar label — "Today at 3:00 PM" style.
+// Calendar label  "Today at 3:00 PM" style.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function calendarLabel(
@@ -111,7 +111,7 @@ export function calendarLabel(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Precise diff — calendar-correct year/month/day/h/m/s/ms breakdown.
+// Precise diff  calendar-correct year/month/day/h/m/s/ms breakdown.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface DateParts {
@@ -189,7 +189,7 @@ export function preciseDiff(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Age (calendar) — wrapper over preciseDiff.
+// Age (calendar)  wrapper over preciseDiff.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function age(diff: PreciseDiffResult): AgeResult {
@@ -208,7 +208,7 @@ export function age(diff: PreciseDiffResult): AgeResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Countdown — time remaining to a target instant.
+// Countdown  time remaining to a target instant.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function countdown(targetMs: number, nowMs: number): CountdownResult {

@@ -9,7 +9,7 @@ function toDT(input: DateInput): DateTime {
 /**
  * Immutable collection of DateTime values with array-like + analytics helpers.
  *
- * Every transformation returns a new collection — instances are safe to share.
+ * Every transformation returns a new collection  instances are safe to share.
  */
 export default class DateCollection implements Iterable<DateTime> {
   private readonly _dates: ReadonlyArray<DateTime>
@@ -97,7 +97,7 @@ export default class DateCollection implements Iterable<DateTime> {
     return new DateTime(sum / this._dates.length)
   }
 
-  /** Median timestamp — interpolated for even-sized collections. */
+  /** Median timestamp  interpolated for even-sized collections. */
   median(): DateTime {
     if (this.isEmpty()) throw new Error('median(): collection is empty')
     const sorted = [...this._dates].sort((a, b) => a.valueOf() - b.valueOf())
@@ -171,7 +171,7 @@ export default class DateCollection implements Iterable<DateTime> {
     return new DateCollection([...this._dates, ...other._dates])
   }
 
-  /** Equivalent of Lodash `_.partition` — first true items, then false. */
+  /** Equivalent of Lodash `_.partition`  first true items, then false. */
   partition(fn: (d: DateTime) => boolean): [DateCollection, DateCollection] {
     const yes: DateTime[] = []
     const no: DateTime[] = []

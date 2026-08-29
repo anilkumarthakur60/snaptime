@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Token table — drives both formatting and parsing.
+// Token table  drives both formatting and parsing.
 //
 // Each token defines:
 //   - format(c, l): produce string from DateComponents + ResolvedLocale
@@ -22,7 +22,7 @@ export interface DateComponents {
   millisecond: number // 0-999
   minute: number // 0-59
   month: number // 1-12
-  /** Native Date — used only for getTimezoneOffset(). */
+  /** Native Date  used only for getTimezoneOffset(). */
   nativeDate: Date
   /** Override offset minutes (used for UTC-aware formatting). */
   offsetMinutes?: number

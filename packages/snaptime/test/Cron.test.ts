@@ -130,11 +130,11 @@ describe('Cron.matches', () => {
   test('both DOM and DOW non-wildcard → OR behavior (vixie cron)', () => {
     // "0 0 15 * 1": matches day 15 OR Monday
     const cron = new Cron('0 0 15 * 1')
-    // Jan 15, 2026 (Thu) at midnight — matches because day=15
+    // Jan 15, 2026 (Thu) at midnight  matches because day=15
     expect(cron.matches(local(2026, 1, 15, 0, 0))).toBe(true)
-    // Jan 12, 2026 (Mon) at midnight — matches because DOW=Mon
+    // Jan 12, 2026 (Mon) at midnight  matches because DOW=Mon
     expect(cron.matches(local(2026, 1, 12, 0, 0))).toBe(true)
-    // Jan 13, 2026 (Tue) — neither day 15 nor Monday → false
+    // Jan 13, 2026 (Tue)  neither day 15 nor Monday → false
     expect(cron.matches(local(2026, 1, 13, 0, 0))).toBe(false)
   })
 
@@ -333,7 +333,7 @@ describe('Cron.humanize', () => {
     expect(result).toContain('17:00')
   })
 
-  test('"0-59 * 15 * *" — all-minute-values fieldDescription returns "every minute"', () => {
+  test('"0-59 * 15 * *"  all-minute-values fieldDescription returns "every minute"', () => {
     // 0-59 on minute with wildcard hour + dom constraint → fieldDescription(minute) hits all-values path
     const result = new Cron('0-59 * 15 * *').humanize()
     expect(result).toContain('every minute')
@@ -381,7 +381,7 @@ describe('Cron.humanize additional branches', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Non-DOW inverted range (lo > hi, isDow=false) — Vixie cron wraps reversed
+// Non-DOW inverted range (lo > hi, isDow=false)  Vixie cron wraps reversed
 // ranges around the field boundary, so "59-0" means minutes 59 and 0.
 // ---------------------------------------------------------------------------
 describe('Cron non-DOW inverted range', () => {

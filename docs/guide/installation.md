@@ -70,7 +70,7 @@ const {
 
 ## TypeScript
 
-D8 ships its own type declarations — no `@types/` package required. Just import and go:
+D8 ships its own type declarations  no `@types/` package required. Just import and go:
 
 ```typescript
 import type {
@@ -109,5 +109,5 @@ You should see today's date printed in a long format. You're ready to go! 🎉
 
 ## Next Steps
 
-- [Quick Start](./quick-start) — Write your first D8 program
-- [DateFormat](./dateformat) — Explore the core class
+- [Quick Start](./quick-start)  Write your first D8 program
+- [DateFormat](./dateformat)  Explore the core class

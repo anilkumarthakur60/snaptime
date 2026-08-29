@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Holiday registry — open for extension.
+// Holiday registry  open for extension.
 //
 // Built-in calendars are pre-registered. Add your own by calling
 // `Holidays.register('XX', (year) => [...])` from a plugin or extension.

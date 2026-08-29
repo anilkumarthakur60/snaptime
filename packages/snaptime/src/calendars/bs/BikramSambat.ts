@@ -144,7 +144,7 @@ function toDevanagari(s: string): string {
 
 /**
  * Format a BS date with Moment-like tokens. Numerals come out Western by
- * default — pass `{ numerals: 'devanagari' }` for ०-९.
+ * default  pass `{ numerals: 'devanagari' }` for ०-९.
  *
  * Tokens:
  *   YYYY YY M MM MMM MMMM (Nepali) MMMM-en (English) D DD Do d ddd dddd

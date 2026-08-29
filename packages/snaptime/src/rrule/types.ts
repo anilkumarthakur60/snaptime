@@ -1,4 +1,4 @@
-// RFC 5545 RRULE — public types.
+// RFC 5545 RRULE  public types.
 
 // Type-only import: keeps the `snaptime/rrule` subpath tree-shakable (no
 // runtime dependency is added by referencing the DateTime type here).
@@ -35,7 +35,7 @@ export interface RRuleOptions {
   byyearday?: number[]
   /** Maximum number of occurrences. Mutually exclusive with `until`. */
   count?: number
-  /** Anchor instant — defaults to "now" if not specified. */
+  /** Anchor instant  defaults to "now" if not specified. */
   dtstart?: DateTimeInput
   freq: Freq
   /** Stride. Default 1. */

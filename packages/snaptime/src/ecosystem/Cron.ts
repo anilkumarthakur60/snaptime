@@ -50,12 +50,12 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const MAX_ITER_MINUTES = 366 * 24 * 60
 
 // Search horizon for next()/prev(). Must span a full leap cycle so rules like
-// "0 0 29 2 *" (Feb 29) are found — 4 years + margin. Impossible specs (e.g.
+// "0 0 29 2 *" (Feb 29) are found  4 years + margin. Impossible specs (e.g.
 // Feb 30) give up after this many days.
 const HORIZON_DAYS = 1500
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Field parser — turns "*/15" / "1-5" / "MON-FRI" / "1,3,5" into a CronField.
+// Field parser  turns "*/15" / "1-5" / "MON-FRI" / "1,3,5" into a CronField.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function resolveValue(token: string, isDow: boolean, isMonth: boolean): number {
@@ -101,7 +101,7 @@ function parseField(
 
     const s = step ?? 1
     // DOW spans 0-7 during expansion with 7 remapped to Sunday as each value
-    // is added (Vixie cron) — so `0-7` covers every day, `5-7` is Fri,Sat,Sun.
+    // is added (Vixie cron)  so `0-7` covers every day, `5-7` is Fri,Sat,Sun.
     const add = (v: number) => values.add(isDow && v === 7 ? 0 : v)
     if (lo <= hi) {
       for (let i = lo; i <= hi; i += s) add(i)
@@ -119,7 +119,7 @@ function parseField(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Humanize — produce a friendly description of a cron expression.
+// Humanize  produce a friendly description of a cron expression.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function fieldDescription(field: CronField, name: string, min: number, max: number): string {
@@ -139,7 +139,7 @@ function dowDescription(field: CronField): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Cron — the public class
+// Cron  the public class
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PRESETS: Record<string, string> = {

@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsup'
 
-// Sub-path entries — each becomes its own bundle so consumers can import
+// Sub-path entries  each becomes its own bundle so consumers can import
 // `@anil-labs/snaptime/locale/fr` (or any other module) without pulling the
 // rest of the library into their bundle. Locale modules register themselves
 // into the shared registry, so `splitting` is required for BOTH formats:
@@ -10,7 +10,7 @@ import { defineConfig } from 'tsup'
 // `treeshake` is deliberately NOT enabled: it runs a second rollup pass over
 // esbuild's output, which emits a duplicate `//# sourceMappingURL=` comment in
 // every artifact and warns about our (intentional) default-plus-named exports.
-// esbuild already tree-shakes, and consumers bundle the ESM entry themselves —
+// esbuild already tree-shakes, and consumers bundle the ESM entry themselves 
 // the pass only shrinks the shared CJS chunks, ~1.7% gzipped overall, while
 // making the ESM/CJS entry files slightly *larger*.
 //

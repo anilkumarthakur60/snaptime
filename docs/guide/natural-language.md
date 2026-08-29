@@ -1,6 +1,6 @@
 # Natural Language
 
-Parse dates from English phrases — relative dates, weekday references, month boundaries, and ordinal patterns.
+Parse dates from English phrases  relative dates, weekday references, month boundaries, and ordinal patterns.
 
 ## Basic Usage
 

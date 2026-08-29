@@ -99,13 +99,13 @@ describe('DateCollection.closest', () => {
   })
 
   test('tie: first encountered wins (both equidistant)', () => {
-    // Jan 5 and Jan 15 are both 5 days from Jan 10 — first (Jan 5) wins
+    // Jan 5 and Jan 15 are both 5 days from Jan 10  first (Jan 5) wins
     const c = new DateCollection(['2026-01-05', '2026-01-15'])
     const result = c.closest(d('2026-01-10'))
     expect(result.format('YYYY-MM-DD')).toBe('2026-01-05')
   })
 
-  test('later element is closer — updates best', () => {
+  test('later element is closer  updates best', () => {
     // Jan 1 is 14 days away, Jan 14 is 1 day away → Jan 14 wins
     const c = new DateCollection(['2026-01-01', '2026-01-14', '2026-12-31'])
     const result = c.closest(d('2026-01-15'))
@@ -128,7 +128,7 @@ describe('DateCollection.farthest', () => {
     expect(result.format('YYYY-MM-DD')).toBe('2026-12-31')
   })
 
-  test('third element closer than second — no update on third iteration', () => {
+  test('third element closer than second  no update on third iteration', () => {
     // Dec 31 is farthest; Dec 1 is closer than Dec 31, so no update on i=2
     const c = new DateCollection(['2026-01-01', '2026-12-31', '2026-12-01'])
     const result = c.farthest(d('2026-01-10'))

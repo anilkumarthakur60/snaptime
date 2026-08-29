@@ -24,7 +24,7 @@ import RangeSetDefault, { RangeSet } from '../src/collections/RangeSet'
 const isoDay = (d: Date) => d.toISOString().slice(0, 10)
 
 // ─────────────────────────────────────────────────────────────────────────────
-// B1 — Bikram Sambat month-length table
+// B1  Bikram Sambat month-length table
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('B1: Bikram Sambat table integrity', () => {
@@ -77,7 +77,7 @@ describe('B1: Bikram Sambat table integrity', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// B2 — equinox/solstice for years < 2000
+// B2  equinox/solstice for years < 2000
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('B2: equinox/solstice before 2000', () => {
@@ -107,7 +107,7 @@ describe('B2: equinox/solstice before 2000', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// B27 — daysInMonth month validation
+// B27  daysInMonth month validation
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('B27: BikramSambat.daysInMonth validates month', () => {
@@ -124,7 +124,7 @@ describe('B27: BikramSambat.daysInMonth validates month', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// E1 — Timezone.format Z/ZZ tokens
+// E1  Timezone.format Z/ZZ tokens
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('E1: Timezone.format renders the zone offset for Z/ZZ', () => {
@@ -155,7 +155,7 @@ describe('E1: Timezone.format renders the zone offset for Z/ZZ', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// E2 — BusinessDay accepts DateInput
+// E2  BusinessDay accepts DateInput
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('E2: BusinessDay functions accept DateInput', () => {
@@ -180,7 +180,7 @@ describe('E2: BusinessDay functions accept DateInput', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// E3 — parseNatural ref accepts DateInput
+// E3  parseNatural ref accepts DateInput
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('E3: parseNatural ref accepts DateInput', () => {
@@ -202,7 +202,7 @@ describe('E3: parseNatural ref accepts DateInput', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// E4 — astronomy functions accept DateInput
+// E4  astronomy functions accept DateInput
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('E4: astronomy functions accept DateInput', () => {
@@ -234,7 +234,7 @@ describe('E4: astronomy functions accept DateInput', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// E5 — BikramSambat.fromAD accepts DateInput
+// E5  BikramSambat.fromAD accepts DateInput
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('E5: BikramSambat.fromAD accepts DateInput', () => {
@@ -259,7 +259,7 @@ describe('E5: BikramSambat.fromAD accepts DateInput', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// E6 — unregistered holiday countries
+// E6  unregistered holiday countries
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('E6: unregistered holiday countries return []', () => {
@@ -279,7 +279,7 @@ describe('E6: unregistered holiday countries return []', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// P1 — RangeSet dual export
+// P1  RangeSet dual export
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('P1: RangeSet exports both named and default', () => {

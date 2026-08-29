@@ -12,7 +12,7 @@ Also available as `d8.natural(input, ref?)`.
 
 | Param | Type | Default | Description |
 |:------|:-----|:--------|:------------|
-| `input` | `string` | — | English phrase to parse |
+| `input` | `string` |  | English phrase to parse |
 | `ref` | `DateFormat` | `new DateFormat()` | Reference date for relative calculations |
 
 **Returns** a `DateFormat`. Returns an invalid `DateFormat` (`.isValid() === false`) if the input cannot be parsed.

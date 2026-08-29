@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Bikram Sambat (Nepali) calendar — month-length table.
+// Bikram Sambat (Nepali) calendar  month-length table.
 //
 // Each row = one BS year. The 12 numbers are the day counts of:
 //   Baishakh, Jestha, Ashadh, Shrawan, Bhadra, Ashwin,

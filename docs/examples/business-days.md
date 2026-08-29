@@ -41,7 +41,7 @@ prevBusinessDay(d8('2026-01-18')).format('YYYY-MM-DD')
 
 ```typescript
 businessDaysBetween(d8('2026-01-12'), d8('2026-01-16'))
-// → 3 (Tue, Wed, Thu — exclusive of endpoints)
+// → 3 (Tue, Wed, Thu  exclusive of endpoints)
 
 businessDaysBetween(d8('2026-01-12'), d8('2026-01-19'))
 // → 4 (skips weekend)

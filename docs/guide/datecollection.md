@@ -1,6 +1,6 @@
 # DateCollection
 
-Batch operations on sets of dates — sort, filter, group, deduplicate, and query.
+Batch operations on sets of dates  sort, filter, group, deduplicate, and query.
 
 ## Creating Collections
 
@@ -288,14 +288,14 @@ const c = new DateCollection([
   '2026-01-20'  // Tuesday
 ])
 
-// some() — returns true if any element matches:
+// some()  returns true if any element matches:
 c.some(d => d.isWeekend())  // → true  (Saturday matches)
 
-// every() — returns true if all elements match:
+// every()  returns true if all elements match:
 c.every(d => d.isValid())   // → true  (all are valid dates)
 c.every(d => d.isWeekday()) // → false (Saturday is not a weekday)
 
-// find() — returns the first matching DateFormat:
+// find()  returns the first matching DateFormat:
 const found = c.find(d => d.isWeekend())
 found.format('YYYY-MM-DD') // → "2026-01-17"
 
@@ -316,7 +316,7 @@ const b = new DateCollection(['2026-06-01', '2026-12-31'])
 const combined = a.merge(b)
 combined.count() // → 4
 
-// Duplicates are preserved — use unique() to deduplicate:
+// Duplicates are preserved  use unique() to deduplicate:
 const c = new DateCollection(['2026-01-01'])
 const d = new DateCollection(['2026-01-01', '2026-06-01'])
 c.merge(d).count()            // → 3
@@ -341,7 +341,7 @@ range.end().format('YYYY-MM-DD')   // → "2026-12-31"
 
 ## DateInput Acceptance
 
-The constructor and `between()` now accept `DateInput` — a union type covering `string`, `number` (timestamp), `Date`, or `DateFormat` — instead of requiring specific types. This means you can freely mix input formats:
+The constructor and `between()` now accept `DateInput`  a union type covering `string`, `number` (timestamp), `Date`, or `DateFormat`  instead of requiring specific types. This means you can freely mix input formats:
 
 ```typescript
 // Constructor accepts any DateInput values:
