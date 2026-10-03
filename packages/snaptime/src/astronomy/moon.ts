@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Lunar position / phase — simplified.
+// Lunar position / phase  simplified.
 //
 // Phase calculation uses Conway's formula: take the elapsed days since a
 // known new moon, modulo the synodic month (29.530588853 days), and read off
@@ -15,7 +15,7 @@ function toDate(input: DateInput): Date {
 }
 
 const SYNODIC_MONTH = 29.530588853
-/** A known new moon instant — 2000-01-06 18:14 UTC. */
+/** A known new moon instant  2000-01-06 18:14 UTC. */
 const NEW_MOON_REF = Date.UTC(2000, 0, 6, 18, 14)
 
 export type MoonPhaseName =

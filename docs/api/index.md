@@ -1,13 +1,13 @@
 # API Reference
 
-Complete API documentation for the `@anilkumarthakur/d8` library. Every class, function, and type — fully documented.
+Complete API documentation for the `@anilkumarthakur/d8` library. Every class, function, and type  fully documented.
 
 ## Modules
 
 | Module | Description |
 |:-------|:------------|
-| [Factory](./factory) | The `dateFormat` factory function — the main entry point |
-| [DateFormat](./dateformat) | Core date class — 80+ methods |
+| [Factory](./factory) | The `dateFormat` factory function  the main entry point |
+| [DateFormat](./dateformat) | Core date class  80+ methods |
 | [Duration](./duration) | Time span representation |
 | [DateRange](./daterange) | Start–end date pair |
 | [DateCollection](./datecollection) | Batch operations on date sets |

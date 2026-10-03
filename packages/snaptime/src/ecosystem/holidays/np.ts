@@ -1,7 +1,7 @@
 import { iso } from './easter'
 
 /**
- * Nepal — fixed Western-calendar dates only. Lunar/festival holidays
+ * Nepal  fixed Western-calendar dates only. Lunar/festival holidays
  * (Dashain, Tihar, etc.) shift each year and are not encoded here.
  */
 export function holidaysNP(y: number): string[] {

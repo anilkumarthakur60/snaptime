@@ -67,10 +67,10 @@ Now TypeScript knows about `isBusinessHours()` and `isLunchTime()` on every `Dat
 
 ## Plugin Best Practices
 
-1. **Use `this`** — Plugin methods run in the context of a `DateFormat` instance
-2. **Return new instances** — For methods that modify dates, clone first: `const d = this.clone()`
-3. **Don't break immutability** — Never mutate `this._d` directly
-4. **Namespace if needed** — For complex plugins, create a method that returns an object
+1. **Use `this`**  Plugin methods run in the context of a `DateFormat` instance
+2. **Return new instances**  For methods that modify dates, clone first: `const d = this.clone()`
+3. **Don't break immutability**  Never mutate `this._d` directly
+4. **Namespace if needed**  For complex plugins, create a method that returns an object
 
 ## Example: Season Plugin
 
@@ -91,5 +91,5 @@ new DateFormat('2026-07-15').season() // "summer"
 
 ## Next Steps
 
-- [Locale Support](./locale) — Customize month/weekday names
-- [TypeScript Types](./types) — Understand the type system
+- [Locale Support](./locale)  Customize month/weekday names
+- [TypeScript Types](./types)  Understand the type system

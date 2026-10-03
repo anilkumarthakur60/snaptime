@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Clock abstraction — the single source of "now" for the whole library.
+// Clock abstraction  the single source of "now" for the whole library.
 //
 // In production this returns Date.now(). In tests, call Clock.setTestNow(t) to
 // freeze time. This is the same pattern Carbon::setTestNow() exposes in PHP.
@@ -44,7 +44,7 @@ export const Clock = {
   },
 
   /**
-   * Pin "now" to a specific instant — string, ms timestamp, Date, or `null`
+   * Pin "now" to a specific instant  string, ms timestamp, Date, or `null`
    * to restore the system clock.
    *
    * @example

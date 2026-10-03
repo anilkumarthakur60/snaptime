@@ -8,7 +8,7 @@ function toDT(input: DateInput): DateTime {
 
 /**
  * IANA-timezone helper. Computes offsets and renders wall-clock formatting in
- * a target zone using `Intl.DateTimeFormat` — no historic-rules data table.
+ * a target zone using `Intl.DateTimeFormat`  no historic-rules data table.
  */
 export default class Timezone {
   readonly tz: string

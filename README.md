@@ -5,8 +5,8 @@
 <h1 align="center">snaptime</h1>
 
 <p align="center">
-  <strong>Monorepo for <a href="https://www.npmjs.com/package/@anil-labs/snaptime"><code>@anil-labs/snaptime</code></a> — a modern, zero-dependency TypeScript date/time library.</strong><br />
-  Formatting · Parsing · Timezones · Business Days · Cron · RRULE · Natural Language · Bikram Sambat · Astronomy — all in one.
+  <strong>Monorepo for <a href="https://www.npmjs.com/package/@anil-labs/snaptime"><code>@anil-labs/snaptime</code></a>  a modern, zero-dependency TypeScript date/time library.</strong><br />
+  Formatting · Parsing · Timezones · Business Days · Cron · RRULE · Natural Language · Bikram Sambat · Astronomy  all in one.
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 
 | Package | Description |
 |:--------|:------------|
-| [`@anil-labs/snaptime`](./packages/snaptime) | The library — ESM + CJS + CDN global builds, full type declarations |
+| [`@anil-labs/snaptime`](./packages/snaptime) | The library  ESM + CJS + CDN global builds, full type declarations |
 
 ## Repo layout
 

@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'D8',
   description:
-    'A modern, zero-dependency TypeScript date/time library — formatting, parsing, timezones, business days, cron, and natural language.',
+    'A modern, zero-dependency TypeScript date/time library  formatting, parsing, timezones, business days, cron, and natural language.',
   lang: 'en-US',
   base: '/snaptime/',
 
@@ -12,7 +12,7 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#667eea' }],
     ['meta', { name: 'og:type', content: 'website' }],
     ['meta', { name: 'og:locale', content: 'en' }],
-    ['meta', { name: 'og:title', content: 'D8 — Modern TypeScript Date/Time Library' }],
+    ['meta', { name: 'og:title', content: 'D8  Modern TypeScript Date/Time Library' }],
     [
       'meta',
       {
@@ -23,7 +23,7 @@ export default defineConfig({
     ],
     ['meta', { name: 'og:site_name', content: 'D8' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'D8 — Modern TypeScript Date/Time Library' }],
+    ['meta', { name: 'twitter:title', content: 'D8  Modern TypeScript Date/Time Library' }],
     [
       'meta',
       {

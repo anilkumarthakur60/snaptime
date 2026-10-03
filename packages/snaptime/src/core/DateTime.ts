@@ -178,11 +178,11 @@ function toDT(input: DateInput, opts?: CreateOptions): DateTime {
  * The main user-facing class. Immutable: every modifier returns a new instance.
  *
  * Construction:
- *   new DateTime()                       — now
- *   new DateTime('2026-04-29')           — ISO date
- *   new DateTime(1700000000000)          — ms epoch
- *   new DateTime(jsDate)                 — wrap a JS Date
- *   new DateTime(other)                  — clone another DateTime
+ *   new DateTime()                        now
+ *   new DateTime('2026-04-29')            ISO date
+ *   new DateTime(1700000000000)           ms epoch
+ *   new DateTime(jsDate)                  wrap a JS Date
+ *   new DateTime(other)                   clone another DateTime
  *
  * Static factories for everything else: `parse`, `fromObject`, `fromUnix`, etc.
  */
@@ -191,7 +191,7 @@ class DateTime {
   private readonly _d: Date
   private readonly _utc: boolean
   private _localeName: string | null
-  /** Forced offset minutes — set by `shiftZone`; null otherwise. */
+  /** Forced offset minutes  set by `shiftZone`; null otherwise. */
   private _offsetMinutes: number | null = null
   /** IANA name attached by `shiftZone`; informational only. */
   private _zoneName: string | null = null;
@@ -240,7 +240,7 @@ class DateTime {
 
     this._localeName = opts.locale ?? null
 
-    // Apply any registered macros lazily — only need to do it once per class
+    // Apply any registered macros lazily  only need to do it once per class
     DateTime._ensureMacros()
   }
 
@@ -445,7 +445,7 @@ class DateTime {
     return c
   }
 
-  /** Resolved locale data — never null. */
+  /** Resolved locale data  never null. */
   getLocaleData(): ResolvedLocale {
     return Locales.get(this._localeName ?? undefined)
   }
@@ -477,7 +477,7 @@ class DateTime {
     return c
   }
 
-  // Sugar getters/setters — Carbon-style
+  // Sugar getters/setters  Carbon-style
   year(): number
   year(v: number): DateTime
   year(v?: number): number | DateTime {
@@ -528,7 +528,7 @@ class DateTime {
   isoWeekYear(): number {
     return _isoWeekYear(this._d, this._utc)
   }
-  /** ISO weeks in the current ISO year — 52 or 53. */
+  /** ISO weeks in the current ISO year  52 or 53. */
   weeksInIsoYear(): number {
     return _weeksInIsoYear(this.isoWeekYear())
   }
@@ -558,7 +558,7 @@ class DateTime {
    * Add `n` of `unit`. Calendar units (day/week/fortnight/month/quarter/year/
    * decade/century/millennium) advance via `Date.setX`, which preserves the
    * wall-clock time across DST transitions in local mode. Sub-day units
-   * (hour/minute/second/millisecond) advance by absolute milliseconds — use
+   * (hour/minute/second/millisecond) advance by absolute milliseconds  use
    * `{ keepLocalTime: true }` if you want the wall-clock-preserving behavior
    * for sub-day units as well (rare).
    *
@@ -569,7 +569,7 @@ class DateTime {
    *   1 calendar day + 12 hours; `add(0.5, 'day')` = 12 hours).
    * - month/quarter/year/decade/century/millennium have no fixed length, so
    *   the amount is converted to months and rounded to the nearest whole
-   *   month, half away from zero — moment's behavior (`add(0.5, 'year')` =
+   *   month, half away from zero  moment's behavior (`add(0.5, 'year')` =
    *   6 months; `add(0.5, 'month')` = 1 month).
    */
   add(n: number, unit: UnitInput, opts: { keepLocalTime?: boolean } = {}): DateTime {
@@ -804,7 +804,7 @@ class DateTime {
     const jan = new Date(y, 0, 1).getTimezoneOffset()
     const jul = new Date(y, 6, 1).getTimezoneOffset()
     // Standard time is the larger getTimezoneOffset (further behind UTC).
-    // DST iff the current offset differs from it — false when jan === jul
+    // DST iff the current offset differs from it  false when jan === jul
     // (zones that never observe DST). Mirrors Timezone.isDST().
     return this._d.getTimezoneOffset() !== Math.max(jan, jul)
   }
@@ -872,14 +872,14 @@ class DateTime {
   }
 
   /**
-   * "Same Mar-15 as the birthday" — month + date match.
+   * "Same Mar-15 as the birthday"  month + date match.
    */
   isBirthday(birthday: DateInput): boolean {
     const b = toDT(birthday)
     return b.get('month') === this.get('month') && b.get('date') === this.get('date')
   }
 
-  // Same/Current/Next/Last variants — generated programmatically below
+  // Same/Current/Next/Last variants  generated programmatically below
   isSameYear(o: DateInput): boolean {
     return this.isSame(o, 'year')
   }
@@ -1065,7 +1065,7 @@ class DateTime {
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
-   * Round to the nearest calendar boundary of `unit` — whichever of
+   * Round to the nearest calendar boundary of `unit`  whichever of
    * `startOf(unit)` / the next boundary is closer (ties round up). Calendar-
    * aware for every unit: day/week/etc. snap to local (or UTC-mode) calendar
    * boundaries, never to a raw UTC-epoch grid.
@@ -1149,19 +1149,19 @@ class DateTime {
 
   // ── Carbon-style presets ─────────────────────────────────────────────────
 
-  /** "2026-04-29T12:34:56+00:00" — alias of {@link toRFC3339}. */
+  /** "2026-04-29T12:34:56+00:00"  alias of {@link toRFC3339}. */
   toAtomString(): string {
     return this.toRFC3339()
   }
-  /** "Wednesday, 29-Apr-2026 12:34:56 GMT" — RFC 850. */
+  /** "Wednesday, 29-Apr-2026 12:34:56 GMT"  RFC 850. */
   toCookieString(): string {
     return this.format('dddd, DD-MMM-YYYY HH:mm:ss [GMT]')
   }
-  /** "2026-04-29T12:34:56+00:00" — W3C / ISO 8601 with offset. */
+  /** "2026-04-29T12:34:56+00:00"  W3C / ISO 8601 with offset. */
   toW3cString(): string {
     return this.toRFC3339()
   }
-  /** "Wed, 29 Apr 2026 12:34:56 +0000" — RFC 1123 / RSS feed style. */
+  /** "Wed, 29 Apr 2026 12:34:56 +0000"  RFC 1123 / RSS feed style. */
   toRssString(): string {
     return this.toRFC2822()
   }
@@ -1201,7 +1201,7 @@ class DateTime {
   toLocaleFullString(): string {
     return this.format('LLLL')
   }
-  /** "1d", "2h", "45m" — best-effort short relative-to-now. */
+  /** "1d", "2h", "45m"  best-effort short relative-to-now. */
   toShortString(): string {
     const ms = Math.abs(this.valueOf() - Clock.now())
     if (ms < 60_000) return 'now'
@@ -1433,7 +1433,7 @@ class DateTime {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper — IANA zone offset minutes for a specific instant.
+// Helper  IANA zone offset minutes for a specific instant.
 // Inlined here to avoid an import cycle with src/ecosystem/Timezone.ts.
 // ─────────────────────────────────────────────────────────────────────────────
 

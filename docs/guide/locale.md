@@ -133,5 +133,5 @@ If a locale field is not provided, D8 falls back to English defaults:
 
 ## Next Steps
 
-- [TypeScript Types](./types) — The complete type reference
-- [API Reference](../api/) — All methods documented
+- [TypeScript Types](./types)  The complete type reference
+- [API Reference](../api/)  All methods documented

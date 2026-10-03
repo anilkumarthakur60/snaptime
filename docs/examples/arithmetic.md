@@ -13,7 +13,7 @@ d.add(1, 'month').get('month')              // → 2
 d.add(1, 'year').get('year')                // → 2027
 d.subtract(1, 'day').format('YYYY-MM-DD')   // → "2026-01-14"
 
-// Immutable — original unchanged:
+// Immutable  original unchanged:
 d.format('YYYY-MM-DD')                      // → "2026-01-15"
 
 // Chaining:

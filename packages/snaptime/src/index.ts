@@ -2,7 +2,7 @@
 // Public API.
 //
 // Two equivalent entry points:
-//   1. The factory function — `dateTime(input)`. Mirrors moment().
+//   1. The factory function  `dateTime(input)`. Mirrors moment().
 //   2. The `DateTime` class itself, plus static factories.
 //
 // All other classes (Duration, DateRange, DatePeriod, DateCollection,
@@ -86,7 +86,7 @@ import type { ResolvedLocale } from './locale/registry'
 import type { Pattern as NaturalLanguagePattern } from './ecosystem/NaturalLanguage'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Factory function — main entry point. `dateTime()` calls work like Moment.
+// Factory function  main entry point. `dateTime()` calls work like Moment.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const dateTime = Object.assign(
@@ -229,7 +229,7 @@ export {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Backwards-compat alias — older code imports `DateFormat`.
+// Backwards-compat alias  older code imports `DateFormat`.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export { DateTime as DateFormat }

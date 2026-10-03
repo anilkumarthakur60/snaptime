@@ -1,6 +1,6 @@
 # Business Days
 
-Functions for business day calculations — skip weekends and holidays, count business days, find next/previous, and get holiday lists for 7 countries.
+Functions for business day calculations  skip weekends and holidays, count business days, find next/previous, and get holiday lists for 7 countries.
 
 ## isBusinessDay
 
@@ -17,7 +17,7 @@ isBusinessDay(d8('2026-01-16')) // → true  (Friday)
 isBusinessDay(d8('2026-01-17')) // → false (Saturday)
 isBusinessDay(d8('2026-01-18')) // → false (Sunday)
 
-// With holidays — weekday on a holiday returns false:
+// With holidays  weekday on a holiday returns false:
 const usHolidays = getHolidays('US', 2026)
 isBusinessDay(d8('2026-01-01'), usHolidays) // → false (New Year's Day, Thursday)
 isBusinessDay(d8('2026-01-15'), usHolidays) // → true  (not a US holiday)
@@ -127,7 +127,7 @@ businessDaysBetween(d8('2026-01-12'), d8('2026-01-16'))
 
 // Mon to Mon next week:
 businessDaysBetween(d8('2026-01-12'), d8('2026-01-19'))
-// → 4 (Tue, Wed, Thu, Fri — skips weekend)
+// → 4 (Tue, Wed, Thu, Fri  skips weekend)
 
 // End < start → negative:
 businessDaysBetween(d8('2026-01-16'), d8('2026-01-12'))
@@ -203,7 +203,7 @@ getHolidays('us', 2026).includes('2026-01-01') // → true
 | `CA` | Canada | 5 |
 | `AU` | Australia | 8 |
 
-Easter-based holidays are computed dynamically using the Anonymous Gregorian algorithm — dates are correct for any year.
+Easter-based holidays are computed dynamically using the Anonymous Gregorian algorithm  dates are correct for any year.
 
 ---
 

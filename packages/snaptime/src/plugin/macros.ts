@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Macro registry — adds instance & static methods to DateTime at runtime.
+// Macro registry  adds instance & static methods to DateTime at runtime.
 //
 // This is the same pattern as Carbon's Carbon::macro() (PHP) and Moment's
 // moment.fn extension. We expose it as a first-class registry so that user
@@ -62,7 +62,7 @@ export function applyMacros(DT: typeof DateTime): void {
 
 /**
  * Register an instance macro. The function is bound to a DateTime instance
- * via `this`. Accepts realistically-typed macros — the concrete parameter and
+ * via `this`. Accepts realistically-typed macros  the concrete parameter and
  * return types are erased only inside the registry.
  */
 export function registerMacro<A extends unknown[], R>(name: string, fn: MacroFn<A, R>): void {

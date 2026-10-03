@@ -1,5 +1,5 @@
 /**
- * Type-level smoke test — this file is compiled with `tsc --noEmit` only.
+ * Type-level smoke test  this file is compiled with `tsc --noEmit` only.
  * It verifies that all public types resolve correctly from the package exports.
  * If this file compiles without errors, the type declarations are working.
  */

@@ -20,7 +20,7 @@ export interface ParseResult {
   hadZ: boolean
   /** Either the resolved millisecond timestamp (UTC) or NaN if invalid. */
   ms: number
-  /** Raw target — exposed for debugging. */
+  /** Raw target  exposed for debugging. */
   target: ParseTarget
 }
 
@@ -34,7 +34,7 @@ export function parseWithFormat(
 ): ParseResult {
   // Stash literals. Pre-existing ESC sentinel characters in the format string
   // are stashed as literals too, so the only ESC chars left in `stashed` are
-  // the ones we emitted — embedded U+0001 can never corrupt index decoding.
+  // the ones we emitted  embedded U+0001 can never corrupt index decoding.
   const literals: string[] = []
   // eslint-disable-next-line no-control-regex -- U+0001 is the stash sentinel; matching it is the point
   const stashed = fmt.replace(/\[([^\]]*)\]|\u0001/gu, (match, txt: string | undefined) => {
@@ -128,7 +128,7 @@ export function parseWithFormat(
   let M = (target.month ?? 1) - 1
   let D = target.date ?? 1
 
-  // Day-of-year resolves the date fields only — time-of-day and offset fields
+  // Day-of-year resolves the date fields only  time-of-day and offset fields
   // parsed alongside it are preserved.
   if (target.dayOfYear != null) {
     let doy = target.dayOfYear
@@ -157,7 +157,7 @@ export function parseWithFormat(
     unixMs = Date.UTC(Y, M, D, h, min, s, ms) - target.timezoneOffsetMinutes * 60_000
     hadOffset = true
   } else {
-    // No offset specified — interpret as local time
+    // No offset specified  interpret as local time
     unixMs = new Date(Y, M, D, h, min, s, ms).getTime()
   }
 

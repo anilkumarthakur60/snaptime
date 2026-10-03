@@ -30,7 +30,7 @@ function toDate(input: DateTimeInput | undefined): Date | null {
   if (input == null) return null
   if (input instanceof Date) return new Date(input.getTime())
   if (typeof input === 'number' || typeof input === 'string') return new Date(input)
-  // DateTime (or anything DateTime-like) — normalize via its epoch-ms valueOf()
+  // DateTime (or anything DateTime-like)  normalize via its epoch-ms valueOf()
   return new Date(input.valueOf())
 }
 
@@ -247,7 +247,7 @@ export class RRule implements Iterable<DateTime> {
         break
     }
 
-    // BYHOUR/BYMINUTE/BYSECOND — expand or limit per the RFC 5545 table
+    // BYHOUR/BYMINUTE/BYSECOND  expand or limit per the RFC 5545 table
     candidates = this._expandTime(candidates, dtstart)
 
     // BY filters that always apply post-expansion
@@ -350,7 +350,7 @@ export class RRule implements Iterable<DateTime> {
     } else if (dtstart.getDate() <= dim) {
       // Anchored to dtstart's day-of-month. Months without that day (e.g.
       // February for a day-31 anchor) are SKIPPED, not clamped (RFC 5545:
-      // "invalid date … are ignored" — matches rrule.js / dateutil).
+      // "invalid date … are ignored"  matches rrule.js / dateutil).
       out.push(mk(dtstart.getDate()))
     }
 
@@ -463,7 +463,7 @@ export class RRule implements Iterable<DateTime> {
     if (o.bymonth && !o.bymonth.includes(d.getMonth() + 1)) return false
     // For DAILY and finer frequencies BYDAY/BYMONTHDAY are limits (they only
     // expand for WEEKLY/MONTHLY/YEARLY, which handle them at candidate
-    // generation) — RFC 5545 §3.3.10.
+    // generation)  RFC 5545 §3.3.10.
     const freq = o.freq
     if (freq === 'DAILY' || freq === 'HOURLY' || freq === 'MINUTELY' || freq === 'SECONDLY') {
       if (o.byweekday?.length && !o.byweekday.some((w) => weekdayNum(w) === d.getDay())) {

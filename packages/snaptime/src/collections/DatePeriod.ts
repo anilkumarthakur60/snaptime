@@ -13,7 +13,7 @@ export interface DatePeriodOptions {
   end?: DateInput
   /** Skip these specific instants (matched by ms). */
   exclude?: DateInput[]
-  /** Filter — only emit items for which `filter(d)` is true. */
+  /** Filter  only emit items for which `filter(d)` is true. */
   filter?: (d: DateTime) => boolean
   start: DateInput
   /** Multiplier for the step (default 1). */
@@ -26,7 +26,7 @@ export interface DatePeriodOptions {
  * A lazy, iterable, filterable schedule of dates.
  *
  * Mirrors PHP CarbonPeriod / Laravel's CarbonPeriod. A DatePeriod is purely
- * declarative — iterating it produces instances; nothing is allocated up
+ * declarative  iterating it produces instances; nothing is allocated up
  * front. Filters/exclusions can be added fluently.
  *
  *   for (const d of new DatePeriod({
@@ -58,7 +58,7 @@ export default class DatePeriod implements Iterable<DateTime> {
     }
   }
 
-  // ── Fluent modifiers — return a new DatePeriod ───────────────────────────
+  // ── Fluent modifiers  return a new DatePeriod ───────────────────────────
 
   filter(fn: (d: DateTime) => boolean): DatePeriod {
     const existing = this._opts.filter

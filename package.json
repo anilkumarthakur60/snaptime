@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Monorepo for @anil-labs/snaptime — a modern, zero-dependency TypeScript date/time library: formatting, parsing, timezones, business days, cron, RRULE, natural language, Bikram Sambat, astronomy, validators, and more.",
+  "description": "Monorepo for @anil-labs/snaptime  a modern, zero-dependency TypeScript date/time library: formatting, parsing, timezones, business days, cron, RRULE, natural language, Bikram Sambat, astronomy, validators, and more.",
   "scripts": {
     "build": "pnpm --filter \"./packages/*\" -r build",
     "dev": "pnpm --filter example-playground dev",

@@ -15,7 +15,7 @@ import {
 import { EN } from './default'
 
 /**
- * Resolved locale — every field is guaranteed to be populated, with English
+ * Resolved locale  every field is guaranteed to be populated, with English
  * fallbacks applied for anything the registered LocaleData omits.
  */
 export interface ResolvedLocale {
@@ -40,7 +40,7 @@ let _default = 'en'
  * Every key of LocaleData, as a checked literal list. `satisfies` rejects
  * entries that are not LocaleData keys, and the `_localeDataKeysComplete`
  * assertion below fails to compile if LocaleData gains a field that is
- * missing here — forcing this list (and the runtime guard) to stay in sync.
+ * missing here  forcing this list (and the runtime guard) to stay in sync.
  */
 const LOCALE_DATA_KEYS = [
   'calendar',
@@ -58,7 +58,7 @@ const LOCALE_DATA_KEYS = [
 ] as const satisfies readonly (keyof LocaleData)[]
 
 type MissingLocaleDataKeys = Exclude<keyof LocaleData, (typeof LOCALE_DATA_KEYS)[number]>
-// Compile-time completeness check — if this line errors, add the reported
+// Compile-time completeness check  if this line errors, add the reported
 // key(s) to LOCALE_DATA_KEYS (and make sure the built-in EN locale sets them).
 const _localeDataKeysComplete: [MissingLocaleDataKeys] extends [never]
   ? true
@@ -129,7 +129,7 @@ export const Locales = {
     return resolve(_store[key])
   },
 
-  /** Get raw (un-resolved) locale data — `undefined` if not registered. */
+  /** Get raw (un-resolved) locale data  `undefined` if not registered. */
   getRaw(name: string): LocaleData | undefined {
     return _store[name]
   },

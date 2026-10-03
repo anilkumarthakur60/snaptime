@@ -1,6 +1,6 @@
 # DateFormat
 
-The core class — 80+ methods for creating, formatting, parsing, manipulating, and comparing dates.
+The core class  80+ methods for creating, formatting, parsing, manipulating, and comparing dates.
 
 ## Creating Dates
 
@@ -192,7 +192,7 @@ DateFormat.parse('2026-01-00', 'YYYY-MM-DD', true)
 DateFormat.parse('2026-00-01', 'YYYY-MM-DD', true)
 // → invalid: month 0 out of range
 
-// Partial format — only year:
+// Partial format  only year:
 DateFormat.parse('2026', 'YYYY', true)
 // → valid (no month/day to validate)
 ```
@@ -353,7 +353,7 @@ a.isSameOrAfter(b)            // → false
 a.isSameOrBefore(c, 'day')    // → true  (same day)
 a.isSameOrAfter(c, 'month')   // → true  (same month)
 
-// isBetween — default is exclusive '()' on both boundaries:
+// isBetween  default is exclusive '()' on both boundaries:
 const mid = d8('2026-01-15T18:00:00Z')
 mid.isBetween(a, b) // → true
 a.isBetween(a, b)   // → false (on boundary)

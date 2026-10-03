@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "D8"
   text: "Modern Date/Time for TypeScript"
-  tagline: "Zero-dependency, fully typed date library — formatting, parsing, timezones, business days, cron, and natural language."
+  tagline: "Zero-dependency, fully typed date library  formatting, parsing, timezones, business days, cron, and natural language."
   image:
     src: /logo-transparent.png
     alt: D8 Logo
@@ -22,10 +22,10 @@ hero:
 features:
   - icon: 🎯
     title: Fully Typed
-    details: Built from the ground up in TypeScript. Every method, option, and return value has precise types — no <code>any</code> escape hatches.
+    details: Built from the ground up in TypeScript. Every method, option, and return value has precise types  no <code>any</code> escape hatches.
   - icon: 📦
     title: Zero Dependencies
-    details: Ships ESM + UMD + CJS + IIFE with type declarations. Zero external packages. ~50 KB unminified — everything included.
+    details: Ships ESM + UMD + CJS + IIFE with type declarations. Zero external packages. ~50 KB unminified  everything included.
   - icon: 🕐
     title: 100+ Methods
     details: Format, parse, compare, diff, age, countdown, calendar grid, fiscal year, ISO weeks, ordinals, unit aliases, and dozens of is‑checks.
@@ -43,7 +43,7 @@ features:
     details: Parse "tomorrow at 3pm", "5 hours ago", "next Friday", "3rd Monday of January", "noon", "midnight", and more.
   - icon: 📅
     title: Ranges & Collections
-    details: DateRange with contains/overlaps/merge/split/iterate. DateCollection with sort/group/unique/closest/filter/reduce — fully iterable.
+    details: DateRange with contains/overlaps/merge/split/iterate. DateCollection with sort/group/unique/closest/filter/reduce  fully iterable.
   - icon: ⏱️
     title: Duration
     details: Parse durations from "2h30m" or ISO 8601 "P1DT12H". Convert units, compare, format with templates, and humanize.

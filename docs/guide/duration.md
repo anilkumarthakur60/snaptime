@@ -16,7 +16,7 @@ DateFormat.duration(2, 'hour') // → Duration(7200000)
 
 // From two timestamps or Date objects:
 Duration.between(new Date('2024-01-01'), new Date('2024-01-03'))
-// → Duration(172800000) — always returns absolute difference
+// → Duration(172800000)  always returns absolute difference
 
 Duration.between(1704067200000, 1704240000000)
 // → Duration(172800000)
@@ -51,10 +51,10 @@ Duration.parse('2Y3M1w4d5h6m7s8ms')
 Duration.fromISO('P1Y2M3DT4H5M6S')
 // → 1 year + 2 months + 3 days + 4 hours + 5 minutes + 6 seconds
 
-Duration.fromISO('PT30M')   // → Duration(1800000) — 30 minutes
-Duration.fromISO('P2W')     // → Duration(1209600000) — 2 weeks
-Duration.fromISO('P1Y')     // → Duration(31536000000) — 1 year
-Duration.fromISO('PT1H30M') // → Duration(5400000) — 1 hour 30 minutes
+Duration.fromISO('PT30M')   // → Duration(1800000)  30 minutes
+Duration.fromISO('P2W')     // → Duration(1209600000)  2 weeks
+Duration.fromISO('P1Y')     // → Duration(31536000000)  1 year
+Duration.fromISO('PT1H30M') // → Duration(5400000)  1 hour 30 minutes
 ```
 
 Accepts any valid [ISO 8601 duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) string. The `P` prefix is required; the `T` separator divides date units from time units.
@@ -117,7 +117,7 @@ new Duration(10000).subtract(5, 'second').valueOf()
 // Unknown unit throws:
 base.add(1, 'unknown') // → throws: 'Cannot add/subtract unit "unknown"'
 
-// Unit aliases — short forms work everywhere a unit is accepted:
+// Unit aliases  short forms work everywhere a unit is accepted:
 base.add(1, 'h')   // → same as add(1, 'hour')
 base.add(30, 'm')  // → same as add(30, 'minute')
 base.add(2, 'd')   // → same as add(2, 'day')

@@ -388,7 +388,7 @@ describe('ISO Week & Weeks In Year', () => {
     expect(dateFormat('2021-01-01').isoWeekYear()).toBe(2020)
     expect(dateFormat('2021-06-15').isoWeekYear()).toBe(2021)
   })
-  test('weeksInYear() — note: 2020 has 53, 2021 has 52', () => {
+  test('weeksInYear()  note: 2020 has 53, 2021 has 52', () => {
     // Method may not exist on instance; guard before asserting.
     const inst = dateFormat('2020-01-01') as unknown as { weeksInYear?: () => number }
     if (typeof inst.weeksInYear === 'function') {

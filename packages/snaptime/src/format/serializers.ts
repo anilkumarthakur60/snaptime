@@ -3,7 +3,7 @@
 //
 // Each serializer takes an optional `utc` flag mirroring DateTime's UTC mode:
 // when set, UTC getters are used (the same getter selection the formatter
-// uses) and the rendered offset is +00:00 — so a UTC-mode instance's
+// uses) and the rendered offset is +00:00  so a UTC-mode instance's
 // serialized form agrees with its own format() output.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -66,12 +66,12 @@ export function toRFC3339(d: Date, utc = false): string {
     : `${date}T${time}${formatOffset(c.offsetMinutes, ':')}`
 }
 
-/** ISO 8601 — wrapper for symmetry with the others. */
+/** ISO 8601  wrapper for symmetry with the others. */
 export function toISO(ms: number): string {
   return new Date(ms).toISOString()
 }
 
-/** Excel serial date — fractional days since 1899-12-30. */
+/** Excel serial date  fractional days since 1899-12-30. */
 export function toExcel(ms: number): number {
   return (ms - EXCEL_EPOCH_MS) / 86_400_000
 }
@@ -81,7 +81,7 @@ export function fromExcel(serial: number): number {
   return serial * 86_400_000 + EXCEL_EPOCH_MS
 }
 
-/** SQL DATETIME — `YYYY-MM-DD HH:MM:SS`. */
+/** SQL DATETIME  `YYYY-MM-DD HH:MM:SS`. */
 export function toSQL(d: Date, utc = false): string {
   const c = wallClock(d, utc)
   return (
@@ -90,13 +90,13 @@ export function toSQL(d: Date, utc = false): string {
   )
 }
 
-/** SQL DATE — `YYYY-MM-DD`. */
+/** SQL DATE  `YYYY-MM-DD`. */
 export function toSQLDate(d: Date, utc = false): string {
   const c = wallClock(d, utc)
   return `${c.year}-${pad(c.month + 1)}-${pad(c.date)}`
 }
 
-/** SQL TIME — `HH:MM:SS`. */
+/** SQL TIME  `HH:MM:SS`. */
 export function toSQLTime(d: Date, utc = false): string {
   const c = wallClock(d, utc)
   return `${pad(c.hours)}:${pad(c.minutes)}:${pad(c.seconds)}`

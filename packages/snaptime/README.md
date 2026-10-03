@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>A modern, zero-dependency TypeScript date/time library.</strong><br />
-  Formatting · Parsing · Timezones · Business Days · Cron · RRULE · Natural Language · Bikram Sambat · Astronomy — all in one.
+  Formatting · Parsing · Timezones · Business Days · Cron · RRULE · Natural Language · Bikram Sambat · Astronomy  all in one.
 </p>
 
 <p align="center">
@@ -23,22 +23,22 @@
 
 | Feature | Description |
 |:--------|:------------|
-| 🎯 **Fully Typed** | Written in strict TypeScript — every method, option, and return value is typed |
+| 🎯 **Fully Typed** | Written in strict TypeScript  every method, option, and return value is typed |
 | 📦 **Zero Dependencies** | No external packages. Ships ESM, CJS, a CDN global bundle, and type declarations |
 | 🕐 **DateTime** | 80+ instance methods: format, parse, compare, add/subtract, start/end of period, diff, age, countdown, calendar grid, fiscal year, ISO weeks, and more |
 | ⏱️ **Duration** | Parse durations from strings (`"2h30m"`), convert between units, format, humanize |
 | 📅 **DateRange** | Ranges with contains/overlaps/intersect/merge/split/iterate |
 | 📚 **DateCollection** | Sort, filter, group, deduplicate, closest/farthest, min/max over sets of dates |
-| 🌍 **Timezone** | Full IANA timezone support — offsets, DST detection, wall-clock formatting |
+| 🌍 **Timezone** | Full IANA timezone support  offsets, DST detection, wall-clock formatting |
 | 💼 **Business Days** | Add/subtract business days, skip weekends + holidays for 7 countries |
 | ⏰ **Cron** | Parse 5-field cron expressions, next/prev match, between, humanize |
-| 🔁 **RRULE** | iCalendar (RFC 5545) recurrence rules — parse, stringify, iterate occurrences |
+| 🔁 **RRULE** | iCalendar (RFC 5545) recurrence rules  parse, stringify, iterate occurrences |
 | 🗣️ **Natural Language** | Parse `"tomorrow"`, `"in 3 days"`, `"last Friday"`, `"3rd Monday of January"` |
 | 🇳🇵 **Bikram Sambat** | Convert between Gregorian and Nepali BS calendar dates |
 | 🌙 **Astronomy** | Sunrise/sunset, moon phases, seasons |
 | ✅ **Validators** | Composable date validation rules |
 | 🔌 **Plugin System** | Extend `DateTime` with custom methods via a simple plugin API |
-| 🌐 **Locale Support** | 19 built-in locales, tree-shakable — plus custom locale registration |
+| 🌐 **Locale Support** | 19 built-in locales, tree-shakable  plus custom locale registration |
 
 ## 📦 Installation
 
@@ -174,7 +174,7 @@ Full guides, API reference, and examples: **https://anilkumarthakur60.github.io/
 
 ## 🤝 Contributing
 
-Contributions are welcome — see the
+Contributions are welcome  see the
 [repository on GitHub](https://github.com/anilkumarthakur60/snaptime).
 
 ```bash

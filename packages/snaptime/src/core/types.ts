@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Core public types for the library.
 // All other modules import from here. Keep this file free of runtime
-// dependencies — type-only imports are fine.
+// dependencies  type-only imports are fine.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type DateTime from './DateTime'
@@ -104,7 +104,7 @@ export type RoundToUnitInput =
   | 'ms'
   | 'milliseconds'
 
-/** Units accepted by `set()` — the fields a JS Date can actually store. */
+/** Units accepted by `set()`  the fields a JS Date can actually store. */
 export type SettableUnit = 'year' | 'month' | 'date' | 'hour' | 'minute' | 'second' | 'millisecond'
 
 /** Settable units plus every alias that resolves to one of them. */
@@ -133,7 +133,7 @@ export type SettableUnitInput =
   | 'ms'
   | 'milliseconds'
 
-/** Iso/locale weekday — 0=Sunday in JS Date, but we expose 1=Monday for ISO. */
+/** Iso/locale weekday  0=Sunday in JS Date, but we expose 1=Monday for ISO. */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
 // ── Date inputs ─────────────────────────────────────────────────────────────
@@ -146,7 +146,7 @@ export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
 export type DateInput = string | number | Date | DateTimeLike
 
 /**
- * Structural type for DateTime — used in pure modules that must avoid a
+ * Structural type for DateTime  used in pure modules that must avoid a
  * circular import on the DateTime class itself. Anything that walks like a
  * DateTime is treated as one.
  */
@@ -278,7 +278,7 @@ export interface CountdownResult {
   milliseconds: number
   minutes: number
   seconds: number
-  /** Signed total ms — negative if target already passed. */
+  /** Signed total ms  negative if target already passed. */
   total: number
 }
 
@@ -298,7 +298,7 @@ export interface CalendarGridOptions {
 // ── Fiscal year ─────────────────────────────────────────────────────────────
 
 export interface FiscalConfig {
-  /** 1-12 — month the fiscal year begins. */
+  /** 1-12  month the fiscal year begins. */
   startMonth: number
 }
 
@@ -349,7 +349,7 @@ export type StaticMacro<A extends unknown[] = unknown[], R = unknown> = StaticMa
  *     }
  *   }
  *
- * No additional helper interface is needed — TypeScript merges your
+ * No additional helper interface is needed  TypeScript merges your
  * declaration into the class's instance type, and any registered macro of
  * the same name is then statically typed.
  */

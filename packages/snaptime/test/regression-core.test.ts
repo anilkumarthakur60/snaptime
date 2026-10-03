@@ -62,11 +62,11 @@ describe('B5: startOf/endOf/floor quarter from May 31', () => {
 // ─── B6: round() snaps to calendar boundaries, not the UTC-epoch grid ────────
 describe('B6: calendar-aware round / roundTo', () => {
   test('round week snaps to the week start (Sunday), not the epoch Thursday grid', () => {
-    // Wednesday 13:00 — closer to next Sunday than to the previous one
+    // Wednesday 13:00  closer to next Sunday than to the previous one
     const wed = new DateTime('2025-05-14T13:00:00Z')
     expect(wed.round('week').toISOString()).toBe('2025-05-18T00:00:00.000Z')
     expect(wed.round('week').get('day')).toBe(0)
-    // Monday — closer to the previous Sunday
+    // Monday  closer to the previous Sunday
     const mon = new DateTime('2025-05-12T09:00:00Z')
     expect(mon.round('week').toISOString()).toBe('2025-05-11T00:00:00.000Z')
   })

@@ -99,7 +99,7 @@ function nthWeekdayOfMonth(n: number, weekday: number, month: number, year: numb
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Built-in patterns — order matters: first match wins.
+// Built-in patterns  order matters: first match wins.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BUILTIN_PATTERNS: Pattern[] = [

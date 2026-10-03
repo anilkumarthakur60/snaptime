@@ -5,7 +5,7 @@
 //   const result = rule.validate(someInput)
 //   if (!result.valid) showErrors(result.errors)
 //
-// Pairs naturally with form libraries — `validate` returns a structured
+// Pairs naturally with form libraries  `validate` returns a structured
 // result, `assert` throws.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ export interface ValidationResult {
 type Predicate = (d: DateTime) => string | null
 type RawPredicate = (input: DateInput | null | undefined) => string | null
 
-/** Internal rule node — either a "value" predicate or a raw-input predicate. */
+/** Internal rule node  either a "value" predicate or a raw-input predicate. */
 type Node = { kind: 'raw'; fn: RawPredicate } | { kind: 'value'; fn: Predicate }
 
 export class DateRule {
@@ -165,7 +165,7 @@ export class DateRule {
     return this._add({ kind: 'value', fn })
   }
 
-  /** Compose with another rule — both must pass (default behavior). */
+  /** Compose with another rule  both must pass (default behavior). */
   and(other: DateRule): DateRule {
     return new DateRule([...this._nodes, ...other._nodes])
   }

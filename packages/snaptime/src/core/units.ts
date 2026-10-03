@@ -20,7 +20,7 @@ const KNOWN: ReadonlySet<Unit> = new Set([
 
 /**
  * Resolve any user-friendly unit string to a canonical {@link Unit}.
- * Throws on unrecognized input — use {@link tryResolveUnit} for a non-throwing variant.
+ * Throws on unrecognized input  use {@link tryResolveUnit} for a non-throwing variant.
  */
 export function resolveUnit(input: UnitInput | (string & {})): Unit {
   const aliased = UNIT_ALIASES[input]
@@ -38,7 +38,7 @@ export function tryResolveUnit(input: string): Unit | null {
 
 /**
  * Approximate ms-per-unit. Calendar-correct arithmetic happens via JS Date
- * for month/year/etc — this function is only used for purely-arithmetic units.
+ * for month/year/etc  this function is only used for purely-arithmetic units.
  */
 export function msPerUnit(unit: Unit): number {
   return MS_PER_UNIT[unit]

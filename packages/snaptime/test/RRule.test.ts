@@ -147,7 +147,7 @@ describe('RRule iteration', () => {
     }
   })
 
-  test('WEEKLY with BYDAY=MO,WE,FR — first 6 occurrences', () => {
+  test('WEEKLY with BYDAY=MO,WE,FR  first 6 occurrences', () => {
     // 2026-01-01 is a Thursday. The next MO is 2026-01-05.
     const r = new RRule({
       freq: 'WEEKLY',
@@ -265,12 +265,12 @@ describe('RRule query helpers', () => {
     expect(new Date(n!.valueOf()).getUTCDate()).toBe(11)
   })
 
-  test('matches() — true for an occurrence, false otherwise', () => {
+  test('matches()  true for an occurrence, false otherwise', () => {
     expect(r.matches(new Date(Date.UTC(2026, 0, 5)))).toBe(true)
     expect(r.matches(new Date(Date.UTC(2026, 0, 5, 12, 0, 0)))).toBe(false)
   })
 
-  test('take(n) — first N occurrences', () => {
+  test('take(n)  first N occurrences', () => {
     const out = r.take(7)
     expect(out).toHaveLength(7)
   })

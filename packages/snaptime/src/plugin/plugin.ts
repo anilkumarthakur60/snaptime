@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Plugin system — `DateTime.use(plugin, options?)`.
+// Plugin system  `DateTime.use(plugin, options?)`.
 //
 // A plugin is just a function that receives the DateTime constructor and
 // (optionally) options. Plugins register macros, locales, or any other side

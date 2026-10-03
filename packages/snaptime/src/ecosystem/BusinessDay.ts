@@ -62,7 +62,7 @@ export function businessDaysBetween(start: DateInput, end: DateInput, holidays?:
   return count * dir
 }
 
-/** Built-in country calendars — delegates to the holidays registry. */
+/** Built-in country calendars  delegates to the holidays registry. */
 export function getHolidays(country: HolidayCountry | (string & {}), year: number): string[] {
   return Holidays.for(country, year)
 }

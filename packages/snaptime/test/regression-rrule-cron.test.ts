@@ -7,7 +7,7 @@ import DateTime from '../src/core/DateTime'
 // Regression tests for audited RRULE + Cron defects. Every DTSTART is pinned
 // explicitly. The RRULE engine operates on local wall-clock time, so dates
 // are built with the local Date constructor and asserted through local
-// components — the expectations hold in any IANA zone.
+// components  the expectations hold in any IANA zone.
 // ---------------------------------------------------------------------------
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -24,7 +24,7 @@ const local = (year: number, month: number, day: number, hour = 0, min = 0) =>
   new DateTime(new Date(year, month - 1, day, hour, min, 0, 0))
 
 // ---------------------------------------------------------------------------
-// B3 — BYDAY / BYMONTHDAY must LIMIT DAILY (and sub-daily) frequencies
+// B3  BYDAY / BYMONTHDAY must LIMIT DAILY (and sub-daily) frequencies
 // (RFC 5545 §3.3.10 limit-vs-expand table; matches rrule.js / dateutil).
 // ---------------------------------------------------------------------------
 describe('B3: BYDAY/BYMONTHDAY limit DAILY frequencies', () => {
@@ -77,8 +77,8 @@ describe('B3: BYDAY/BYMONTHDAY limit DAILY frequencies', () => {
 })
 
 // ---------------------------------------------------------------------------
-// B4 — BYHOUR/BYMINUTE/BYSECOND LIMIT frequencies at or above their own
-// precision (they only expand for DAILY and coarser) — RFC 5545 §3.3.10.
+// B4  BYHOUR/BYMINUTE/BYSECOND LIMIT frequencies at or above their own
+// precision (they only expand for DAILY and coarser)  RFC 5545 §3.3.10.
 // The old code remapped every hourly window onto the same instant, emitting
 // endless duplicates.
 // ---------------------------------------------------------------------------
@@ -97,7 +97,7 @@ describe('B4: BYHOUR limits HOURLY (no duplicate occurrences)', () => {
     ])
   })
 
-  test('FREQ=HOURLY;BYHOUR=9;BYMINUTE=15,45 — BYHOUR limits, BYMINUTE expands', () => {
+  test('FREQ=HOURLY;BYHOUR=9;BYMINUTE=15,45  BYHOUR limits, BYMINUTE expands', () => {
     const r = new RRule({
       freq: 'HOURLY',
       byhour: [9],
@@ -113,7 +113,7 @@ describe('B4: BYHOUR limits HOURLY (no duplicate occurrences)', () => {
     ])
   })
 
-  test('FREQ=MINUTELY;BYMINUTE=30 — BYMINUTE limits MINUTELY', () => {
+  test('FREQ=MINUTELY;BYMINUTE=30  BYMINUTE limits MINUTELY', () => {
     const r = new RRule({
       freq: 'MINUTELY',
       byminute: [30],
@@ -125,7 +125,7 @@ describe('B4: BYHOUR limits HOURLY (no duplicate occurrences)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// B8 — MONTHLY from a day-29/30/31 DTSTART: months lacking that day are
+// B8  MONTHLY from a day-29/30/31 DTSTART: months lacking that day are
 // SKIPPED, never clamped, and the window arithmetic must not drift past
 // short months (RFC 5545: "Recurrence instances falling on invalid dates
 // … are ignored"; matches rrule.js / dateutil).
@@ -171,7 +171,7 @@ describe('B8: MONTHLY day-31/30 anchors skip short months (no clamp, no drift)',
 })
 
 // ---------------------------------------------------------------------------
-// B9 — YEARLY with BYYEARDAY/BYWEEKNO, or BYDAY without BYMONTH, must expand
+// B9  YEARLY with BYYEARDAY/BYWEEKNO, or BYDAY without BYMONTH, must expand
 // over the whole year (previously only DTSTART's month was expanded → zero
 // occurrences).
 // ---------------------------------------------------------------------------
@@ -230,7 +230,7 @@ describe('B9: YEARLY whole-year expansion', () => {
 })
 
 // ---------------------------------------------------------------------------
-// B26 — DTSTART with nonzero milliseconds must not skip the first occurrence
+// B26  DTSTART with nonzero milliseconds must not skip the first occurrence
 // (candidates previously truncated ms to 0 and failed the `>= dtstart` gate).
 // ---------------------------------------------------------------------------
 describe('B26: DTSTART milliseconds are preserved', () => {
@@ -256,7 +256,7 @@ describe('B26: DTSTART milliseconds are preserved', () => {
 })
 
 // ---------------------------------------------------------------------------
-// API-T — the query helpers and dtstart/until options accept DateTime
+// API-T  the query helpers and dtstart/until options accept DateTime
 // (previously a type error even though the runtime coerced via valueOf()).
 // ---------------------------------------------------------------------------
 describe('API-T: RRule accepts DateTime everywhere a date input is taken', () => {
@@ -289,7 +289,7 @@ describe('API-T: RRule accepts DateTime everywhere a date input is taken', () =>
 })
 
 // ---------------------------------------------------------------------------
-// B20a — Cron DOW `0-7`: 7 must remap to Sunday during range expansion, so
+// B20a  Cron DOW `0-7`: 7 must remap to Sunday during range expansion, so
 // `0-7` covers every day and `5-7` is Fri,Sat,Sun (Vixie cron).
 // ---------------------------------------------------------------------------
 describe('B20a: Cron DOW ranges including 7', () => {
@@ -313,7 +313,7 @@ describe('B20a: Cron DOW ranges including 7', () => {
 })
 
 // ---------------------------------------------------------------------------
-// B20b — Reversed cron ranges wrap around the field boundary (Vixie cron)
+// B20b  Reversed cron ranges wrap around the field boundary (Vixie cron)
 // instead of silently producing an empty set.
 // ---------------------------------------------------------------------------
 describe('B20b: reversed cron ranges wrap', () => {
@@ -360,7 +360,7 @@ describe('B20b: reversed cron ranges wrap', () => {
 })
 
 // ---------------------------------------------------------------------------
-// B20c — next()/prev() must search past a full leap cycle so "0 0 29 2 *"
+// B20c  next()/prev() must search past a full leap cycle so "0 0 29 2 *"
 // (Feb 29) resolves; impossible specs still throw with the horizon in the
 // error message.
 // ---------------------------------------------------------------------------
