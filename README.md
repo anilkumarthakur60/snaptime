@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="./img.png" alt="snaptime Logo" width="120" />
+  <img src="./docs/public/logo.svg" alt="snaptime" width="360" />
 </p>
-
-<h1 align="center">snaptime</h1>
 
 <p align="center">
   <strong>Monorepo for <a href="https://www.npmjs.com/package/@anil-labs/snaptime"><code>@anil-labs/snaptime</code></a>  a modern, zero-dependency TypeScript date/time library.</strong><br />

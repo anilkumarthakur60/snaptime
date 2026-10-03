@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anilkumarthakur60/snaptime/main/docs/public/logo.svg" alt="snaptime" width="360" />
+</p>
+
 <h1 align="center">@anil-labs/snaptime</h1>
 
 <p align="center">

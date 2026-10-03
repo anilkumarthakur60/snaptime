@@ -6,8 +6,8 @@ hero:
   text: "Modern Date/Time for TypeScript"
   tagline: "Zero-dependency, fully typed date library  formatting, parsing, timezones, business days, cron, and natural language."
   image:
-    src: /logo-transparent.png
-    alt: snaptime Logo
+    src: /icon.svg
+    alt: snaptime logo
   actions:
     - theme: brand
       text: Get Started →

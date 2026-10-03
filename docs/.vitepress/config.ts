@@ -8,7 +8,9 @@ export default defineConfig({
   base: '/snaptime/',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/png', href: '/snaptime/icon-transparent.png' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/snaptime/icon.svg' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/snaptime/icon.png' }],
+    ['link', { rel: 'apple-touch-icon', href: '/snaptime/icon.png' }],
     ['meta', { name: 'theme-color', content: '#667eea' }],
     ['meta', { name: 'og:type', content: 'website' }],
     ['meta', { name: 'og:locale', content: 'en' }],
@@ -35,7 +37,7 @@ export default defineConfig({
   ],
 
   themeConfig: {
-    logo: '/icon-transparent.png',
+    logo: '/icon.svg',
     siteTitle: 'snaptime',
 
     nav: [
