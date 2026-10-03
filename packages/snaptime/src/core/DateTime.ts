@@ -267,7 +267,7 @@ class DateTime {
    * Register an instance macro. To get type-safety on the new method, augment
    * the DateTime interface in your own code:
    *
-   *   declare module '@anilkumarthakur/d8' {
+   *   declare module '@anil-labs/snaptime' {
    *     interface DateTime {
    *       greet(): string
    *     }

@@ -5,7 +5,7 @@ Batch operations on sets of dates  sort, filter, group, deduplicate, and query.
 ## Creating Collections
 
 ```typescript
-import { DateCollection, DateFormat } from '@anilkumarthakur/d8'
+import { DateCollection, DateFormat } from '@anil-labs/snaptime'
 
 // From strings:
 new DateCollection(['2026-01-01', '2026-06-01'])        // count → 2
@@ -29,8 +29,8 @@ new DateCollection([
 // count → 4
 
 // Or via the factory:
-import d8 from '@anilkumarthakur/d8'
-const c = d8.collection(['2026-01-01', '2026-06-01', '2026-03-15'])
+import snaptime from '@anil-labs/snaptime'
+const c = snaptime.collection(['2026-01-01', '2026-06-01', '2026-03-15'])
 ```
 
 ---

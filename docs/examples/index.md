@@ -1,6 +1,6 @@
 # Examples
 
-Real-world code samples and recipes for D8.
+Real-world code samples and recipes for snaptime.
 
 ## Basics
 

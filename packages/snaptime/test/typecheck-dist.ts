@@ -3,7 +3,7 @@
  * This simulates what an npm consumer sees.
  */
 
-import d8, {
+import snaptime, {
   DateFormat,
   Duration,
   DateRange,
@@ -32,11 +32,11 @@ import type {
 } from '../dist/index'
 
 // Factory
-const a: DateFormat = d8('2026-01-01')
-const b: DateFormat = d8.fromObject({ year: 2026, month: 3, day: 15 })
-const c: DateFormat = d8.parse('2026-01-01', 'YYYY-MM-DD')
-const mn: DateFormat = d8.min('2026-01-01', '2026-06-01')
-const mx: DateFormat = d8.max('2026-01-01', '2026-06-01')
+const a: DateFormat = snaptime('2026-01-01')
+const b: DateFormat = snaptime.fromObject({ year: 2026, month: 3, day: 15 })
+const c: DateFormat = snaptime.parse('2026-01-01', 'YYYY-MM-DD')
+const mn: DateFormat = snaptime.min('2026-01-01', '2026-06-01')
+const mx: DateFormat = snaptime.max('2026-01-01', '2026-06-01')
 
 // DateFormat instance methods
 const fmt: string = a.format('[Year:] YYYY')
@@ -80,11 +80,11 @@ const eq: boolean = dur.equals(dur2)
 const isoD: string = dur.toISO()
 
 // DateRange
-const range = d8.range('2026-01-01', '2026-12-31')
+const range = snaptime.range('2026-01-01', '2026-12-31')
 const contains: boolean = range.contains('2026-06-15')
 
 // DateCollection
-const col = d8.collection(['2026-01-01', '2026-06-15'])
+const col = snaptime.collection(['2026-01-01', '2026-06-15'])
 const found: DateFormat | undefined = col.find((d) => d.isFriday())
 const sp: DateRange = col.span()
 const merged: DateCollection = col.merge(col)
@@ -94,15 +94,15 @@ for (const d of col) {
 }
 
 // Timezone
-const tz = d8.tz('UTC')
+const tz = snaptime.tz('UTC')
 const tzFmt: string = tz.format(a, 'HH:mm')
 
 // Cron
-const cron = d8.cron('* * * * *')
+const cron = snaptime.cron('* * * * *')
 const next: DateFormat = cron.next()
 
 // NaturalLanguage
-const nl: DateFormat = d8.natural('tomorrow at 3pm')
+const nl: DateFormat = snaptime.natural('tomorrow at 3pm')
 const nl2: DateFormat = parseNatural('5 hours ago')
 
 // Business
@@ -121,7 +121,7 @@ const _hc: HolidayCountry = 'IN'
 const _fc: FiscalConfig = { startMonth: 4 }
 declare const _ld: LocaleData
 
-// Classes are also constructible directly (not just via the d8 facade)
+// Classes are also constructible directly (not just via the snaptime facade)
 const tzc: Timezone = new Timezone('UTC')
 const crc: Cron = new Cron('*/5 * * * *')
 

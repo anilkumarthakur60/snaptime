@@ -4,7 +4,7 @@
  * If this file compiles without errors, the type declarations are working.
  */
 
-import d8, {
+import snaptime, {
   DateFormat,
   Duration,
   DateRange,
@@ -20,7 +20,8 @@ import d8, {
   businessDaysBetween,
   getHolidays,
   resolveUnit,
-  dateTime
+  dateTime,
+  snaptime as snaptimeNamed
 } from '../src/index'
 
 import type {
@@ -50,29 +51,30 @@ import type {
 
 // ── Factory function ──────────────────────────────────────────────────────────
 
-const a: DateFormat = d8()
-const b: DateFormat = d8('2026-01-01')
-const c: DateFormat = d8(Date.now())
-const d: DateFormat = d8(new Date())
-const e: DateFormat = d8('2026-01-01', { utc: true })
-const _same: typeof d8 = dateTime
+const a: DateFormat = snaptime()
+const b: DateFormat = snaptime('2026-01-01')
+const c: DateFormat = snaptime(Date.now())
+const d: DateFormat = snaptime(new Date())
+const e: DateFormat = snaptime('2026-01-01', { utc: true })
+const _same: typeof snaptime = dateTime
+const _named: typeof snaptime = snaptimeNamed
 
 // ── Static methods ────────────────────────────────────────────────────────────
 
-const parsed: DateFormat = d8.parse('2026-01-01', 'YYYY-MM-DD')
-const fromObj: DateFormat = d8.fromObject({ year: 2026, month: 3, day: 15 })
-const fromObjUtc: DateFormat = d8.fromObject({ year: 2026 }, { utc: true })
-const minD: DateFormat = d8.min('2026-01-01', '2026-06-01')
-const maxD: DateFormat = d8.max('2026-01-01', '2026-06-01')
-const dur: Duration = d8.duration(5, 'day')
-const durAlias: Duration = d8.duration(5, 'd')
-d8.locale('en')
-d8.locale('fr', { months: [] })
-d8.use(() => {})
+const parsed: DateFormat = snaptime.parse('2026-01-01', 'YYYY-MM-DD')
+const fromObj: DateFormat = snaptime.fromObject({ year: 2026, month: 3, day: 15 })
+const fromObjUtc: DateFormat = snaptime.fromObject({ year: 2026 }, { utc: true })
+const minD: DateFormat = snaptime.min('2026-01-01', '2026-06-01')
+const maxD: DateFormat = snaptime.max('2026-01-01', '2026-06-01')
+const dur: Duration = snaptime.duration(5, 'day')
+const durAlias: Duration = snaptime.duration(5, 'd')
+snaptime.locale('en')
+snaptime.locale('fr', { months: [] })
+snaptime.use(() => {})
 
 // ── DateFormat instance ───────────────────────────────────────────────────────
 
-const df = d8('2026-03-15')
+const df = snaptime('2026-03-15')
 
 // Core
 const ms: number = df.valueOf()
@@ -230,7 +232,7 @@ const _fmt: string = d1.format('HH:mm:ss')
 
 // ── DateRange ─────────────────────────────────────────────────────────────────
 
-const range = d8.range('2026-01-01', '2026-12-31')
+const range = snaptime.range('2026-01-01', '2026-12-31')
 const _rv: boolean = range.isValid()
 const _rf: boolean = range.isForward()
 const _rd: Duration = range.duration()
@@ -245,7 +247,7 @@ const _re: boolean = range.equals(range)
 
 // ── DateCollection ────────────────────────────────────────────────────────────
 
-const col = d8.collection(['2026-01-01', '2026-06-15', '2026-12-31'])
+const col = snaptime.collection(['2026-01-01', '2026-06-15', '2026-12-31'])
 const sorted: DateCollection = col.sort('asc')
 const filtered: DateCollection = col.filter((d) => d.isWeekday())
 const unique: DateCollection = col.unique('day')
@@ -285,7 +287,7 @@ const grouped: Map<string, DateFormat[]> = col.groupBy('month')
 
 // ── Timezone ──────────────────────────────────────────────────────────────────
 
-const tz2 = d8.tz('America/New_York')
+const tz2 = snaptime.tz('America/New_York')
 const _guess: string = Timezone.guess()
 const _isValidTz: boolean = Timezone.isValid('UTC')
 const _offMin: number = tz2.offsetMinutes()
@@ -296,7 +298,7 @@ const _tzLocal: DateFormat = tz2.toLocalDate(df)
 
 // ── Cron ──────────────────────────────────────────────────────────────────────
 
-const cron = d8.cron('30 9 * * 1-5')
+const cron = snaptime.cron('30 9 * * 1-5')
 const cronDirect: Cron = new Cron('30 9 * * 1-5')
 const _matches: boolean = cron.matches(df)
 const _next: DateFormat = cron.next()
@@ -306,7 +308,7 @@ const _cronHumanize: string = cron.humanize()
 
 // ── Natural Language ──────────────────────────────────────────────────────────
 
-const nlResult: DateFormat = d8.natural('tomorrow at 3pm')
+const nlResult: DateFormat = snaptime.natural('tomorrow at 3pm')
 const nlDirect: DateFormat = parseNatural('5 hours ago')
 
 // ── Business Days ─────────────────────────────────────────────────────────────
@@ -345,7 +347,7 @@ const _cgo: CalendarGridOptions = { weekStart: 'monday' }
 const _cronField: CronField | null = null
 
 // Suppress unused warnings
-void [a, b, c, d, e, _same, parsed, fromObj, fromObjUtc, minD, maxD, dur, durAlias]
+void [a, b, c, d, e, _same, _named, parsed, fromObj, fromObjUtc, minD, maxD, dur, durAlias]
 void [ms, unix, valid, utc, local, date, cloned, year, day, withHour, withAlias]
 void [added, addedAlias, subtracted, subtractedAlias, diffMs, diffDays, diffFloat]
 void [

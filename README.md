@@ -45,9 +45,9 @@ pnpm add @anil-labs/snaptime
 ```
 
 ```typescript
-import d8 from '@anil-labs/snaptime'
+import snaptime from '@anil-labs/snaptime'
 
-d8('2026-03-18').add(7, 'day').format('dddd, MMMM Do YYYY')
+snaptime('2026-03-18').add(7, 'day').format('dddd, MMMM Do YYYY')
 ```
 
 Or straight off a CDN:

@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: "D8"
+  name: "snaptime"
   text: "Modern Date/Time for TypeScript"
   tagline: "Zero-dependency, fully typed date library  formatting, parsing, timezones, business days, cron, and natural language."
   image:
     src: /logo-transparent.png
-    alt: D8 Logo
+    alt: snaptime Logo
   actions:
     - theme: brand
       text: Get Started →
@@ -70,16 +70,16 @@ features:
 ## Quick Example
 
 ```typescript
-import d8, { Timezone, Cron, Duration } from '@anilkumarthakur/d8'
+import snaptime, { Timezone, Cron, Duration } from '@anil-labs/snaptime'
 
-const date = d8('2026-03-18')
+const date = snaptime('2026-03-18')
 date.format('[It is] dddd, MMMM Do YYYY')  // "It is Wednesday, March 18th 2026"
 date.add(7, 'd').format('YYYY-MM-DD')      // "2026-03-25" (unit aliases!)
 date.isSameOrBefore('2026-12-31')           // true
 date.isBetween('2026-01-01', '2026-06-30', undefined, '[]')  // inclusive
 
 // Create from object
-d8.fromObject({ year: 2026, month: 3, day: 18 })
+snaptime.fromObject({ year: 2026, month: 3, day: 18 })
 
 // Timezones
 const tz = new Timezone('America/New_York')
@@ -91,12 +91,12 @@ job.humanize()                              // "At 09:30, Monday through Friday"
 Duration.fromISO('P1DT12H').humanize(false) // "1 day, 12 hours"
 
 // Natural language with time support
-d8.natural('tomorrow at 3pm').format('YYYY-MM-DD HH:mm')
-d8.natural('5 hours ago')
-d8.business.getHolidays('US', 2026)
+snaptime.natural('tomorrow at 3pm').format('YYYY-MM-DD HH:mm')
+snaptime.natural('5 hours ago')
+snaptime.business.getHolidays('US', 2026)
 
 // Iterable collections
-for (const date of d8.collection(['2026-01-01', '2026-06-15'])) {
+for (const date of snaptime.collection(['2026-01-01', '2026-06-15'])) {
   console.log(date.format('MMM D'))
 }
 ```

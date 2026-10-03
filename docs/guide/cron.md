@@ -16,7 +16,7 @@ Parse and evaluate standard 5-field cron expressions.
 Supports: `*`, `,` lists, `-` ranges, `/` steps, and `MON`–`SUN` abbreviations.
 
 ```typescript
-import { Cron } from '@anilkumarthakur/d8'
+import { Cron } from '@anil-labs/snaptime'
 
 new Cron('* * * * *')    // ✓ valid
 new Cron('* * * *')      // → throws (too few fields)

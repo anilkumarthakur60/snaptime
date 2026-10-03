@@ -5,7 +5,7 @@ Start–end date pair with containment, overlap, intersection, splitting, and it
 ## Creating Ranges
 
 ```typescript
-import { DateRange, DateFormat } from '@anilkumarthakur/d8'
+import { DateRange, DateFormat } from '@anil-labs/snaptime'
 
 // All input types supported:
 new DateRange('2026-01-01', '2026-01-31')
@@ -14,8 +14,8 @@ new DateRange(new DateFormat('2026-01-01'), new DateFormat('2026-01-31'))
 new DateRange(1735689600000, 1738281600000) // timestamps
 
 // Or via the factory:
-import d8 from '@anilkumarthakur/d8'
-const range = d8.range('2026-01-01', '2026-01-31')
+import snaptime from '@anil-labs/snaptime'
+const range = snaptime.range('2026-01-01', '2026-01-31')
 ```
 
 ---

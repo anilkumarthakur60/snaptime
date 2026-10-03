@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for the `@anilkumarthakur/d8` library. Every class, function, and type  fully documented.
+Complete API documentation for the `@anil-labs/snaptime` library. Every class, function, and type  fully documented.
 
 ## Modules
 
@@ -21,7 +21,7 @@ Complete API documentation for the `@anilkumarthakur/d8` library. Every class, f
 
 ```typescript
 // Default export: factory function
-import d8 from '@anilkumarthakur/d8'
+import snaptime from '@anil-labs/snaptime'
 
 // Named exports: classes
 import {
@@ -32,7 +32,7 @@ import {
   Timezone,
   Cron,
   dateFormat,        // also the factory
-} from '@anilkumarthakur/d8'
+} from '@anil-labs/snaptime'
 
 // Named exports: functions
 import {
@@ -44,7 +44,7 @@ import {
   prevBusinessDay,
   businessDaysBetween,
   getHolidays,
-} from '@anilkumarthakur/d8'
+} from '@anil-labs/snaptime'
 
 // Type imports
 import type {
@@ -68,5 +68,5 @@ import type {
   FiscalConfig,
   CronField,
   DateFormatStatic,
-} from '@anilkumarthakur/d8'
+} from '@anil-labs/snaptime'
 ```

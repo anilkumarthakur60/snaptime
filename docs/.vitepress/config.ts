@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'D8',
+  title: 'snaptime',
   description:
     'A modern, zero-dependency TypeScript date/time library  formatting, parsing, timezones, business days, cron, and natural language.',
   lang: 'en-US',
@@ -12,7 +12,7 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#667eea' }],
     ['meta', { name: 'og:type', content: 'website' }],
     ['meta', { name: 'og:locale', content: 'en' }],
-    ['meta', { name: 'og:title', content: 'D8  Modern TypeScript Date/Time Library' }],
+    ['meta', { name: 'og:title', content: 'snaptime  Modern TypeScript Date/Time Library' }],
     [
       'meta',
       {
@@ -21,9 +21,9 @@ export default defineConfig({
           'Zero-dependency, fully typed date library for formatting, parsing, timezones, business days, cron, and natural language.'
       }
     ],
-    ['meta', { name: 'og:site_name', content: 'D8' }],
+    ['meta', { name: 'og:site_name', content: 'snaptime' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'D8  Modern TypeScript Date/Time Library' }],
+    ['meta', { name: 'twitter:title', content: 'snaptime  Modern TypeScript Date/Time Library' }],
     [
       'meta',
       {
@@ -36,7 +36,7 @@ export default defineConfig({
 
   themeConfig: {
     logo: '/icon-transparent.png',
-    siteTitle: 'D8',
+    siteTitle: 'snaptime',
 
     nav: [
       { text: 'Guide', link: '/guide/' },
@@ -45,7 +45,7 @@ export default defineConfig({
       {
         text: 'Links',
         items: [
-          { text: 'npm', link: 'https://www.npmjs.com/package/@anilkumarthakur/d8' },
+          { text: 'npm', link: 'https://www.npmjs.com/package/@anil-labs/snaptime' },
           { text: 'GitHub', link: 'https://github.com/anilkumarthakur60/snaptime' },
           { text: 'Changelog', link: 'https://github.com/anilkumarthakur60/snaptime/releases' }
         ]
@@ -133,7 +133,7 @@ export default defineConfig({
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/anilkumarthakur60/snaptime' },
-      { icon: 'npm', link: 'https://www.npmjs.com/package/@anilkumarthakur/d8' }
+      { icon: 'npm', link: 'https://www.npmjs.com/package/@anil-labs/snaptime' }
     ],
 
     footer: {

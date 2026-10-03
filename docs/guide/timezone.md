@@ -5,7 +5,7 @@ IANA timezone support using the built-in `Intl` API  format in any timezone, get
 ## Creating Timezones
 
 ```typescript
-import { Timezone } from '@anilkumarthakur/d8'
+import { Timezone } from '@anil-labs/snaptime'
 
 const ny = new Timezone('America/New_York')
 ny.tz // → "America/New_York"
@@ -40,14 +40,14 @@ Timezone.isValid('')                // → false
 ## Offset
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import snaptime from '@anil-labs/snaptime'
 
 const ny = new Timezone('America/New_York')
 const kolkata = new Timezone('Asia/Kolkata')
 const utcTz = new Timezone('UTC')
 
-const jan = d8('2026-01-15T12:00:00Z') // Winter
-const jul = d8('2026-07-15T12:00:00Z') // Summer
+const jan = snaptime('2026-01-15T12:00:00Z') // Winter
+const jul = snaptime('2026-07-15T12:00:00Z') // Summer
 
 // UTC offset in minutes:
 utcTz.offsetMinutes(jan)  // → 0
@@ -76,14 +76,14 @@ const kolkata = new Timezone('Asia/Kolkata')
 const utcTz = new Timezone('UTC')
 
 // UTC midnight:
-const midnight = d8('2026-01-01T00:00:00Z')
+const midnight = snaptime('2026-01-01T00:00:00Z')
 
 utcTz.format(midnight, 'YYYY-MM-DD')    // → "2026-01-01"
 kolkata.format(midnight, 'YYYY-MM-DD')   // → "2026-01-01" (05:30 → still Jan 1)
 ny.format(midnight, 'YYYY-MM-DD')        // → "2025-12-31" (UTC-5 → Dec 31!)
 kolkata.format(midnight, 'HH:mm')        // → "05:30"
 
-const noon = d8('2026-01-15T12:00:00Z')
+const noon = snaptime('2026-01-15T12:00:00Z')
 ny.format(noon, 'HH:mm')                // → "07:00" (12:00 UTC - 5h)
 ```
 
@@ -96,8 +96,8 @@ const ny = new Timezone('America/New_York')
 const kolkata = new Timezone('Asia/Kolkata')
 const utcTz = new Timezone('UTC')
 
-const jan = d8('2026-01-15T12:00:00Z')
-const jul = d8('2026-07-15T12:00:00Z')
+const jan = snaptime('2026-01-15T12:00:00Z')
+const jul = snaptime('2026-07-15T12:00:00Z')
 
 // UTC → never DST:
 utcTz.isDST(jan) // → false
@@ -121,7 +121,7 @@ const kolkata = new Timezone('Asia/Kolkata')
 const ny = new Timezone('America/New_York')
 const utcTz = new Timezone('UTC')
 
-const midnight = d8('2026-01-01T00:00:00Z')
+const midnight = snaptime('2026-01-01T00:00:00Z')
 
 // toLocalDate returns a DateFormat (UTC mode) with wall-clock values:
 const kolkataLocal = kolkata.toLocalDate(midnight)
@@ -129,7 +129,7 @@ kolkataLocal.get('hour')   // → 5
 kolkataLocal.get('minute') // → 30
 kolkataLocal.isUtc()       // → true (numeric components = wall-clock in this tz)
 
-const nyLocal = ny.toLocalDate(d8('2026-01-15T12:00:00Z'))
+const nyLocal = ny.toLocalDate(snaptime('2026-01-15T12:00:00Z'))
 nyLocal.get('hour')   // → 7  (12:00 UTC - 5h)
 nyLocal.get('minute') // → 0
 
@@ -153,9 +153,9 @@ new Timezone('America/New_York').toString() // → "America/New_York"
 ## World Clock Example
 
 ```typescript
-import d8, { Timezone } from '@anilkumarthakur/d8'
+import snaptime, { Timezone } from '@anil-labs/snaptime'
 
-const now = d8()
+const now = snaptime()
 const cities = [
   { name: 'New York',  tz: new Timezone('America/New_York') },
   { name: 'London',    tz: new Timezone('Europe/London') },

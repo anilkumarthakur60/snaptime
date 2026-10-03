@@ -1,9 +1,9 @@
 # TypeScript Types
 
-D8 ships full type declarations. All types are available from the main package:
+snaptime ships full type declarations. All types are available from the main package:
 
 ```typescript
-import type { ... } from '@anilkumarthakur/d8'
+import type { ... } from '@anil-labs/snaptime'
 ```
 
 ## Core Types
@@ -67,7 +67,7 @@ type HolidayCountry = 'US' | 'UK' | 'IN' | 'DE' | 'FR' | 'CA' | 'AU'
 
 ### `DateInput`
 
-The universal input type accepted by most D8 APIs  parsing, comparison, arithmetic, and factory methods:
+The universal input type accepted by most snaptime APIs  parsing, comparison, arithmetic, and factory methods:
 
 ```typescript
 type DateInput = string | number | Date | DateFormatLike
@@ -239,7 +239,7 @@ interface LocaleCalendar {
 
 ### `DateFormatLike`
 
-A duck-typing interface that allows any object to be used wherever D8 expects a date, as long as it implements these methods:
+A duck-typing interface that allows any object to be used wherever snaptime expects a date, as long as it implements these methods:
 
 ```typescript
 interface DateFormatLike {
@@ -249,7 +249,7 @@ interface DateFormatLike {
 }
 ```
 
-This enables interop with other date libraries or custom date wrappers without requiring an explicit dependency on D8.
+This enables interop with other date libraries or custom date wrappers without requiring an explicit dependency on snaptime.
 
 ### `PluginFn`
 
@@ -262,7 +262,7 @@ type PluginFn = (DF: unknown, inst: unknown) => void
 Extend this interface via declaration merging:
 
 ```typescript
-declare module '@anilkumarthakur/d8' {
+declare module '@anil-labs/snaptime' {
   interface DateFormatPluginMethods {
     myMethod(): string
   }

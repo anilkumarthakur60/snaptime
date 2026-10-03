@@ -1,13 +1,13 @@
 # Plugin System
 
-D8's `DateFormat` class can be extended with custom methods using the plugin system. Plugins let you add domain-specific functionality without modifying the library source.
+snaptime's `DateFormat` class can be extended with custom methods using the plugin system. Plugins let you add domain-specific functionality without modifying the library source.
 
 ## Writing a Plugin
 
 A plugin is a function that receives the `DateFormat` class. You can add methods to its prototype:
 
 ```typescript
-import { DateFormat, PluginFn } from '@anilkumarthakur/d8'
+import { DateFormat, PluginFn } from '@anil-labs/snaptime'
 
 const businessHoursPlugin: PluginFn = (DF: any) => {
   DF.prototype.isBusinessHours = function () {
@@ -38,10 +38,10 @@ date.isLunchTime()     // false
 To get TypeScript support for your plugin methods, use declaration merging:
 
 ```typescript
-import { DateFormat, PluginFn, DateFormatPluginMethods } from '@anilkumarthakur/d8'
+import { DateFormat, PluginFn, DateFormatPluginMethods } from '@anil-labs/snaptime'
 
 // Extend the plugin methods interface
-declare module '@anilkumarthakur/d8' {
+declare module '@anil-labs/snaptime' {
   interface DateFormatPluginMethods {
     isBusinessHours(): boolean
     isLunchTime(): boolean

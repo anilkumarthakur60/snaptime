@@ -3,7 +3,7 @@
 ## Sorting a Collection
 
 ```typescript
-import { DateCollection, DateFormat } from '@anilkumarthakur/d8'
+import { DateCollection, DateFormat } from '@anil-labs/snaptime'
 
 const c = new DateCollection(['2026-06-01', '2026-01-01', '2026-03-15'])
 
@@ -74,7 +74,7 @@ c.between(new DateFormat('2026-01-01'), new DateFormat('2026-06-01')).count()
 ## DateRange Basics
 
 ```typescript
-import { DateRange } from '@anilkumarthakur/d8'
+import { DateRange } from '@anil-labs/snaptime'
 
 const range = new DateRange('2026-01-01', '2026-01-31')
 
@@ -119,7 +119,7 @@ range.toArray('day').map(d => d.format('MM-DD'))
 ## Iteration with for...of
 
 ```js
-const col = d8.collection(['2026-01-01', '2026-06-15', '2026-12-31'])
+const col = snaptime.collection(['2026-01-01', '2026-06-15', '2026-12-31'])
 for (const date of col) {
   console.log(date.format('MMM D'))
 }

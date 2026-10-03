@@ -1,5 +1,5 @@
 // Locale registry + English default. Other locales are opt-in (tree-shaking
-// friendly): import them explicitly from `@anilkumarthakur/d8/locale/<name>`.
+// friendly): import them explicitly from `@anil-labs/snaptime/locale/<name>`.
 
 export { Locales, type ResolvedLocale } from './registry'
 export { EN } from './default'

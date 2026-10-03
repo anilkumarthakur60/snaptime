@@ -1,12 +1,12 @@
 # Introduction
 
-**D8** is a modern, zero-dependency TypeScript date/time library that gives you everything you need for date manipulation, formatting, timezone handling, business calendars, cron scheduling, and natural language parsing  in a single, fully-typed package.
+**snaptime** is a modern, zero-dependency TypeScript date/time library that gives you everything you need for date manipulation, formatting, timezone handling, business calendars, cron scheduling, and natural language parsing  in a single, fully-typed package.
 
-## Why D8?
+## Why snaptime?
 
-Most date libraries ask you to choose: lightweight _or_ feature-rich. D8 gives you both.
+Most date libraries ask you to choose: lightweight _or_ feature-rich. snaptime gives you both.
 
-| | D8 |
+| | snaptime |
 |:--|:--|
 | **Type safety** | 100 % TypeScript  no `any` escape hatches |
 | **Dependencies** | Zero |
@@ -21,7 +21,7 @@ Most date libraries ask you to choose: lightweight _or_ feature-rich. D8 gives y
 ## Core Modules
 
 ### 🕐 DateFormat
-The heart of D8. Create, format, parse, compare, diff, and query dates with 80+ chainable methods. Supports UTC, local, ordinals, ISO weeks, quarters, fiscal years, calendar grids, countdown timers, and more.
+The heart of snaptime. Create, format, parse, compare, diff, and query dates with 80+ chainable methods. Supports UTC, local, ordinals, ISO weeks, quarters, fiscal years, calendar grids, countdown timers, and more.
 
 ### ⏱️ Duration
 Represent lengths of time. Parse from strings (`"2h30m"`), convert between units, format with templates, and humanize to human-readable strings.
@@ -47,10 +47,10 @@ Parse phrases like `"tomorrow"`, `"in 2 weeks"`, `"last Friday"`, `"end of month
 ## Quick Example
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import snaptime from '@anil-labs/snaptime'
 
 // Create & format
-const date = d8('2026-03-18')
+const date = snaptime('2026-03-18')
 date.format('dddd, MMMM Do YYYY') // "Wednesday, March 18th 2026"
 
 // Arithmetic
@@ -71,6 +71,6 @@ date.countdown().humanize() // "5 days, 8 hours"
 
 ## Next Steps
 
-- [Installation](./installation)  Set up D8 in your project
+- [Installation](./installation)  Set up snaptime in your project
 - [Quick Start](./quick-start)  Build your first date program
 - [DateFormat](./dateformat)  Deep dive into the core class

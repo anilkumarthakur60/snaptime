@@ -1,14 +1,14 @@
 # Real-World Recipes
 
-Practical patterns combining D8 features.
+Practical patterns combining snaptime features.
 
 ## Age Calculator
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import snaptime from '@anil-labs/snaptime'
 
 function calculateAge(birthdate: string) {
-  const bd = d8(birthdate)
+  const bd = snaptime(birthdate)
   const a = bd.age()
   return {
     years: a.years,
@@ -27,7 +27,7 @@ calculateAge('1995-06-15')
 
 ```typescript
 function getCountdown(targetDate: string) {
-  const target = d8(targetDate)
+  const target = snaptime(targetDate)
   const cd = target.countdown()
 
   if (cd.isPast) return { status: 'passed', text: 'already passed' }
@@ -50,10 +50,10 @@ getCountdown('2020-01-01')
 ## Payroll Period
 
 ```typescript
-import { DateRange } from '@anilkumarthakur/d8'
+import { DateRange } from '@anil-labs/snaptime'
 
 function getPayrollPeriod(date: string) {
-  const d = d8(date)
+  const d = snaptime(date)
   const day = d.get('date')
 
   const start = day <= 15
@@ -79,10 +79,10 @@ getPayrollPeriod('2026-01-10')
 ## Multi-Timezone Clock
 
 ```typescript
-import { Timezone } from '@anilkumarthakur/d8'
+import { Timezone } from '@anil-labs/snaptime'
 
 function worldClock() {
-  const now = d8()
+  const now = snaptime()
   const zones = [
     { city: 'New York',  tz: new Timezone('America/New_York') },
     { city: 'London',    tz: new Timezone('Europe/London') },
@@ -105,10 +105,10 @@ function worldClock() {
 ## SLA Timer
 
 ```typescript
-import { addBusinessDays, isBusinessDay, getHolidays } from '@anilkumarthakur/d8'
+import { addBusinessDays, isBusinessDay, getHolidays } from '@anil-labs/snaptime'
 
 function calculateSLA(ticket: string, hours: number, country = 'US') {
-  const created = d8(ticket)
+  const created = snaptime(ticket)
   const year = created.get('year')
   const holidays = getHolidays(country, year)
 
@@ -131,7 +131,7 @@ calculateSLA('2026-01-15', 24)
 ## Date Sequence Generator
 
 ```typescript
-import { DateRange, DateCollection } from '@anilkumarthakur/d8'
+import { DateRange, DateCollection } from '@anil-labs/snaptime'
 
 function generateMeetingDates(start: string, end: string, dayOfWeek: number) {
   const range = new DateRange(start, end)
@@ -158,7 +158,7 @@ generateMeetingDates('2026-01-01', '2026-01-31', 1)
 
 ```typescript
 function invoiceDueDate(invoiceDate: string, terms: number, country = 'US') {
-  const invoice = d8(invoiceDate)
+  const invoice = snaptime(invoiceDate)
   const holidays = getHolidays(country, invoice.get('year'))
   const due = addBusinessDays(invoice, terms, holidays)
 
@@ -178,7 +178,7 @@ invoiceDueDate('2026-01-12', 30)
 
 ```typescript
 function quarterSummary(date: string, startMonth = 1) {
-  const d = d8(date)
+  const d = snaptime(date)
   return {
     date: d.format('YYYY-MM-DD'),
     quarter: d.fiscalQuarter({ startMonth }),

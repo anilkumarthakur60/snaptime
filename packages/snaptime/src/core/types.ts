@@ -342,8 +342,8 @@ export type StaticMacro<A extends unknown[] = unknown[], R = unknown> = StaticMa
  * interface directly via TypeScript module augmentation:
  *
  * @example
- *   import type {} from '@anilkumarthakur/d8'
- *   declare module '@anilkumarthakur/d8' {
+ *   import type {} from '@anil-labs/snaptime'
+ *   declare module '@anil-labs/snaptime' {
  *     interface DateTime {
  *       greet(): string
  *     }

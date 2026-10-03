@@ -69,10 +69,10 @@ bun add @anil-labs/snaptime
 ## 🚀 Quick Start
 
 ```typescript
-import d8, { DateTime, Timezone, Cron } from '@anil-labs/snaptime'
+import snaptime, { DateTime, Timezone, Cron } from '@anil-labs/snaptime'
 
 // ── Create & format ──────────────────────────────────────────
-const date = d8('2026-03-18')
+const date = snaptime('2026-03-18')
 date.format('dddd, MMMM Do YYYY')   // "Wednesday, March 18th 2026"
 date.format('hh:mm A')              // "12:00 AM"
 
@@ -108,20 +108,20 @@ job.humanize()                  // "At 09:30, Monday through Friday"
 job.next().format('YYYY-MM-DD HH:mm')
 
 // ── Natural language ─────────────────────────────────────────
-d8.natural('next friday').format('YYYY-MM-DD')
-d8.natural('3rd Monday of January 2027').format('YYYY-MM-DD')
+snaptime.natural('next friday').format('YYYY-MM-DD')
+snaptime.natural('3rd Monday of January 2027').format('YYYY-MM-DD')
 
 // ── Business days ────────────────────────────────────────────
-d8.business.addBusinessDays(date, 5)
-d8.business.getHolidays('US', 2026)
+snaptime.business.addBusinessDays(date, 5)
+snaptime.business.getHolidays('US', 2026)
 
 // ── Ranges ───────────────────────────────────────────────────
-const range = d8.range('2026-01-01', '2026-12-31')
+const range = snaptime.range('2026-01-01', '2026-12-31')
 range.contains('2026-06-15')            // true
 range.split(1, 'month')                 // DateRange[] (12 chunks)
 
 // ── Collections ──────────────────────────────────────────────
-const col = d8.collection(['2026-03-01', '2026-01-15', '2026-06-10'])
+const col = snaptime.collection(['2026-03-01', '2026-01-15', '2026-06-10'])
 col.sort('asc').first().format('YYYY-MM-DD')  // "2026-01-15"
 ```
 

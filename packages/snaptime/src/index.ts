@@ -289,4 +289,5 @@ export type { Freq, Weekday as RRuleWeekday, WeekdayWithN, RRuleOptions } from '
 export type { BSDate } from './calendars/bs'
 export type { MoonPhase, MoonPhaseName, Season } from './astronomy'
 
+export { dateTime as snaptime }
 export default dateTime

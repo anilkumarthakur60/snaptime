@@ -5,11 +5,11 @@ Parse dates from English phrases  relative dates, weekday references, month boun
 ## Basic Usage
 
 ```typescript
-import { parseNatural } from '@anilkumarthakur/d8'
-// or: import d8 from '@anilkumarthakur/d8'; d8.natural(...)
+import { parseNatural } from '@anil-labs/snaptime'
+// or: import snaptime from '@anil-labs/snaptime'; snaptime.natural(...)
 
 // With a reference date (Jan 15, 2026, Thursday):
-const ref = d8('2026-01-15T12:00:00')
+const ref = snaptime('2026-01-15T12:00:00')
 
 parseNatural('now', ref).valueOf() === ref.valueOf()   // → true
 parseNatural('today', ref).valueOf() === ref.valueOf()  // → true

@@ -3,7 +3,7 @@
 ## Basic Parsing
 
 ```typescript
-import { parseNatural } from '@anilkumarthakur/d8'
+import { parseNatural } from '@anil-labs/snaptime'
 
 parseNatural('today').isValid()                      // → true
 parseNatural('tomorrow').isValid()                   // → true
@@ -17,7 +17,7 @@ parseNatural('').isValid()                            // → false
 ## Relative Dates (with ref = Jan 15, 2026)
 
 ```typescript
-const ref = d8('2026-01-15T12:00:00')
+const ref = snaptime('2026-01-15T12:00:00')
 
 parseNatural('tomorrow', ref).format('YYYY-MM-DD')     // → "2026-01-16"
 parseNatural('yesterday', ref).format('YYYY-MM-DD')    // → "2026-01-14"
@@ -101,22 +101,22 @@ scheduleReminder('nonsense')
 ## Time Support
 
 ```js
-d8.natural('tomorrow at 3pm')
-d8.natural('next friday at 10:30')
-d8.natural('yesterday at midnight')
+snaptime.natural('tomorrow at 3pm')
+snaptime.natural('next friday at 10:30')
+snaptime.natural('yesterday at midnight')
 ```
 
 ## Sub-day Offsets
 
 ```js
-d8.natural('5 hours ago')
-d8.natural('30 minutes from now')
-d8.natural('in 10 seconds')
+snaptime.natural('5 hours ago')
+snaptime.natural('30 minutes from now')
+snaptime.natural('in 10 seconds')
 ```
 
 ## Named Times
 
 ```js
-d8.natural('noon')       // today at 12:00
-d8.natural('midnight')   // today at 00:00
+snaptime.natural('noon')       // today at 12:00
+snaptime.natural('midnight')   // today at 00:00
 ```

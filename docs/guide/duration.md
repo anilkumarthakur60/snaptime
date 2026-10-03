@@ -5,7 +5,7 @@ Time span representation with parsing, conversion, arithmetic, and humanization.
 ## Creating Durations
 
 ```typescript
-import { Duration, DateFormat } from '@anilkumarthakur/d8'
+import { Duration, DateFormat } from '@anil-labs/snaptime'
 
 new Duration()        // → 0ms
 new Duration(5000)    // → 5 seconds

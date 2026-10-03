@@ -1,9 +1,9 @@
 # Type Definitions
 
-All exported types from `@anilkumarthakur/d8`.
+All exported types from `@anil-labs/snaptime`.
 
 ```typescript
-import type { ... } from '@anilkumarthakur/d8'
+import type { ... } from '@anil-labs/snaptime'
 ```
 
 ---
@@ -149,7 +149,7 @@ interface DateFormatPluginMethods {
 }
 
 // Extend via declaration merging:
-// declare module '@anilkumarthakur/d8' {
+// declare module '@anil-labs/snaptime' {
 //   interface DateFormatPluginMethods { myMethod(): string }
 // }
 ```

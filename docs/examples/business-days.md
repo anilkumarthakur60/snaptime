@@ -3,50 +3,50 @@
 ## Basic Checks
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import snaptime from '@anil-labs/snaptime'
 import { isBusinessDay, addBusinessDays, nextBusinessDay, prevBusinessDay,
-         businessDaysBetween, getHolidays } from '@anilkumarthakur/d8'
+         businessDaysBetween, getHolidays } from '@anil-labs/snaptime'
 
-isBusinessDay(d8('2026-01-12'))  // → true  (Monday)
-isBusinessDay(d8('2026-01-17'))  // → false (Saturday)
-isBusinessDay(d8('2026-01-18'))  // → false (Sunday)
+isBusinessDay(snaptime('2026-01-12'))  // → true  (Monday)
+isBusinessDay(snaptime('2026-01-17'))  // → false (Saturday)
+isBusinessDay(snaptime('2026-01-18'))  // → false (Sunday)
 ```
 
 ## Navigating Business Days
 
 ```typescript
-addBusinessDays(d8('2026-01-12'), 1).format('YYYY-MM-DD')
+addBusinessDays(snaptime('2026-01-12'), 1).format('YYYY-MM-DD')
 // → "2026-01-13" (Mon → Tue)
 
-addBusinessDays(d8('2026-01-16'), 1).format('YYYY-MM-DD')
+addBusinessDays(snaptime('2026-01-16'), 1).format('YYYY-MM-DD')
 // → "2026-01-19" (Fri → Mon, skips weekend)
 
-addBusinessDays(d8('2026-01-12'), 5).format('YYYY-MM-DD')
+addBusinessDays(snaptime('2026-01-12'), 5).format('YYYY-MM-DD')
 // → "2026-01-19" (Mon + 5 biz days → next Mon)
 
-nextBusinessDay(d8('2026-01-16')).format('YYYY-MM-DD')
+nextBusinessDay(snaptime('2026-01-16')).format('YYYY-MM-DD')
 // → "2026-01-19" (Fri → Mon)
 
-nextBusinessDay(d8('2026-01-17')).format('YYYY-MM-DD')
+nextBusinessDay(snaptime('2026-01-17')).format('YYYY-MM-DD')
 // → "2026-01-19" (Sat → Mon)
 
-prevBusinessDay(d8('2026-01-12')).format('YYYY-MM-DD')
+prevBusinessDay(snaptime('2026-01-12')).format('YYYY-MM-DD')
 // → "2026-01-09" (Mon → prev Fri)
 
-prevBusinessDay(d8('2026-01-18')).format('YYYY-MM-DD')
+prevBusinessDay(snaptime('2026-01-18')).format('YYYY-MM-DD')
 // → "2026-01-16" (Sun → Fri)
 ```
 
 ## Counting Between
 
 ```typescript
-businessDaysBetween(d8('2026-01-12'), d8('2026-01-16'))
+businessDaysBetween(snaptime('2026-01-12'), snaptime('2026-01-16'))
 // → 3 (Tue, Wed, Thu  exclusive of endpoints)
 
-businessDaysBetween(d8('2026-01-12'), d8('2026-01-19'))
+businessDaysBetween(snaptime('2026-01-12'), snaptime('2026-01-19'))
 // → 4 (skips weekend)
 
-businessDaysBetween(d8('2026-01-16'), d8('2026-01-12'))
+businessDaysBetween(snaptime('2026-01-16'), snaptime('2026-01-12'))
 // → -3 (negative when end < start)
 ```
 
@@ -55,13 +55,13 @@ businessDaysBetween(d8('2026-01-16'), d8('2026-01-12'))
 ```typescript
 const usHolidays = getHolidays('US', 2026)
 
-isBusinessDay(d8('2026-01-01'), usHolidays)
+isBusinessDay(snaptime('2026-01-01'), usHolidays)
 // → false (New Year's Day is a Thursday)
 
-addBusinessDays(d8('2026-01-16'), 1, ['2026-01-19']).format('YYYY-MM-DD')
+addBusinessDays(snaptime('2026-01-16'), 1, ['2026-01-19']).format('YYYY-MM-DD')
 // → "2026-01-20" (Fri + 1, Mon is holiday → Tue)
 
-businessDaysBetween(d8('2026-01-12'), d8('2026-01-16'), ['2026-01-14'])
+businessDaysBetween(snaptime('2026-01-12'), snaptime('2026-01-16'), ['2026-01-14'])
 // → 2 (Wed excluded as holiday)
 ```
 

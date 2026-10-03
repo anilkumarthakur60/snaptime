@@ -1,11 +1,11 @@
 # Locale Support
 
-D8 supports custom locales for month names, weekday names, and relative time strings. Register a locale once, and all subsequent formatting uses it.
+snaptime supports custom locales for month names, weekday names, and relative time strings. Register a locale once, and all subsequent formatting uses it.
 
 ## Registering a Locale
 
 ```typescript
-import { DateFormat } from '@anilkumarthakur/d8'
+import { DateFormat } from '@anil-labs/snaptime'
 
 DateFormat.locale('es', {
   months: [
@@ -126,7 +126,7 @@ new DateFormat('2026-03-18').format('dddd D MMMM YYYY')
 
 ## Defaults
 
-If a locale field is not provided, D8 falls back to English defaults:
+If a locale field is not provided, snaptime falls back to English defaults:
 - Months: January, February, …
 - Weekdays: Sunday, Monday, …
 - Ordinals: 1st, 2nd, 3rd, 4th, …

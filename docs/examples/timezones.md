@@ -3,11 +3,11 @@
 ## UTC Offset & DST
 
 ```typescript
-import d8, { Timezone } from '@anilkumarthakur/d8'
+import snaptime, { Timezone } from '@anil-labs/snaptime'
 
 const ny = new Timezone('America/New_York')
-const winter = d8('2026-01-15T12:00:00Z')
-const summer = d8('2026-07-15T12:00:00Z')
+const winter = snaptime('2026-01-15T12:00:00Z')
+const summer = snaptime('2026-07-15T12:00:00Z')
 
 ny.offsetMinutes(winter)  // → -300 (UTC-5)
 ny.offsetMinutes(summer)  // → -240 (UTC-4, DST)
@@ -20,7 +20,7 @@ ny.isDST(summer)          // → true
 ## Cross-Timezone Formatting
 
 ```typescript
-const utc = d8('2026-01-01T00:00:00Z') // UTC midnight
+const utc = snaptime('2026-01-01T00:00:00Z') // UTC midnight
 
 new Timezone('UTC').format(utc, 'YYYY-MM-DD HH:mm')
 // → "2026-01-01 00:00"
@@ -36,7 +36,7 @@ new Timezone('America/New_York').format(utc, 'YYYY-MM-DD HH:mm')
 
 ```typescript
 const kolkata = new Timezone('Asia/Kolkata')
-const midnight = d8('2026-01-01T00:00:00Z')
+const midnight = snaptime('2026-01-01T00:00:00Z')
 const local = kolkata.toLocalDate(midnight)
 
 local.get('hour')   // → 5
@@ -44,7 +44,7 @@ local.get('minute') // → 30
 local.isUtc()       // → true (values represent wall-clock time)
 
 const ny = new Timezone('America/New_York')
-const nyLocal = ny.toLocalDate(d8('2026-01-15T12:00:00Z'))
+const nyLocal = ny.toLocalDate(snaptime('2026-01-15T12:00:00Z'))
 nyLocal.get('hour') // → 7 (12:00 UTC - 5h)
 ```
 

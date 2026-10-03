@@ -5,19 +5,19 @@
 ::: code-group
 
 ```bash [npm]
-npm install @anilkumarthakur/d8
+npm install @anil-labs/snaptime
 ```
 
 ```bash [yarn]
-yarn add @anilkumarthakur/d8
+yarn add @anil-labs/snaptime
 ```
 
 ```bash [pnpm]
-pnpm add @anilkumarthakur/d8
+pnpm add @anil-labs/snaptime
 ```
 
 ```bash [bun]
-bun add @anilkumarthakur/d8
+bun add @anil-labs/snaptime
 ```
 
 :::
@@ -28,7 +28,7 @@ bun add @anilkumarthakur/d8
 
 ```typescript
 // Default factory import
-import d8 from '@anilkumarthakur/d8'
+import snaptime from '@anil-labs/snaptime'
 
 // Named imports
 import {
@@ -43,7 +43,7 @@ import {
   addBusinessDays,
   getHolidays,
   dateFormat,
-} from '@anilkumarthakur/d8'
+} from '@anil-labs/snaptime'
 ```
 
 ### CommonJS
@@ -54,23 +54,23 @@ const {
   Duration,
   Timezone,
   dateFormat,
-} = require('@anilkumarthakur/d8')
+} = require('@anil-labs/snaptime')
 ```
 
 ### Browser (UMD)
 
 ```html
-<script src="https://unpkg.com/@anilkumarthakur/d8/dist/index.umd.js"></script>
+<script src="https://unpkg.com/@anil-labs/snaptime"></script>
 <script>
   // All exports are available on the global object
-  const date = new D8.DateFormat('2026-03-18')
+  const date = new Snaptime.DateFormat('2026-03-18')
   console.log(date.format('YYYY-MM-DD'))
 </script>
 ```
 
 ## TypeScript
 
-D8 ships its own type declarations  no `@types/` package required. Just import and go:
+snaptime ships its own type declarations  no `@types/` package required. Just import and go:
 
 ```typescript
 import type {
@@ -84,15 +84,15 @@ import type {
   HolidayCountry,
   LocaleData,
   PluginFn,
-} from '@anilkumarthakur/d8'
+} from '@anil-labs/snaptime'
 ```
 
 ## Verify Installation
 
 ```typescript
-import d8 from '@anilkumarthakur/d8'
+import snaptime from '@anil-labs/snaptime'
 
-const today = d8()
+const today = snaptime()
 console.log(today.format('dddd, MMMM Do YYYY'))
 // e.g. "Wednesday, March 18th 2026"
 ```
@@ -109,5 +109,5 @@ You should see today's date printed in a long format. You're ready to go! 🎉
 
 ## Next Steps
 
-- [Quick Start](./quick-start)  Write your first D8 program
+- [Quick Start](./quick-start)  Write your first snaptime program
 - [DateFormat](./dateformat)  Explore the core class

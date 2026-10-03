@@ -2,7 +2,7 @@
 
 Functions for business day calculations, skipping weekends and holidays.
 
-All functions are available as named exports and on the `d8.business` namespace.
+All functions are available as named exports and on the `snaptime.business` namespace.
 
 ---
 

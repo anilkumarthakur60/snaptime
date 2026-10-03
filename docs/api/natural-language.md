@@ -8,7 +8,7 @@ Parse dates from English phrases.
 parseNatural(input: string, ref?: DateFormat): DateFormat
 ```
 
-Also available as `d8.natural(input, ref?)`.
+Also available as `snaptime.natural(input, ref?)`.
 
 | Param | Type | Default | Description |
 |:------|:-----|:--------|:------------|

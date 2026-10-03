@@ -3,7 +3,7 @@
 ## Matching Dates
 
 ```typescript
-import { Cron } from '@anilkumarthakur/d8'
+import { Cron } from '@anil-labs/snaptime'
 
 const everyQuarter = new Cron('*/15 * * * *')
 // Matches at :00, :15, :30, :45
@@ -21,11 +21,11 @@ weekdays9am.humanize()
 const cron = new Cron('0 9 * * 1') // Monday 9 AM
 
 // From Thursday Jan 15 → next Monday Jan 19:
-const next = cron.next(d8('2026-01-15T09:00:00'))
+const next = cron.next(snaptime('2026-01-15T09:00:00'))
 next.format('YYYY-MM-DD HH:mm') // → "2026-01-19 09:00"
 
 // Previous Monday → Jan 12:
-const prev = cron.prev(d8('2026-01-15T09:00:00'))
+const prev = cron.prev(snaptime('2026-01-15T09:00:00'))
 prev.format('YYYY-MM-DD HH:mm') // → "2026-01-12 09:00"
 ```
 
@@ -35,15 +35,15 @@ prev.format('YYYY-MM-DD HH:mm') // → "2026-01-12 09:00"
 const hourly = new Cron('0 * * * *')
 
 const results = hourly.between(
-  d8('2026-01-15T09:00:00'),
-  d8('2026-01-15T12:00:00')
+  snaptime('2026-01-15T09:00:00'),
+  snaptime('2026-01-15T12:00:00')
 )
 results.length // → 4 (09:00, 10:00, 11:00, 12:00)
 
 // With limit:
 hourly.between(
-  d8('2026-01-15T09:00:00'),
-  d8('2026-01-15T12:00:00'),
+  snaptime('2026-01-15T09:00:00'),
+  snaptime('2026-01-15T12:00:00'),
   2
 ).length // → 2
 ```
