@@ -13,7 +13,7 @@ snaptime('2026-01-15T12:00:00Z')    // → 2026-01-15T12:00:00.000Z (UTC mode)
 snaptime('2026-01-15T12:00:00+05:30') // → local mode (offset detected)
 snaptime(1737100800000)             // → from timestamp (local mode)
 snaptime(new Date())                // → from native Date (local mode)
-snaptime(existingD8)                // → clone (preserves UTC flag)
+snaptime(existingDate)                // → clone (preserves UTC flag)
 ```
 
 ### UTC Mode
